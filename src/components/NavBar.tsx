@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { gsap } from 'gsap';
 
 const NavBar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -14,9 +16,31 @@ const NavBar: React.FC = () => {
     setIsMobileMenuOpen(false);
   };
 
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Set initial state - navbar is hidden by default CSS
+      gsap.set(navRef.current, {
+        opacity: 0,
+        y: -30
+      });
+
+      // Animate navbar in
+      gsap.to(navRef.current, {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: "power2.out",
+        delay: 0.2
+      });
+
+    }, navRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
     <>
-      <nav className="absolute top-8 left-8 sm:left-16 lg:left-[120px] 2xl:left-[200px] right-8 sm:right-16 lg:right-[120px] 2xl:right-[200px] z-10">
+      <nav ref={navRef} style={{ opacity: 0, transform: 'translateY(-30px)' }} className="absolute top-8 left-8 sm:left-16 lg:left-[120px] 2xl:left-[200px] right-8 sm:right-16 lg:right-[120px] 2xl:right-[200px] z-10">
         <div className="flex items-center justify-between w-full gap-2 sm:gap-4 md:gap-6 lg:gap-8 2xl:gap-12">
           {/* Left Column - Logo */}
           <div className="flex-shrink-0">

@@ -1,7 +1,8 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { gsap } from 'gsap';
 import NavBar from './NavBar';
 
 // Import crypto logos
@@ -19,28 +20,72 @@ import Rep5 from '/public/images/rep5.png'
 import Rep6 from '/public/images/rep6.png'
 
 const Hero: React.FC = () => {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
+  const buttonsRef = useRef<HTMLDivElement>(null);
+  const cryptoLogosRef = useRef<HTMLDivElement>(null);
+  const heroImageRef = useRef<HTMLDivElement>(null);
+  const reputationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Set initial states - elements are hidden by default CSS
+      gsap.set([headingRef.current, descriptionRef.current, buttonsRef.current, cryptoLogosRef.current, heroImageRef.current], {
+        opacity: 0,
+        y: 30
+      });
+
+      gsap.set(reputationRef.current, {
+        opacity: 0,
+        y: 30
+      });
+
+      // Animate main content elements together
+      gsap.to([headingRef.current, descriptionRef.current, buttonsRef.current, cryptoLogosRef.current, heroImageRef.current], {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: "power2.out",
+        delay: 0.5
+      });
+
+      // Animate reputation section after main content
+      gsap.to(reputationRef.current, {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: "power2.out",
+        delay: 1.0
+      });
+
+    }, heroRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <div className="bg-[#fcf8f1] relative min-h-screen overflow-x-hidden">
-      {/* Navigation Bar */}
-      <NavBar />
+    <div ref={heroRef} className="bg-[#fcf8f1] relative min-h-screen overflow-x-hidden">
+        {/* Navigation Bar */}
+        <NavBar />
 
       {/* Hero Content */}
       <div className="relative flex flex-col lg:flex-row items-center justify-between min-h-screen lg:min-h-screen px-4 sm:px-16 lg:px-[120px] 2xl:px-[200px] pt-[96px] pb-8 sm:py-[96px] sm:pb-8 lg:py-0">
         {/* Left Content */}
         <div className="flex flex-col justify-center w-full lg:w-[50%] lg:max-w-[600px] 2xl:max-w-[664px] mb-12 lg:mb-0 items-start md:items-center lg:items-start text-left md:text-center lg:text-left">
           {/* Main Heading */}
-          <h1 className="font-inter font-semibold text-[36px] sm:text-[clamp(2rem,5vw,4.5rem)] leading-[1.1] text-[#141722] tracking-[-0.5px] sm:tracking-[-1px] lg:tracking-[-2.16px]">
+          <h1 ref={headingRef} style={{ opacity: 0, transform: 'translateY(30px)' }} className="font-inter font-semibold text-[36px] sm:text-[clamp(2rem,5vw,4.5rem)] leading-[1.1] text-[#141722] tracking-[-0.5px] sm:tracking-[-1px] lg:tracking-[-2.16px]">
             <span className="text-[#ffb546]">Precious</span>
             <span> metals for the next generation.</span>
           </h1>
 
           {/* Description */}
-          <p className="font-inter font-medium text-[18px] text-[#7c7c7c] leading-[28px] tracking-[0.3456px] mt-4 sm:mt-8 w-full sm:w-[70%] md:w-full lg:w-[70%]">
+          <p ref={descriptionRef} style={{ opacity: 0, transform: 'translateY(30px)' }} className="font-inter font-medium text-[18px] text-[#7c7c7c] leading-[28px] tracking-[0.3456px] mt-4 sm:mt-8 w-full sm:w-[70%] md:w-full lg:w-[70%]">
             Clear prices and fast fulfillment, with flexible payment options for every investor.
           </p>
 
           {/* Action Buttons */}
-          <div className="flex flex-row sm:flex-row gap-[14px] mt-4 sm:mt-8 w-full justify-start md:justify-center lg:justify-start">
+          <div ref={buttonsRef} style={{ opacity: 0, transform: 'translateY(30px)' }} className="flex flex-row sm:flex-row gap-[14px] mt-4 sm:mt-8 w-full justify-start md:justify-center lg:justify-start">
          
             <button className="inline-flex px-8 sm:px-12 lg:px-[61px] py-3 sm:py-4 lg:py-[18px] justify-center items-center gap-[10px] rounded-[59px] bg-[#141722] text-[#efe9e0] font-inter font-medium text-xs sm:text-sm lg:text-[14.4px] uppercase tracking-wider hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black hover:shadow-lg transition-all duration-300 whitespace-nowrap flex-1 sm:flex-none cursor-pointer">
               Learn more
@@ -51,7 +96,7 @@ const Hero: React.FC = () => {
           </div>
 
           {/* Crypto Logos */}
-          <div className="flex items-center gap-4 sm:gap-[28px] mt-8 flex-wrap justify-start md:justify-center lg:justify-start">
+          <div ref={cryptoLogosRef} style={{ opacity: 0, transform: 'translateY(30px)' }} className="flex items-center gap-4 sm:gap-[28px] mt-8 flex-wrap justify-start md:justify-center lg:justify-start">
             {[BitLogo, EthLogo, SolLogo, LinkLogo].map((logo, index) => (
               <div key={index} className="relative w-[32px] h-[32px] sm:w-[36px] sm:h-[36px] flex-shrink-0">
                 <Image
@@ -66,7 +111,7 @@ const Hero: React.FC = () => {
         </div>
 
         {/* Right Content - Hero Image */}
-        <div className="flex-1 flex justify-center items-start relative w-full lg:w-[50%] lg:max-w-[580px] 2xl:max-w-[645px]">
+        <div ref={heroImageRef} style={{ opacity: 0, transform: 'translateY(30px)' }} className="flex-1 flex justify-center items-start relative w-full lg:w-[50%] lg:max-w-[580px] 2xl:max-w-[645px]">
           <div className="relative w-full max-w-[300px] sm:max-w-[350px] md:max-w-[400px] lg:max-w-[580px] 2xl:max-w-[645px] h-fit lg:h-auto">
             <Image
               src="/images/hero-image.png"
@@ -79,7 +124,7 @@ const Hero: React.FC = () => {
             />
           </div>
         </div>
-        <div className="relative lg:absolute bottom-0 lg:bottom-[5%] left-0 right-0 w-full px-4 sm:px-16 lg:px-[120px] 2xl:px-[200px] mt-8 lg:mt-0">
+        <div ref={reputationRef} style={{ opacity: 0, transform: 'translateY(30px)' }} className="relative lg:absolute bottom-0 lg:bottom-[5%] left-0 right-0 w-full px-4 sm:px-16 lg:px-[120px] 2xl:px-[200px] mt-8 lg:mt-0">
          <div className="grid grid-cols-3 gap-2 gap-y-1 sm:flex sm:gap-3 md:gap-4 lg:gap-6 xl:gap-8 justify-center items-center opacity-40 w-full">
            <div className="relative h-[clamp(100px,10vw,140px)] sm:w-auto sm:flex-1">
              <Image

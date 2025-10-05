@@ -1,7 +1,8 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { gsap } from 'gsap';
 
 // Import benefit images
 import Benefits1 from '/public/images/benefits1.png';
@@ -16,6 +17,66 @@ import NewsletterImage from '/public/images/newsletter-image.png';
 import ChevronRight from '/public/images/icons/chevron-right.svg';
 
 const BenefitsNewsletter: React.FC = () => {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const benefitsRef = useRef<HTMLDivElement>(null);
+  const newsletterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Set initial states
+      gsap.set([titleRef.current, benefitsRef.current, newsletterRef.current], {
+        opacity: 0,
+        y: 50
+      });
+
+      // Create intersection observer for scroll-triggered animation
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              // Animate title first
+              gsap.to(titleRef.current, {
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+                ease: "power2.out"
+              });
+
+              // Then animate benefits cards with stagger
+              gsap.to(benefitsRef.current, {
+                opacity: 1,
+                y: 0,
+                duration: 1.0,
+                ease: "power2.out",
+                delay: 0.2
+              });
+
+              // Finally animate newsletter section
+              gsap.to(newsletterRef.current, {
+                opacity: 1,
+                y: 0,
+                duration: 1.0,
+                ease: "power2.out",
+                delay: 0.4
+              });
+
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.1 }
+      );
+
+      if (sectionRef.current) {
+        observer.observe(sectionRef.current);
+      }
+
+      return () => observer.disconnect();
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
   const benefits = [
     {
       image: Benefits1,
@@ -48,15 +109,15 @@ const BenefitsNewsletter: React.FC = () => {
   ];
 
   return (
-    <div className="bg-[#fcf8f1] relative w-full py-12 sm:py-16 lg:py-20 px-4 sm:px-8 md:px-16 lg:px-[120px] 2xl:px-[200px]">
+    <div ref={sectionRef} className="bg-[#fcf8f1] relative w-full py-12 sm:py-16 lg:py-20 px-4 sm:px-8 md:px-16 lg:px-[120px] 2xl:px-[200px]">
       {/* Title */}
-      <h2 className="font-inter font-semibold text-[32px] sm:text-[36px] lg:text-[42px] leading-[1.1] text-center mb-8 sm:mb-12 lg:mb-16">
+      <h2 ref={titleRef} style={{ opacity: 0, transform: 'translateY(50px)' }} className="font-inter font-semibold text-[32px] sm:text-[36px] lg:text-[42px] leading-[1.1] text-center mb-8 sm:mb-12 lg:mb-16">
         <span className="text-[#ffb546]">Our </span>
         <span className="text-black">Key Benefits</span>
       </h2>
 
       {/* Benefits Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 xl:gap-[14px] max-w-7xl mx-auto mb-8 sm:mb-12 lg:mb-16">
+      <div ref={benefitsRef} style={{ opacity: 0, transform: 'translateY(50px)' }} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 xl:gap-[14px] max-w-7xl mx-auto mb-8 sm:mb-12 lg:mb-16">
         {benefits.map((benefit, index) => (
           <div
             key={index}
@@ -133,7 +194,7 @@ const BenefitsNewsletter: React.FC = () => {
       </div>
 
       {/* Newsletter Section */}
-      <div className="bg-black rounded-[24px] sm:rounded-[36px] max-w-7xl mx-auto overflow-hidden relative">
+      <div ref={newsletterRef} style={{ opacity: 0, transform: 'translateY(50px)' }} className="bg-black rounded-[24px] sm:rounded-[36px] max-w-7xl mx-auto overflow-hidden relative">
         {/* Newsletter Image - Desktop Only (1100px+) */}
         <div className="hidden xl:block absolute left-0 top-0 bottom-0 w-[255px]">
           <div className="relative w-full h-full">

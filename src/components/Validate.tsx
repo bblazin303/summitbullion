@@ -1,7 +1,8 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { gsap } from 'gsap';
 
 // Import why-buy images
 import WhyBuyImage from '/public/images/why-buy-image.png';
@@ -11,6 +12,71 @@ import WhyBuyImageMobile from '/public/images/why-buy-image-mobile.png';
 import CheckmarkIcon from '/public/images/icons/checkmark.svg';
 
 const Validate: React.FC = () => {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const desktopContentRef = useRef<HTMLDivElement>(null);
+  const mobileContentRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Set initial states
+      gsap.set(cardRef.current, {
+        backgroundPosition: 'center bottom',
+        backgroundSize: 'cover'
+      });
+
+      gsap.set([desktopContentRef.current, mobileContentRef.current, featuresRef.current], {
+        opacity: 0,
+        y: 30
+      });
+
+      // Create intersection observer for scroll-triggered animation
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              // Animate background image sliding up
+              gsap.to(cardRef.current, {
+                backgroundPosition: 'center center',
+                duration: 1.5,
+                ease: "power2.out"
+              });
+
+              // Animate content elements
+              gsap.to([desktopContentRef.current, mobileContentRef.current], {
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+                ease: "power2.out",
+                delay: 0.3
+              });
+
+              // Animate feature cards
+              gsap.to(featuresRef.current, {
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+                ease: "power2.out",
+                delay: 0.6
+              });
+
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.2 }
+      );
+
+      if (sectionRef.current) {
+        observer.observe(sectionRef.current);
+      }
+
+      return () => observer.disconnect();
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
   const benefits = [
     "Competitive pricing",
     "Established reputation", 
@@ -27,9 +93,10 @@ const Validate: React.FC = () => {
   ];
 
   return (
-    <div className="bg-[#fcf8f1] relative w-full py-12 sm:py-16 lg:py-20 px-4 sm:px-8 md:px-16 lg:px-[120px] 2xl:px-[200px]">
+    <div ref={sectionRef} className="bg-[#fcf8f1] relative w-full py-12 sm:py-16 lg:py-20 px-4 sm:px-8 md:px-16 lg:px-[120px] 2xl:px-[200px]">
       {/* Main Card */}
       <div 
+        ref={cardRef}
         className="bg-white rounded-[24px] sm:rounded-[52px] max-w-7xl mx-auto relative overflow-hidden"
       >
         {/* Responsive Background Styles */}
@@ -58,7 +125,7 @@ const Validate: React.FC = () => {
         {/* Content Container */}
         <div className="responsive-bg relative w-full max-h-[800px]">
           {/* Desktop Layout */}
-          <div className="hidden lg:flex flex-row items-center gap-0 relative min-h-[374px]">
+          <div ref={desktopContentRef} style={{ opacity: 0, transform: 'translateY(30px)' }} className="hidden lg:flex flex-row items-center gap-0 relative min-h-[374px]">
             {/* Left Content */}
             <div className="flex flex-col gap-8 flex-shrink-0 pl-16 pr-8 py-12 relative z-10">
               {/* Title */}
@@ -113,7 +180,7 @@ const Validate: React.FC = () => {
           </div>
 
           {/* Mobile Layout */}
-          <div className="lg:hidden flex flex-col pt-8 px-8 sm:pt-12 sm:px-12">
+          <div ref={mobileContentRef} style={{ opacity: 0, transform: 'translateY(30px)' }} className="lg:hidden flex flex-col pt-8 px-8 sm:pt-12 sm:px-12">
             {/* Title */}
             <h2 className="font-inter font-semibold text-[32px] sm:text-[36px] leading-[1.1] mb-8">
               <span className="text-[#ffb546]">Why buy </span>
@@ -146,7 +213,7 @@ const Validate: React.FC = () => {
       </div>
 
       {/* Feature Cards */}
-      <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 justify-center items-center mt-4 sm:mt-12 lg:mt-16 max-w-7xl mx-auto">
+      <div ref={featuresRef} style={{ opacity: 0, transform: 'translateY(30px)' }} className="flex flex-col lg:flex-row gap-4 lg:gap-8 justify-center items-center mt-4 sm:mt-12 lg:mt-16 max-w-7xl mx-auto">
         {features.map((feature, index) => (
           <div key={index} className="bg-white rounded-[14px] px-5 py-4 flex items-center justify-center gap-3 w-full lg:w-auto lg:min-w-[288px]">
             {/* Checkmark Icon */}
