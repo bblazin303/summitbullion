@@ -71,7 +71,7 @@ const NavBar: React.FC = () => {
               onClick={toggleMobileMenu}
               className="md:hidden text-[#141722] focus:outline-none p-1 sm:p-2"
             >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
@@ -80,15 +80,15 @@ const NavBar: React.FC = () => {
       </nav>
 
       {/* Mobile Slide-in Menu Overlay */}
-      <div className={`fixed inset-0 z-50 md:hidden transition-opacity duration-300 ease-in-out ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        {/* Backdrop */}
-        <div 
-          className="absolute inset-0 bg-black bg-opacity-50"
-          onClick={closeMobileMenu}
-        />
-        
+      <div 
+        className={`fixed inset-0 z-50 md:hidden ${isMobileMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        onClick={closeMobileMenu}
+      >
         {/* Slide-in Menu */}
-        <div className={`absolute right-0 top-0 h-full w-full bg-[#fcf8f1] transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div 
+          className={`absolute right-0 top-0 h-full w-full bg-[#fcf8f1] transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex flex-col h-full px-8 py-8 max-h-screen overflow-y-auto">
             {/* Header with Mobile Logo and Close Button */}
             <div className="flex items-center justify-between mb-8">
@@ -115,40 +115,40 @@ const NavBar: React.FC = () => {
             </div>
 
             {/* Navigation Links */}
-            <div className="flex flex-col space-y-8 flex-1 justify-center">
+            <div className="flex flex-col space-y-6 mt-8">
               <a 
                 href="#home" 
                 onClick={closeMobileMenu}
-                className="font-inter text-2xl text-[#141722] uppercase tracking-wider font-medium hover:text-[#ffb546] transition-colors text-center py-4"
+                className="font-inter text-2xl text-[#141722] uppercase tracking-wider font-medium hover:text-[#ffb546] transition-colors text-left py-2"
               >
                 Home
               </a>
               <a 
                 href="#products" 
                 onClick={closeMobileMenu}
-                className="font-inter text-2xl text-[#141722] uppercase tracking-wider font-medium hover:text-[#ffb546] transition-colors text-center py-4"
+                className="font-inter text-2xl text-[#141722] uppercase tracking-wider font-medium hover:text-[#ffb546] transition-colors text-left py-2"
               >
                 Products
               </a>
               <a 
                 href="#docs" 
                 onClick={closeMobileMenu}
-                className="font-inter text-2xl text-[#141722] uppercase tracking-wider font-medium hover:text-[#ffb546] transition-colors text-center py-4"
+                className="font-inter text-2xl text-[#141722] uppercase tracking-wider font-medium hover:text-[#ffb546] transition-colors text-left py-2"
               >
                 Docs
               </a>
               <a 
                 href="#about" 
                 onClick={closeMobileMenu}
-                className="font-inter text-2xl text-[#141722] uppercase tracking-wider font-medium hover:text-[#ffb546] transition-colors text-center py-4"
+                className="font-inter text-2xl text-[#141722] uppercase tracking-wider font-medium hover:text-[#ffb546] transition-colors text-left py-2"
               >
                 About
               </a>
             </div>
 
-            {/* Connect Wallet Button */}
-            <div className="mt-8">
-              <button className="w-full bg-[#141722] text-[#efe9e0] px-8 py-4 rounded-[42px] font-inter font-medium text-lg uppercase tracking-wider hover:bg-[#ffb546] hover:text-[#141722] transition-all duration-300">
+            {/* Connect Wallet Button - Positioned at bottom */}
+            <div className="mt-auto mb-8">
+              <button className="w-full inline-flex px-8 py-4 justify-center items-center gap-[10px] rounded-[42px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-lg uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300">
                 Connect wallet
               </button>
             </div>
