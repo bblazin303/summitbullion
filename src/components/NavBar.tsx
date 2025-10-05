@@ -62,14 +62,14 @@ const NavBar: React.FC = () => {
           {/* Right Column - Connect Wallet Button / Mobile Menu */}
           <div className="flex-shrink-0">
             {/* Connect Wallet Button (Desktop) */}
-            <button className="hidden md:block bg-[#141722] text-[#efe9e0] px-1.5 sm:px-2 md:px-3 lg:px-4 2xl:px-[28px] py-1 sm:py-1.5 md:py-2 lg:py-2.5 2xl:py-[17px] rounded-[42px] font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14px] uppercase tracking-wider hover:bg-[#ffb546] hover:text-[#141722] transition-all duration-300">
+            <button className="hidden md:block bg-[#141722] text-[#efe9e0] px-1.5 sm:px-2 md:px-3 lg:px-4 2xl:px-[28px] py-1 sm:py-1.5 md:py-2 lg:py-2.5 2xl:py-[17px] rounded-[42px] font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14px] uppercase tracking-wider hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer">
               Connect wallet
             </button>
 
             {/* Mobile Menu Button */}
-            <button 
-              onClick={toggleMobileMenu}
-              className="md:hidden text-[#141722] focus:outline-none p-1 sm:p-2"
+              <button 
+                onClick={toggleMobileMenu}
+                className="md:hidden text-[#141722] focus:outline-none p-1 sm:p-2 cursor-pointer"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -106,7 +106,7 @@ const NavBar: React.FC = () => {
               {/* Close Button */}
               <button 
                 onClick={closeMobileMenu}
-                className="text-[#141722] focus:outline-none p-2 hover:bg-[#ffb546] hover:text-[#141722] rounded-full transition-all duration-200"
+                className="text-[#141722] focus:outline-none p-2 hover:bg-[#ffb546] hover:text-[#141722] rounded-full transition-all duration-200 cursor-pointer"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -148,7 +148,7 @@ const NavBar: React.FC = () => {
 
             {/* Connect Wallet Button - Positioned at bottom */}
             <div className="mt-auto mb-8">
-              <button className="w-full inline-flex px-8 py-4 justify-center items-center gap-[10px] rounded-[42px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-lg uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300">
+              <button className="w-full inline-flex px-8 py-4 justify-center items-center gap-[10px] rounded-[42px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-lg uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300 cursor-pointer">
                 Connect wallet
               </button>
             </div>

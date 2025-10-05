@@ -50,7 +50,7 @@ const Validate: React.FC = () => {
             .responsive-bg {
               background-image: url(${WhyBuyImageMobile.src}) !important;
               background-position: center bottom !important;
-              background-size: 100% 80% !important;
+              background-size: cover !important;
             }
           }
         `}</style>
@@ -106,8 +106,8 @@ const Validate: React.FC = () => {
               </div>
 
               {/* Read More Button */}
-              <button className="inline-flex px-7 py-[18px] justify-center items-center gap-[10px] rounded-[42px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-[14.4px] uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300 w-fit whitespace-nowrap">
-                Read More
+              <button className="inline-flex px-7 py-[18px] justify-center items-center gap-[10px] rounded-[42px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-[14.4px] uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300 w-fit whitespace-nowrap cursor-pointer">
+               Learn More
               </button>
             </div>
           </div>
@@ -121,10 +121,10 @@ const Validate: React.FC = () => {
             </h2>
 
             {/* Benefits List - Single Column on Mobile */}
-            <div className="flex flex-col gap-3 items-start max-sm:items-stretch">
+            <div className="flex flex-col gap-3 items-start">
               {benefits.map((benefit, index) => (
-                <div key={index} className="flex items-center gap-3 bg-white/70 backdrop-blur-sm rounded-full px-4 py-2 w-fit sm:items-center max-sm:bg-transparent max-sm:backdrop-blur-none max-sm:px-0 max-sm:py-0 max-sm:items-start max-sm:w-auto">
-                  <div className="relative w-5 h-5 flex-shrink-0 max-sm:mt-0.5">
+                <div key={index} className="flex items-center gap-3 bg-white/70 backdrop-blur-sm rounded-full px-4 py-2 w-fit">
+                  <div className="relative w-5 h-5 flex-shrink-0">
                     <Image
                       src={CheckmarkIcon}
                       alt="Checkmark"

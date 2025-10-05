@@ -42,10 +42,10 @@ const Hero: React.FC = () => {
           {/* Action Buttons */}
           <div className="flex flex-row sm:flex-row gap-[14px] mt-4 sm:mt-8 w-full justify-start md:justify-center lg:justify-start">
          
-            <button className="inline-flex px-8 sm:px-12 lg:px-[61px] py-3 sm:py-4 lg:py-[18px] justify-center items-center gap-[10px] rounded-[59px] bg-[#141722] text-[#efe9e0] font-inter font-medium text-xs sm:text-sm lg:text-[14.4px] uppercase tracking-wider  hover:shadow-lg transition-all duration-300 whitespace-nowrap flex-1 sm:flex-none">
+            <button className="inline-flex px-8 sm:px-12 lg:px-[61px] py-3 sm:py-4 lg:py-[18px] justify-center items-center gap-[10px] rounded-[59px] bg-[#141722] text-[#efe9e0] font-inter font-medium text-xs sm:text-sm lg:text-[14.4px] uppercase tracking-wider hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black hover:shadow-lg transition-all duration-300 whitespace-nowrap flex-1 sm:flex-none cursor-pointer">
               Learn more
             </button>
-            <button className="inline-flex px-8 sm:px-12 lg:px-[61px] py-3 sm:py-4 lg:py-[18px] justify-center items-center gap-[10px] rounded-[59px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-xs sm:text-sm lg:text-[14.4px] uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300 whitespace-nowrap flex-1 sm:flex-none">
+            <button className="inline-flex px-8 sm:px-12 lg:px-[61px] py-3 sm:py-4 lg:py-[18px] justify-center items-center gap-[10px] rounded-[59px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-xs sm:text-sm lg:text-[14.4px] uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300 whitespace-nowrap flex-1 sm:flex-none cursor-pointer">
               Buy Now
             </button>
           </div>
