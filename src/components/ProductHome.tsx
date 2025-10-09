@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { gsap } from 'gsap';
 
 // Import product images
@@ -85,7 +86,8 @@ const ProductHome: React.FC = () => {
       price: "$44272.12 USD",
       solAmount: "186.8862",
       image: ProductImage1,
-      imageAlt: "1 gram fine gold grain"
+      imageAlt: "1 gram fine gold grain",
+      metal: "Gold"
     },
     {
       id: 2,
@@ -94,7 +96,8 @@ const ProductHome: React.FC = () => {
       price: "$44272.12 USD",
       solAmount: "186.8862",
       image: ProductImage2,
-      imageAlt: "1 ounce gold bar"
+      imageAlt: "1 ounce gold bar",
+      metal: "Gold"
     },
     {
       id: 3,
@@ -103,7 +106,8 @@ const ProductHome: React.FC = () => {
       price: "$44272.12 USD",
       solAmount: "186.8862",
       image: ProductImage3,
-      imageAlt: "10 ounce gold bar"
+      imageAlt: "10 ounce gold bar",
+      metal: "Gold"
     },
     {
       id: 4,
@@ -112,7 +116,8 @@ const ProductHome: React.FC = () => {
       price: "$44272.12 USD",
       solAmount: "186.8862",
       image: ProductImage4,
-      imageAlt: "1 ounce silver unity bar"
+      imageAlt: "1 ounce silver unity bar",
+      metal: "Silver"
     }
   ];
 
@@ -132,7 +137,7 @@ const ProductHome: React.FC = () => {
       {/* Products Grid */}
       <div ref={productsRef} style={{ opacity: 0, transform: 'translateY(60px)' }} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 xl:gap-8 max-w-7xl mx-auto relative">
         {products.map((product) => (
-          <div key={product.id} className="bg-white rounded-[24px] sm:rounded-[36px] p-4 sm:p-6 flex flex-col">
+          <Link key={product.id} href={`/marketplace/${product.id}`} className="bg-white rounded-[24px] sm:rounded-[36px] p-4 sm:p-6 flex flex-col hover:shadow-lg transition-shadow duration-300">
             {/* Product Image */}
             <div className="bg-white h-[160px] sm:h-[180px] lg:h-[219px] w-full rounded-lg overflow-hidden mb-4 sm:mb-6 flex items-center justify-center">
               <div className="relative w-full h-full">
@@ -185,7 +190,7 @@ const ProductHome: React.FC = () => {
                 Add to cart
               </button> */}
             </div>
-          </div>
+          </Link>
         ))}
 
         {/* Floating View More Button - Hidden on mobile */}

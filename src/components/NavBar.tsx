@@ -2,11 +2,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { gsap } from 'gsap';
 
 const NavBar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
+  const pathname = usePathname();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -43,7 +46,7 @@ const NavBar: React.FC = () => {
       <nav ref={navRef} style={{ opacity: 0, transform: 'translateY(-30px)' }} className="absolute top-8 left-8 sm:left-16 lg:left-[120px] 2xl:left-[200px] right-8 sm:right-16 lg:right-[120px] 2xl:right-[200px] z-10">
         <div className="flex items-center justify-between w-full gap-2 sm:gap-4 md:gap-6 lg:gap-8 2xl:gap-12">
           {/* Left Column - Logo */}
-          <div className="flex-shrink-0">
+          <Link href="/" className="flex-shrink-0">
             {/* Desktop Logo */}
             <div className="hidden md:block">
               <Image
@@ -65,16 +68,26 @@ const NavBar: React.FC = () => {
                 className="h-6 sm:h-7 md:h-8 2xl:h-8 w-auto"
               />
             </div>
-          </div>
+          </Link>
 
           {/* Center Column - Navigation Links (Desktop) */}
           <div className="hidden md:flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4 2xl:gap-6">
-            <a href="#home" className="font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14.136px] text-[#141722] uppercase tracking-wider hover:text-[#ffb546] transition-colors whitespace-nowrap">
+            <Link 
+              href="/" 
+              className={`font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14.136px] uppercase tracking-wider transition-colors whitespace-nowrap ${
+                pathname === '/' ? 'text-[#ffb546]' : 'text-[#141722] hover:text-[#ffb546]'
+              }`}
+            >
               Home
-            </a>
-            <a href="#products" className="font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14.136px] text-[#141722] uppercase tracking-wider hover:text-[#ffb546] transition-colors whitespace-nowrap">
+            </Link>
+            <Link 
+              href="/marketplace" 
+              className={`font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14.136px] uppercase tracking-wider transition-colors whitespace-nowrap ${
+                pathname === '/marketplace' ? 'text-[#ffb546]' : 'text-[#141722] hover:text-[#ffb546]'
+              }`}
+            >
               Products
-            </a>
+            </Link>
             <a href="#docs" className="font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14.136px] text-[#141722] uppercase tracking-wider hover:text-[#ffb546] transition-colors whitespace-nowrap">
               Docs
             </a>
@@ -117,7 +130,7 @@ const NavBar: React.FC = () => {
             {/* Header with Mobile Logo and Close Button */}
             <div className="flex items-center justify-between mb-8">
               {/* Mobile Logo - Same position as main screen */}
-              <div className="flex-shrink-0">
+              <Link href="/" onClick={closeMobileMenu} className="flex-shrink-0">
                 <Image
                   src="/images/mobile-hero-logo.svg"
                   alt="Summit Bullion"
@@ -125,7 +138,7 @@ const NavBar: React.FC = () => {
                   height={40}
                   className="h-6 sm:h-7 md:h-8 2xl:h-8 w-auto"
                 />
-              </div>
+              </Link>
               
               {/* Close Button */}
               <button 
@@ -140,20 +153,24 @@ const NavBar: React.FC = () => {
 
             {/* Navigation Links */}
             <div className="flex flex-col space-y-6 mt-8">
-              <a 
-                href="#home" 
+              <Link 
+                href="/" 
                 onClick={closeMobileMenu}
-                className="font-inter text-2xl text-[#141722] uppercase tracking-wider font-medium hover:text-[#ffb546] transition-colors text-left py-2"
+                className={`font-inter text-2xl uppercase tracking-wider font-medium transition-colors text-left py-2 ${
+                  pathname === '/' ? 'text-[#ffb546]' : 'text-[#141722] hover:text-[#ffb546]'
+                }`}
               >
                 Home
-              </a>
-              <a 
-                href="#products" 
+              </Link>
+              <Link 
+                href="/marketplace" 
                 onClick={closeMobileMenu}
-                className="font-inter text-2xl text-[#141722] uppercase tracking-wider font-medium hover:text-[#ffb546] transition-colors text-left py-2"
+                className={`font-inter text-2xl uppercase tracking-wider font-medium transition-colors text-left py-2 ${
+                  pathname === '/marketplace' ? 'text-[#ffb546]' : 'text-[#141722] hover:text-[#ffb546]'
+                }`}
               >
                 Products
-              </a>
+              </Link>
               <a 
                 href="#docs" 
                 onClick={closeMobileMenu}
