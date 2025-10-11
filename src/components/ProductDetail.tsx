@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { gsap } from 'gsap';
+import { useCart } from '@/context/CartContext';
 
 // Import product images
 import ProductImage1 from '/public/images/product-image1.png';
@@ -27,6 +28,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
   const [selectedPricingTier, setSelectedPricingTier] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
   const relatedProductsRef = useRef<HTMLDivElement>(null);
+  const { addToCart } = useCart();
 
   // Product database (in a real app, this would be fetched from an API)
   const productDatabase = {
@@ -195,6 +197,17 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
     }
   };
 
+  const handleAddToCart = () => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0],
+      brand: product.brand,
+      quantity: quantity
+    });
+  };
+
   return (
     <div className="w-full">
       {/* Main Product Section */}
@@ -218,9 +231,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
 
         {/* Product Content Grid */}
         <div className="max-w-[1100px] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 mb-12 sm:mb-16">
           {/* Left: Image Gallery */}
-          <div className="flex flex-col-reverse lg:flex-row gap-6 lg:items-end">
+          <div className="flex flex-col-reverse lg:flex-row gap-4 sm:gap-6 lg:items-end">
             {/* Thumbnails */}
             <div className="flex lg:flex-col gap-3 justify-start lg:justify-end">
               {product.images.map((image, index) => (
@@ -242,7 +255,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
             </div>
 
             {/* Main Image */}
-            <div className="relative w-full lg:w-[342px] h-[400px] lg:h-[597px] rounded-[36px] lg:rounded-[72px] overflow-hidden">
+            <div className="relative w-full lg:w-[342px] h-[300px] sm:h-[400px] lg:h-[597px] rounded-[24px] sm:rounded-[36px] lg:rounded-[72px] overflow-hidden">
               <Image
                 src={product.images[selectedImage]}
                 alt={product.name}
@@ -253,7 +266,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
           </div>
 
           {/* Right: Product Info Card */}
-          <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-[36px] p-6 h-fit">
+          <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-[24px] sm:rounded-[36px] p-4 sm:p-6 h-fit">
             <div className="flex flex-col gap-[18px]">
               {/* Brand */}
               <div className="font-inter font-medium text-[12px] text-[#7c7c7c] uppercase tracking-wider">
@@ -261,18 +274,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
               </div>
 
               {/* Product Name */}
-              <h1 className="font-inter font-bold text-[32px] lg:text-[40px] text-black leading-none">
+              <h1 className="font-inter font-bold text-[24px] sm:text-[32px] lg:text-[40px] text-black leading-tight sm:leading-none">
                 {product.name}
               </h1>
 
               {/* Price */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-start gap-3">
-                  <span className="font-inter font-bold text-[32px] text-black">${product.price}</span>
-                  <span className="font-inter font-bold text-[32px] text-[#7c7c7c] line-through">${product.originalPrice}</span>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <span className="font-inter font-bold text-[24px] sm:text-[32px] text-black">${product.price}</span>
+                  <span className="font-inter font-bold text-[24px] sm:text-[32px] text-[#7c7c7c] line-through">${product.originalPrice}</span>
                 </div>
-                <div className="bg-[rgba(51,146,255,0.1)] px-[14px] py-[6px] rounded-full">
-                  <span className="font-inter font-medium text-[16px] text-[#3392ff]">-{product.discount}%</span>
+                <div className="bg-[rgba(51,146,255,0.1)] px-[12px] sm:px-[14px] py-[4px] sm:py-[6px] rounded-full">
+                  <span className="font-inter font-medium text-[14px] sm:text-[16px] text-[#3392ff]">-{product.discount}%</span>
                 </div>
               </div>
 
@@ -280,10 +293,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
               <div className="border-t border-[rgba(0,0,0,0.1)]"></div>
 
               {/* Volume Discount Header */}
-              <div className="flex items-center justify-between">
-                <span className="font-inter font-medium text-[16px] text-black">Volume Discount Pricing</span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                <span className="font-inter font-medium text-[14px] sm:text-[16px] text-black whitespace-nowrap">Volume Discount Pricing</span>
                 <div className="flex items-center gap-2">
-                  <div className="relative w-[18px] h-[18px]">
+                  <div className="relative w-[18px] h-[18px] flex-shrink-0">
                     <Image
                       src={FlameLogo}
                       alt="Hot"
@@ -291,18 +304,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                       className="object-contain"
                     />
                   </div>
-                  <span className="font-inter font-normal text-[16px] text-[#ff3333]">{product.recentSales} sold in the last week</span>
+                  <span className="font-inter font-normal text-[13px] sm:text-[16px] text-[#ff3333]">{product.recentSales} sold in the last week</span>
                 </div>
               </div>
 
               {/* Pricing Table */}
-              <div className="space-y-2">
+              <div className="space-y-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
                 {/* Header Row */}
-                <div className="grid grid-cols-4 gap-4 font-inter font-medium text-[14px] text-black text-center mb-2">
+                <div className="grid grid-cols-4 gap-2 sm:gap-4 font-inter font-medium text-[11px] sm:text-[14px] text-black text-center mb-2 min-w-[300px] sm:min-w-0">
                   <div>Quantity</div>
-                  <div>Check Wire</div>
+                  <div className="whitespace-nowrap">Check Wire</div>
                   <div>Crypto</div>
-                  <div>CC/Paypal</div>
+                  <div className="whitespace-nowrap">CC/Paypal</div>
                 </div>
 
                 {/* Pricing Rows */}
@@ -310,7 +323,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                   <button
                     key={index}
                     onClick={() => handlePricingTierClick(index)}
-                    className={`w-full grid grid-cols-4 gap-4 font-inter font-normal text-[14px] text-black text-center py-3 rounded-full transition-colors cursor-pointer ${
+                    className={`w-full grid grid-cols-4 gap-2 sm:gap-4 font-inter font-normal text-[11px] sm:text-[14px] text-black text-center py-2 sm:py-3 rounded-full transition-colors cursor-pointer min-w-[300px] sm:min-w-0 ${
                       selectedPricingTier === index ? 'bg-[#f7f7f7]' : 'hover:bg-[#fafafa]'
                     }`}
                   >
@@ -326,38 +339,43 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
               <div className="border-t border-[rgba(0,0,0,0.1)]"></div>
 
               {/* Actions */}
-              <div className="flex items-center gap-3">
-                {/* Wishlist Button */}
-                <button className="flex items-center justify-center w-[52px] h-[52px] rounded-full border border-[#dfdfdf] hover:bg-[#f7f7f7] hover:border-[#dfdfdf] transition-colors cursor-pointer">
-                  <div className="relative w-[26px] h-[26px]">
-                    <Image
-                      src={LikeLogo}
-                      alt="Like"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                </button>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="flex items-center gap-3">
+                  {/* Wishlist Button */}
+                  <button className="flex items-center justify-center w-[52px] h-[52px] rounded-full border border-[#dfdfdf] hover:bg-[#f7f7f7] hover:border-[#dfdfdf] transition-colors cursor-pointer flex-shrink-0">
+                    <div className="relative w-[26px] h-[26px]">
+                      <Image
+                        src={LikeLogo}
+                        alt="Like"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  </button>
 
-                {/* Quantity Selector */}
-                <div className="flex items-center justify-between w-[150px] h-[52px] border border-[#dfdfdf] rounded-full px-3">
-                  <button
-                    onClick={() => handleQuantityChange(-1)}
-                    className="flex items-center justify-center w-[36px] h-[36px] rounded-full text-black text-xl font-medium hover:bg-[#f7f7f7] hover:text-[#ffb546] transition-colors cursor-pointer"
-                  >
-                    −
-                  </button>
-                  <span className="font-satoshi text-[16px] text-black">{quantity}</span>
-                  <button
-                    onClick={() => handleQuantityChange(1)}
-                    className="flex items-center justify-center w-[36px] h-[36px] rounded-full text-black text-xl font-medium hover:bg-[#f7f7f7] hover:text-[#ffb546] transition-colors cursor-pointer"
-                  >
-                    +
-                  </button>
+                  {/* Quantity Selector */}
+                  <div className="flex items-center justify-between w-[150px] h-[52px] border border-[#dfdfdf] rounded-full px-3 flex-shrink-0">
+                    <button
+                      onClick={() => handleQuantityChange(-1)}
+                      className="flex items-center justify-center w-[36px] h-[36px] rounded-full text-black text-xl font-medium hover:bg-[#f7f7f7] hover:text-[#ffb546] transition-colors cursor-pointer"
+                    >
+                      −
+                    </button>
+                    <span className="font-satoshi text-[16px] text-black">{quantity}</span>
+                    <button
+                      onClick={() => handleQuantityChange(1)}
+                      className="flex items-center justify-center w-[36px] h-[36px] rounded-full text-black text-xl font-medium hover:bg-[#f7f7f7] hover:text-[#ffb546] transition-colors cursor-pointer"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
 
                 {/* Add to Cart Button */}
-                <button className="flex-1 bg-[#141722] text-[#efe9e0] font-inter font-medium text-[14px] uppercase h-[52px] rounded-full hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer">
+                <button 
+                  onClick={handleAddToCart}
+                  className="w-full sm:flex-1 bg-[#141722] text-[#efe9e0] font-inter font-medium text-[14px] uppercase h-[52px] rounded-full hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer"
+                >
                   Add to cart
                 </button>
               </div>
@@ -367,9 +385,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
         </div>
 
         {/* Product Details Tabs */}
-        <div className="flex flex-col gap-12 max-w-[998px] mx-auto mb-16">
+        <div className="flex flex-col gap-8 sm:gap-12 max-w-[998px] mx-auto mb-12 sm:mb-16">
           {/* Section Title */}
-          <h2 className="font-inter font-bold text-[32px] lg:text-[42px] text-center leading-none">
+          <h2 className="font-inter font-bold text-[24px] sm:text-[32px] lg:text-[42px] text-center leading-none">
             <span className="text-[#ffc633]">Product</span>
             <span className="text-black"> Details</span>
           </h2>
@@ -379,26 +397,28 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
             {/* Tab Border Line */}
             <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-[rgba(0,0,0,0.1)]"></div>
 
-            {/* Tab Buttons */}
-            <div className="flex items-center justify-between relative">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-5 py-3 font-inter font-medium text-[14px] lg:text-[16px] uppercase transition-all relative cursor-pointer ${
-                    activeTab === tab
-                      ? 'bg-[#ffb546] text-black rounded-t-[9px] border-b-[3px] border-black'
-                      : 'text-[#141722] hover:text-[#ffb546] border-b-[3px] border-transparent'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
+            {/* Tab Buttons - Scrollable on Mobile */}
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex items-center gap-1 sm:gap-2 lg:justify-between relative min-w-max sm:min-w-0">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-2 sm:px-3 lg:px-5 py-2 sm:py-3 font-inter font-medium text-[10px] sm:text-[12px] lg:text-[16px] uppercase transition-all relative cursor-pointer whitespace-nowrap ${
+                      activeTab === tab
+                        ? 'bg-[#ffb546] text-black rounded-t-[9px] border-b-[3px] border-black'
+                        : 'text-[#141722] hover:text-[#ffb546] border-b-[3px] border-transparent'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Tab Content */}
-          <div className="font-inter font-normal text-[16px] text-black leading-[25px] whitespace-pre-line min-h-[150px]">
+          <div className="font-inter font-normal text-[14px] sm:text-[16px] text-black leading-[25px] whitespace-pre-line min-h-[120px] sm:min-h-[150px]">
             {tabContent[activeTab as keyof typeof tabContent]}
           </div>
         </div>
