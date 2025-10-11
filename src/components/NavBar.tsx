@@ -12,7 +12,8 @@ const NavBar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
-  const cartButtonRef = useRef<HTMLButtonElement>(null);
+  const desktopCartButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileCartButtonRef = useRef<HTMLButtonElement>(null);
   const cartDropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { cart, getCartCount, getCartTotal, removeFromCart, updateQuantity } = useCart();
@@ -29,10 +30,11 @@ const NavBar: React.FC = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
-      const clickedInsideButton = cartButtonRef.current?.contains(target);
+      const clickedInsideDesktopButton = desktopCartButtonRef.current?.contains(target);
+      const clickedInsideMobileButton = mobileCartButtonRef.current?.contains(target);
       const clickedInsideDropdown = cartDropdownRef.current?.contains(target);
       
-      if (!clickedInsideButton && !clickedInsideDropdown) {
+      if (!clickedInsideDesktopButton && !clickedInsideMobileButton && !clickedInsideDropdown) {
         setIsCartOpen(false);
       }
     };
@@ -133,7 +135,7 @@ const NavBar: React.FC = () => {
             {/* Shopping Cart Button (Desktop) */}
             <div className="hidden md:block relative">
               <button
-                ref={cartButtonRef}
+                ref={desktopCartButtonRef}
                 onClick={() => setIsCartOpen(!isCartOpen)}
                 className="bg-[#141722] text-[#efe9e0] p-2 md:p-2.5 lg:p-3 2xl:p-[14px] rounded-full hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer relative"
               >
@@ -263,7 +265,7 @@ const NavBar: React.FC = () => {
             {/* Shopping Cart Button (Mobile) */}
             <div className="md:hidden relative">
               <button
-                ref={cartButtonRef}
+                ref={mobileCartButtonRef}
                 onClick={() => setIsCartOpen(!isCartOpen)}
                 className="bg-[#141722] text-[#efe9e0] p-2 rounded-full hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer relative"
               >
