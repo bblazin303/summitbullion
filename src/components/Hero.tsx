@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { gsap } from 'gsap';
 import NavBar from './NavBar';
 
@@ -75,24 +76,24 @@ const Hero: React.FC = () => {
         <div className="flex flex-col justify-center w-full lg:w-[50%] lg:max-w-[600px] 2xl:max-w-[664px] mb-12 lg:mb-0 items-start md:items-center lg:items-start text-left md:text-center lg:text-left">
           {/* Main Heading */}
           <h1 ref={headingRef} style={{ opacity: 0, transform: 'translateY(30px)' }} className="font-inter font-semibold text-[36px] sm:text-[clamp(2rem,5vw,4.5rem)] leading-[1.1] text-[#141722] tracking-[-0.5px] sm:tracking-[-1px] lg:tracking-[-2.16px]">
-            <span className="text-[#ffb546]">Precious</span>
-            <span> metals for the next generation.</span>
+            <span className="block text-[#ffb546]">Real Metals.</span>
+            <span className="block">Zero guesswork.</span>
           </h1>
 
           {/* Description */}
-          <p ref={descriptionRef} style={{ opacity: 0, transform: 'translateY(30px)' }} className="font-inter font-medium text-[18px] text-[#7c7c7c] leading-[28px] tracking-[0.3456px] mt-4 sm:mt-8 w-full sm:w-[70%] md:w-full lg:w-[70%]">
-            Clear prices and fast fulfillment, with flexible payment options for every investor.
+          <p ref={descriptionRef} style={{ opacity: 0, transform: 'translateY(30px)' }} className="font-inter font-medium text-[18px] text-[#7c7c7c] leading-[28px] tracking-[0.3456px] mt-4 sm:mt-8 w-full sm:w-[80%] md:w-full lg:w-[85%]">
+          Clear prices and fast fulfillment, with flexible payment options for every investor. Browse today’s selection and check out in minutes.
           </p>
 
           {/* Action Buttons */}
           <div ref={buttonsRef} style={{ opacity: 0, transform: 'translateY(30px)' }} className="flex flex-row sm:flex-row gap-[14px] mt-4 sm:mt-8 w-full justify-start md:justify-center lg:justify-start">
          
-            <button className="inline-flex px-8 sm:px-12 lg:px-[61px] py-3 sm:py-4 lg:py-[18px] justify-center items-center gap-[10px] rounded-[59px] bg-[#141722] text-[#efe9e0] font-inter font-medium text-xs sm:text-sm lg:text-[14.4px] uppercase tracking-wider hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black hover:shadow-lg transition-all duration-300 whitespace-nowrap flex-1 sm:flex-none cursor-pointer">
-              Learn more
-            </button>
-            <button className="inline-flex px-8 sm:px-12 lg:px-[61px] py-3 sm:py-4 lg:py-[18px] justify-center items-center gap-[10px] rounded-[59px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-xs sm:text-sm lg:text-[14.4px] uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300 whitespace-nowrap flex-1 sm:flex-none cursor-pointer">
-              Buy Now
-            </button>
+            <Link href="/marketplace" className="inline-flex px-8 sm:px-12 lg:px-[61px] py-3 sm:py-4 lg:py-[18px] justify-center items-center gap-[10px] rounded-[59px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-xs sm:text-sm lg:text-[14.4px] uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300 whitespace-nowrap flex-1 sm:flex-none cursor-pointer">
+              Shop Inventory
+            </Link>
+            <Link href="/docs" className="inline-flex px-8 sm:px-12 lg:px-[61px] py-3 sm:py-4 lg:py-[18px] justify-center items-center gap-[10px] rounded-[59px] bg-[#141722] text-[#efe9e0] font-inter font-medium text-xs sm:text-sm lg:text-[14.4px] uppercase tracking-wider hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black hover:shadow-lg transition-all duration-300 whitespace-nowrap flex-1 sm:flex-none cursor-pointer">
+              Learn More
+            </Link>
           </div>
 
           {/* Crypto Logos */}

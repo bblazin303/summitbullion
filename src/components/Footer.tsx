@@ -129,19 +129,45 @@ export default function Footer() {
             </ul>
           </div>
 
+          {/* Shop Today */}
+          <div className="flex flex-col gap-[16px] mb-[32px]">
+            <h3 className="text-white text-[16.645px] font-medium leading-[24.968px]">
+              Shop Today
+            </h3>
+            <ul className="flex flex-col gap-[16px]">
+              <li>
+                <Link href="#" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                  Shop Gold
+                </Link>
+              </li>
+              <li>
+                <Link href="#" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                  Shop Silver
+                </Link>
+              </li>
+              <li>
+                <Link href="#" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                  Shop Palladium
+                </Link>
+              </li>
+              <li>
+                <Link href="#" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                  Shop Platinum
+                </Link>
+              </li>
+            </ul>
+          </div>
+
           {/* Contact Us */}
           <div className="flex flex-col gap-[15px] mb-[32px]">
             <h3 className="text-white text-[17.205px] font-medium leading-[25.808px]">
               Contact us
             </h3>
             <div className="flex flex-col gap-[16px] text-[#b7b7b7] text-[16px] font-light leading-[21.506px]">
-              <p>Jacksonville, Florida, USA</p>
-              <p>Phone: 1-904-305-7903</p>
-              <p>Email: official.sleeper.bot@gmail.com</p>
-              <div>
-                <p>Working Hours:</p>
-                <p>Mon - Fri: 9AM - 5PM</p>
-              </div>
+              <p>1200 Riverplace Blvd</p>
+              <p>Suite 105 1308</p>
+              <p>1-904-305-7903</p>
+              <p>Contact@SummitBullion.Io</p>
             </div>
           </div>
 
@@ -159,9 +185,9 @@ export default function Footer() {
         {/* Desktop Layout - Original */}
         <div className="hidden lg:block px-4 sm:px-8 md:px-16 lg:px-[120px] 2xl:px-[200px] pt-12 sm:pt-16 lg:pt-24 xl:pt-32 2xl:pt-[201px] pb-8 sm:pb-12">
           {/* Main Footer Content */}
-          <div className="flex flex-col lg:flex-row justify-between gap-8 sm:gap-10 lg:gap-12 xl:gap-16 mb-12 sm:mb-16 lg:mb-20 xl:mb-24 2xl:mb-[160px] max-w-full">
+          <div className="flex flex-col lg:flex-row lg:flex-wrap xl:flex-nowrap justify-between gap-8 sm:gap-10 lg:gap-8 xl:gap-12 2xl:gap-16 mb-12 sm:mb-16 lg:mb-20 xl:mb-24 2xl:mb-[160px] max-w-full">
             {/* Left Side - Logo, Description, and Social Icons */}
-            <div className="flex flex-col gap-6 sm:gap-8 lg:max-w-[466px] shrink-0 flex-1">
+            <div className="flex flex-col gap-6 sm:gap-8 lg:max-w-[400px] xl:max-w-[466px] shrink-0 flex-1 lg:basis-full xl:basis-auto">
               {/* Logo and Description */}
               <div className="flex flex-col gap-4 sm:gap-6">
                 <div className="w-full max-w-[280px] sm:max-w-[350px] lg:max-w-[462px]">
@@ -225,10 +251,10 @@ export default function Footer() {
               </div>
             </div>
 
-            {/* Right Side - Quick Links and Contact Us */}
-            <div className="flex flex-row gap-8 sm:gap-12 lg:gap-12 xl:gap-16 2xl:gap-20 shrink-0">
+            {/* Right Side - Quick Links, Shop Today, and Contact Us */}
+            <div className="flex flex-row flex-wrap xl:flex-nowrap gap-6 sm:gap-8 lg:gap-6 xl:gap-10 2xl:gap-12 lg:basis-full xl:basis-auto">
               {/* Quick Links */}
-              <div className="flex flex-col gap-3 sm:gap-4 lg:w-[156px] shrink-0">
+              <div className="flex flex-col gap-3 sm:gap-4 lg:min-w-[140px] xl:w-[156px] shrink-0">
                 <h3 className="text-white text-[14px] sm:text-[15px] lg:text-[17px] font-medium leading-[20px] sm:leading-[22px] lg:leading-[25px]">
                   Quick Links
                 </h3>
@@ -253,28 +279,58 @@ export default function Footer() {
                       Shipping Information
                     </Link>
                   </li>
+                  
+                </ul>
+              </div>
+
+              {/* Shop Today */}
+              <div className="flex flex-col gap-3 sm:gap-4 lg:min-w-[140px] xl:w-[156px] shrink-0">
+                <h3 className="text-white text-[14px] sm:text-[15px] lg:text-[17px] font-medium leading-[20px] sm:leading-[22px] lg:leading-[25px]">
+                  Shop Today
+                </h3>
+                <ul className="flex flex-col gap-2.5 sm:gap-3 lg:gap-4">
                   <li>
                     <Link href="#" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
-                      Discount Information
+                      Shop Gold
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="#" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
+                      Shop Silver
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="#" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
+                      Shop Palladium
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="#" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
+                      Shop Platinum
                     </Link>
                   </li>
                 </ul>
               </div>
 
               {/* Contact Us */}
-              <div className="flex flex-col gap-3 sm:gap-4 lg:w-[277px] shrink-0">
-                <h3 className="text-white text-[14px] sm:text-[15px] lg:text-[17px] font-medium leading-[20px] sm:leading-[22px] lg:leading-[26px]">
+              <div className="flex flex-col gap-3 sm:gap-4 lg:min-w-[200px] xl:w-[277px] shrink-0">
+                <h3 className="text-white text-[14px] sm:text-[15px] lg:text-[17px] font-medium leading-[20px] sm:leading-[22px] lg:leading-[25px]">
                   Contact us
                 </h3>
-                <div className="flex flex-col gap-2.5 sm:gap-3 lg:gap-4 text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px]">
-                  <p>Jacksonville, Florida, USA</p>
-                  <p>Phone: 1-904-305-7903</p>
-                  <p>Email: official.sleeper.bot@gmail.com</p>
-                  <div>
-                    <p>Working Hours:</p>
-                    <p>Mon - Fri: 9AM - 5PM</p>
-                  </div>
-                </div>
+                <ul className="flex flex-col gap-2.5 sm:gap-3 lg:gap-4">
+                  <li>
+                    <span className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px]">1200 Riverplace Blvd</span>
+                  </li>
+                  <li>
+                    <span className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px]">Suite 105 1308</span>
+                  </li>
+                  <li>
+                    <span className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px]">1-904-305-7903</span>
+                  </li>
+                  <li>
+                    <span className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px]">Contact@SummitBullion.Io</span>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -285,10 +341,10 @@ export default function Footer() {
           {/* Copyright */}
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4 text-[#b7b7b7] text-[9px] sm:text-[10px] font-light">
             <p className="text-center sm:text-left">
-              ALL RIGHTS RESERVED © 2025 Summit Bullion Precious Metals
+              ALL RIGHTS RESERVED © 2025 Summit Bullion Inc
             </p>
             <p className="text-center sm:text-right">
-              2025@TORBOR
+              2025
             </p>
           </div>
         </div>

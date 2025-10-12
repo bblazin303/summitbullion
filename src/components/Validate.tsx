@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { gsap } from 'gsap';
 
 // Import why-buy images
@@ -173,9 +174,9 @@ const Validate: React.FC = () => {
               </div>
 
               {/* Read More Button */}
-              <button className="inline-flex px-7 py-[18px] justify-center items-center gap-[10px] rounded-[42px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-[14.4px] uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300 w-fit whitespace-nowrap cursor-pointer">
+              <Link href="/docs" className="inline-flex px-7 py-[18px] justify-center items-center gap-[10px] rounded-[42px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-[14.4px] uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300 w-fit whitespace-nowrap cursor-pointer">
                Learn More
-              </button>
+              </Link>
             </div>
           </div>
 

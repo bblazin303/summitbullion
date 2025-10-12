@@ -81,29 +81,29 @@ const BenefitsNewsletter: React.FC = () => {
     {
       image: Benefits1,
       title: "Physical Assets. Fast Shipping.",
-      description: "From fractional gold to full ounces - find the perfect precious metals for your portfolio",
+      description: "From fractional gold to full ounces - find the perfect precious metals for your portfolio.",
       buttonText: "BROWSE PRODUCTS",
       darkMode: false
     },
     {
       image: Benefits2,
       title: "Free Shipping on Eligible Orders",
-      description: "Hold Zzzz tokens and save 10% on every precious metals purchase",
-      buttonText: "BUY $SBGOLD",
+      description: "Insured delivery at no extra cost when you meet the threshold.",
+      buttonText: "VIEW DETAILS",
       darkMode: false
     },
     {
       image: Benefits3,
-      title: "Wealth Simplified with Precious Metals.",
-      description: "The future of precious metals investing meet modern technology",
-      buttonText: "BROWSE PRODUCTS",
+      title: "Flexible Payment Options.",
+      description: "Wire, ACH, card, and crypto. Payment options for traditional and modern investors.",
+      buttonText: "VIEW OPTIONS",
       darkMode: false
     },
     {
       image: Benefits4,
-      title: "Enhance Your Purchasing Power",
-      description: "$OLD token holders enjoy exclusive benefits",
-      buttonText: "Read More",
+      title: "Join our active community",
+      description: "Buy Zzzz Our Legacy Token And Become Part Of The Family.",
+      buttonText: "BUY ZZZZ",
       darkMode: true
     }
   ];
@@ -202,7 +202,7 @@ const BenefitsNewsletter: React.FC = () => {
               src={NewsletterImage}
               alt="Newsletter"
               fill
-              className="object-cover object-center"
+              className="object-cover object-left"
             />
           </div>
         </div>
@@ -212,10 +212,10 @@ const BenefitsNewsletter: React.FC = () => {
           {/* Text Content */}
           <div className="flex flex-col gap-3 text-center md:text-left flex-1 min-w-0">
             <h2 className="font-inter font-semibold text-[clamp(24px,5vw,40px)] leading-[1.2] text-white tracking-[-1.2px]">
-              Gain Financial Freedom
+            Financial Freedom Starts with Clear Insight
             </h2>
             <p className="font-inter font-normal text-[clamp(14px,3vw,20px)] text-[#b7b7b7] tracking-[-0.6px]">
-              Stay up to date with the latest at Newsletter
+            Get our weekly Metals Brief news, policy moves, and practical tips on buying physical gold & silver (no hype, just what matters).
             </p>
           </div>
 
@@ -223,11 +223,11 @@ const BenefitsNewsletter: React.FC = () => {
           <div className="flex flex-col gap-3 w-full md:w-auto md:min-w-[300px] md:max-w-[374px]">
             <input
               type="email"
-              placeholder="Enter your email address"
+              placeholder="Enter your email"
               className="bg-white rounded-[62px] px-6 py-4 font-inter font-normal text-[clamp(14px,2vw,16px)] text-[#7c7c7c] placeholder:text-[#7c7c7c] h-[52px] text-center md:text-left focus:outline-none focus:ring-2 focus:ring-[#FFB546] w-full"
             />
             <button className="bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] rounded-[62px] px-4 py-3 font-inter font-medium text-[clamp(12px,2vw,14px)] uppercase text-black hover:shadow-lg transition-all duration-300 h-[52px] w-full whitespace-nowrap">
-              Subscribe Now
+              Stay Informed
             </button>
           </div>
         </div>

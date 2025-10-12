@@ -119,9 +119,9 @@ const NavBar: React.FC = () => {
             >
               Products
             </Link>
-            <a href="#docs" className="font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14.136px] text-[#141722] uppercase tracking-wider hover:text-[#ffb546] transition-colors whitespace-nowrap">
+            <Link href="/docs" className="font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14.136px] text-[#141722] uppercase tracking-wider hover:text-[#ffb546] transition-colors whitespace-nowrap">
               Docs
-            </a>
+            </Link>
             <a href="#about" className="font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14.136px] text-[#141722] uppercase tracking-wider hover:text-[#ffb546] transition-colors whitespace-nowrap">
               About
             </a>
@@ -496,13 +496,13 @@ const NavBar: React.FC = () => {
               >
                 Products
               </Link>
-              <a 
-                href="#docs" 
+              <Link 
+                href="/docs" 
                 onClick={closeMobileMenu}
                 className="font-inter text-2xl text-[#141722] uppercase tracking-wider font-medium hover:text-[#ffb546] transition-colors text-left py-2"
               >
                 Docs
-              </a>
+              </Link>
               <a 
                 href="#about" 
                 onClick={closeMobileMenu}
