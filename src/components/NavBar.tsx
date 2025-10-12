@@ -14,7 +14,8 @@ const NavBar: React.FC = () => {
   const navRef = useRef<HTMLElement>(null);
   const desktopCartButtonRef = useRef<HTMLButtonElement>(null);
   const mobileCartButtonRef = useRef<HTMLButtonElement>(null);
-  const cartDropdownRef = useRef<HTMLDivElement>(null);
+  const desktopCartDropdownRef = useRef<HTMLDivElement>(null);
+  const mobileCartDropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { cart, getCartCount, getCartTotal, removeFromCart, updateQuantity } = useCart();
 
@@ -32,9 +33,10 @@ const NavBar: React.FC = () => {
       const target = event.target as Node;
       const clickedInsideDesktopButton = desktopCartButtonRef.current?.contains(target);
       const clickedInsideMobileButton = mobileCartButtonRef.current?.contains(target);
-      const clickedInsideDropdown = cartDropdownRef.current?.contains(target);
+      const clickedInsideDesktopDropdown = desktopCartDropdownRef.current?.contains(target);
+      const clickedInsideMobileDropdown = mobileCartDropdownRef.current?.contains(target);
       
-      if (!clickedInsideDesktopButton && !clickedInsideMobileButton && !clickedInsideDropdown) {
+      if (!clickedInsideDesktopButton && !clickedInsideMobileButton && !clickedInsideDesktopDropdown && !clickedInsideMobileDropdown) {
         setIsCartOpen(false);
       }
     };
@@ -136,7 +138,11 @@ const NavBar: React.FC = () => {
             <div className="hidden md:block relative">
               <button
                 ref={desktopCartButtonRef}
-                onClick={() => setIsCartOpen(!isCartOpen)}
+                onClick={() => {
+                  console.log('Cart button clicked - current state:', isCartOpen);
+                  console.log('Toggling to:', !isCartOpen);
+                  setIsCartOpen(!isCartOpen);
+                }}
                 className="bg-[#141722] text-[#efe9e0] p-2 md:p-2.5 lg:p-3 2xl:p-[14px] rounded-full hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer relative"
               >
                 <div className="relative w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6">
@@ -156,10 +162,13 @@ const NavBar: React.FC = () => {
               </button>
 
               {/* Cart Dropdown */}
-              {isCartOpen && (
+              {isCartOpen && (() => {
+                console.log('Desktop cart dropdown rendering');
+                console.log('Cart items:', cart);
+                return (
                 <div
-                  ref={cartDropdownRef}
-                  className="absolute right-0 mt-2 w-[380px] bg-white rounded-[24px] shadow-[0_8px_31.1px_-9px_rgba(0,0,0,0.25)] overflow-hidden z-50"
+                  ref={desktopCartDropdownRef}
+                  className="hidden md:block absolute right-0 mt-2 w-[380px] bg-white rounded-[24px] shadow-[0_8px_31.1px_-9px_rgba(0,0,0,0.25)] overflow-hidden z-50"
                 >
                   {/* Cart Header */}
                   <div className="p-6 border-b border-[rgba(0,0,0,0.1)]">
@@ -253,20 +262,34 @@ const NavBar: React.FC = () => {
                           ${getCartTotal().toFixed(2)}
                         </span>
                       </div>
-                      <button className="w-full bg-[#141722] text-[#efe9e0] font-inter font-medium text-[14px] uppercase py-[14px] rounded-full hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer">
+                      <Link
+                        href="/checkout"
+                        onClick={() => {
+                          console.log('Desktop Checkout button clicked');
+                          console.log('Current cart:', cart);
+                          console.log('Closing cart dropdown...');
+                          setIsCartOpen(false);
+                        }}
+                        className="block w-full bg-[#141722] text-[#efe9e0] font-inter font-medium text-[14px] uppercase py-[14px] rounded-full hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer text-center"
+                      >
                         Proceed to Checkout
-                      </button>
+                      </Link>
                     </div>
                   )}
                 </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Shopping Cart Button (Mobile) */}
             <div className="md:hidden relative">
               <button
                 ref={mobileCartButtonRef}
-                onClick={() => setIsCartOpen(!isCartOpen)}
+                onClick={() => {
+                  console.log('Mobile cart button clicked - current state:', isCartOpen);
+                  console.log('Toggling to:', !isCartOpen);
+                  setIsCartOpen(!isCartOpen);
+                }}
                 className="bg-[#141722] text-[#efe9e0] p-2 rounded-full hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer relative"
               >
                 <div className="relative w-5 h-5">
@@ -286,10 +309,13 @@ const NavBar: React.FC = () => {
               </button>
 
               {/* Cart Dropdown Mobile */}
-              {isCartOpen && (
+              {isCartOpen && (() => {
+                console.log('Mobile cart dropdown rendering');
+                console.log('Cart items:', cart);
+                return (
                 <div
-                  ref={cartDropdownRef}
-                  className="fixed inset-x-4 top-20 bg-white rounded-[24px] shadow-[0_8px_31.1px_-9px_rgba(0,0,0,0.25)] overflow-hidden z-50 max-h-[80vh]"
+                  ref={mobileCartDropdownRef}
+                  className="md:hidden fixed inset-x-4 top-20 bg-white rounded-[24px] shadow-[0_8px_31.1px_-9px_rgba(0,0,0,0.25)] overflow-hidden z-50 max-h-[80vh]"
                 >
                   {/* Cart Header */}
                   <div className="p-4 border-b border-[rgba(0,0,0,0.1)]">
@@ -383,13 +409,23 @@ const NavBar: React.FC = () => {
                           ${getCartTotal().toFixed(2)}
                         </span>
                       </div>
-                      <button className="w-full bg-[#141722] text-[#efe9e0] font-inter font-medium text-[12px] uppercase py-[12px] rounded-full hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer">
+                      <Link
+                        href="/checkout"
+                        onClick={() => {
+                          console.log('Mobile Checkout button clicked');
+                          console.log('Current cart:', cart);
+                          console.log('Closing cart dropdown...');
+                          setIsCartOpen(false);
+                        }}
+                        className="block w-full bg-[#141722] text-[#efe9e0] font-inter font-medium text-[12px] uppercase py-[12px] rounded-full hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer text-center"
+                      >
                         Proceed to Checkout
-                      </button>
+                      </Link>
                     </div>
                   )}
                 </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Mobile Menu Button */}
