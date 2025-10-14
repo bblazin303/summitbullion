@@ -102,28 +102,28 @@ export default function Footer() {
             </h3>
             <ul className="flex flex-col gap-[16px]">
               <li>
-                <Link href="#" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                <Link href="/docs#privacy" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                <Link href="/docs#terms" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                <Link href="/docs#payment-info" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
                   Payment Information
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                <Link href="/docs#shipping-info" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
                   Shipping Information
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
-                  Discount Information
+                <Link href="/marketplace" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                  Shop Inventory
                 </Link>
               </li>
             </ul>
@@ -260,22 +260,22 @@ export default function Footer() {
                 </h3>
                 <ul className="flex flex-col gap-2.5 sm:gap-3 lg:gap-4">
                   <li>
-                    <Link href="#" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
+                    <Link href="/docs#privacy" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
                       Privacy Policy
                     </Link>
                   </li>
                   <li>
-                    <Link href="#" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
+                    <Link href="/docs#terms" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
                       Terms of Service
                     </Link>
                   </li>
                   <li>
-                    <Link href="#" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
+                    <Link href="/docs#payment-info" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
                       Payment Information
                     </Link>
                   </li>
                   <li>
-                    <Link href="#" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
+                    <Link href="/docs#shipping-info" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
                       Shipping Information
                     </Link>
                   </li>
