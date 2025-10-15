@@ -3,7 +3,7 @@
 import { Search, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 type SearchResult = {
   section: string;
@@ -20,8 +20,8 @@ const navigation = [
     id: 'getting-started',
     title: 'Getting Started',
     subsections: [
+      { id: 'welcome', title: 'Welcome' },
       { id: 'buy-physical', title: 'Buying Physical Metals' },
-      { id: 'kyc-verification', title: 'KYC Verification' },
     ]
   },
   {
@@ -31,7 +31,6 @@ const navigation = [
       { id: 'what-is-sbgold', title: 'What is SB-GOLD' },
       { id: 'minting', title: 'How to Mint' },
       { id: 'redemption', title: 'Redemption Options' },
-      { id: 'trading', title: 'Trading on DEX' },
     ]
   },
   {
@@ -39,7 +38,6 @@ const navigation = [
     title: 'Features',
     subsections: [
       { id: 'liquidity', title: 'Liquidity Provision' },
-      { id: 'payments', title: 'Payment Processing' },
       { id: 'legacy-token', title: 'Zzzz Legacy Token' },
     ]
   },
@@ -50,9 +48,6 @@ const navigation = [
       { id: 'history', title: 'Company History' },
       { id: 'legal-structure', title: 'Legal Structure' },
       { id: 'tokenomics', title: 'Token Mechanisms' },
-      { id: 'fees', title: 'Fees & Economics' },
-      { id: 'projections', title: 'Financial Projections' },
-      { id: 'compliance', title: 'Compliance' },
     ]
   },
   {
@@ -72,8 +67,7 @@ const navigation = [
     id: 'legal',
     title: 'Legal',
     subsections: [
-      { id: 'payment-info', title: 'Payment Information' },
-      { id: 'shipping-info', title: 'Shipping Information' },
+      { id: 'compliance', title: 'Compliance' },
       { id: 'terms', title: 'Terms of Service' },
       { id: 'privacy', title: 'Privacy Policy' },
     ]
@@ -85,14 +79,33 @@ export default function DocsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [activeSection, setActiveSection] = useState('getting-started');
-  const [activeSubsection, setActiveSubsection] = useState('buy-physical');
+  const [activeSubsection, setActiveSubsection] = useState('welcome');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const handleNavigate = (sectionId: string, subsectionId?: string) => {
     setActiveSection(sectionId);
     setActiveSubsection(subsectionId || '');
   };
 
-  // Search functionality
+  // Keyboard shortcut for search (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+      if (e.key === 'Escape' && isSearchOpen) {
+        setIsSearchOpen(false);
+        setSearchQuery('');
+        setSearchResults([]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchOpen]);
+
+  // Search functionality - Enhanced for robust content searching
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
     
@@ -102,37 +115,126 @@ export default function DocsPage() {
     }
 
     const results: SearchResult[] = [];
-    const searchTerms = query.toLowerCase().split(' ');
+    const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 0);
 
-    // Search through all sections and subsections
+    // Define searchable content for each section
+    const searchableContent: Record<string, { description: string; keywords: string[] }> = {
+      'getting-started-welcome': { 
+        description: 'Welcome to Summit Bullion! Explore our platform and access all major sections of the Help Center.',
+        keywords: ['welcome', 'introduction', 'start', 'begin', 'overview', 'getting started', 'help center']
+      },
+      'getting-started-buy-physical': { 
+        description: 'Start investing in physical gold and silver with just a few clicks. Browse catalog, add to cart, choose payment method.',
+        keywords: ['buy', 'purchase', 'physical', 'gold', 'silver', 'metals', 'invest', 'catalog', 'cart', 'checkout', 'alchemy pay']
+      },
+      'sbgold-token-what-is-sbgold': { 
+        description: 'SB-GOLD is a tokenized gold asset backed 1:1 by allocated physical gold stored in secure vaults with serial number tracking.',
+        keywords: ['sb-gold', 'token', 'tokenized', 'gold', 'backed', 'vault', 'allocated', 'serial number', 'digital gold']
+      },
+      'sbgold-token-minting': { 
+        description: 'Mint SB-GOLD tokens by depositing funds and purchasing gold bars. KYC required for minting operations.',
+        keywords: ['mint', 'minting', 'create', 'deposit', 'kyc', 'purchase', 'bars', 'usdc']
+      },
+      'sbgold-token-redemption': { 
+        description: 'Redeem SB-GOLD tokens for physical delivery or sell back to protocol. Weekly batch processing available.',
+        keywords: ['redeem', 'redemption', 'physical delivery', 'sell back', 'convert', 'withdraw', 'shipping']
+      },
+      'features-liquidity': { 
+        description: 'Provide liquidity to SB-GOLD pools and earn yield. KYC required with fresh mint policy.',
+        keywords: ['liquidity', 'provide', 'lp', 'yield', 'earn', 'pool', 'dex', 'fresh mint', 'rewards']
+      },
+      'features-legacy-token': { 
+        description: 'Zzzz legacy token with buyback and burn mechanism. Company owns 60% of supply with continuous buyback.',
+        keywords: ['zzzz', 'legacy', 'founder', 'buyback', 'burn', 'deflationary']
+      },
+      'whitepaper-history': { 
+        description: 'Advanced Financial Technologies LLC founded in 2023. Summit Bullion mission, vision, and company background.',
+        keywords: ['history', 'company', 'aft', 'founded', 'mission', 'vision', 'about', 'background']
+      },
+      'whitepaper-legal-structure': { 
+        description: 'Operating under AFT LLC with FinCEN compliance, AML/KYC programs, and proper legal framework.',
+        keywords: ['legal', 'structure', 'llc', 'compliance', 'fincen', 'aml', 'kyc', 'regulatory']
+      },
+      'whitepaper-tokenomics': { 
+        description: 'Token economics including 1% transaction tax, treasury allocation, LP rewards, and buyback mechanisms.',
+        keywords: ['tokenomics', 'economics', 'token tax', 'treasury', 'allocation', 'rewards', 'mechanisms']
+      },
+      'roadmap': { 
+        description: 'Development roadmap including rebrand, catalog expansion, KYC pipeline, and SB-GOLD token launch plans.',
+        keywords: ['roadmap', 'timeline', 'future', 'plans', 'development', 'upcoming', 'launch']
+      },
+      'support-get-help': { 
+        description: 'Contact support team via email or telegram for assistance with orders, technical issues, or questions.',
+        keywords: ['support', 'help', 'contact', 'email', 'telegram', 'assistance', 'customer service']
+      },
+      'support-faq': { 
+        description: 'Frequently asked questions about shipping, payments, returns, KYC, and token operations.',
+        keywords: ['faq', 'questions', 'answers', 'help', 'common', 'frequently asked']
+      },
+      'legal-compliance': { 
+        description: 'Compliance framework with security measures, custody procedures, risk management, and regulatory protocols.',
+        keywords: ['compliance', 'security', 'custody', 'risk', 'audit', 'regulatory', 'legal']
+      },
+      'legal-terms': { 
+        description: 'Terms of Service outlining usage rights, responsibilities, and legal agreements.',
+        keywords: ['terms', 'service', 'agreement', 'legal', 'conditions', 'tos']
+      },
+      'legal-privacy': { 
+        description: 'Privacy Policy detailing data collection, usage, protection, and user rights.',
+        keywords: ['privacy', 'policy', 'data', 'protection', 'gdpr', 'information']
+      }
+    };
+
+    // Search through all sections and subsections with content matching
     navigation.forEach(section => {
       if (section.subsections.length === 0) {
-        // Standalone section like Roadmap
-        const matchesAllTerms = searchTerms.every(term => 
-          section.title.toLowerCase().includes(term)
-        );
-        if (matchesAllTerms) {
+        // Standalone section
+        const contentKey = section.id;
+        const searchData = searchableContent[contentKey];
+        const searchableText = `${section.title} ${searchData?.description || ''} ${searchData?.keywords?.join(' ') || ''}`.toLowerCase();
+        
+        const matchScore = searchTerms.reduce((score, term) => {
+          if (searchableText.includes(term)) {
+            // Higher score for title matches
+            if (section.title.toLowerCase().includes(term)) return score + 10;
+            return score + 1;
+          }
+          return score;
+        }, 0);
+
+        if (matchScore > 0) {
           results.push({
             section: section.title,
             subsection: '',
             title: section.title,
-            content: `View ${section.title} documentation`,
+            content: searchData?.description || `View ${section.title} documentation`,
             sectionId: section.id,
           });
         }
       } else {
         // Section with subsections
         section.subsections.forEach(subsection => {
-          const matchesAllTerms = searchTerms.every(term => 
-            section.title.toLowerCase().includes(term) ||
-            subsection.title.toLowerCase().includes(term)
-          );
-          if (matchesAllTerms) {
+          const contentKey = `${section.id}-${subsection.id}`;
+          const searchData = searchableContent[contentKey];
+          const searchableText = `${section.title} ${subsection.title} ${searchData?.description || ''} ${searchData?.keywords?.join(' ') || ''}`.toLowerCase();
+          
+          const matchScore = searchTerms.reduce((score, term) => {
+            if (searchableText.includes(term)) {
+              // Higher score for title matches
+              if (subsection.title.toLowerCase().includes(term) || section.title.toLowerCase().includes(term)) {
+                return score + 10;
+              }
+              return score + 1;
+            }
+            return score;
+          }, 0);
+
+          if (matchScore > 0) {
             results.push({
               section: section.title,
               subsection: subsection.title,
               title: subsection.title,
-              content: `${section.title} - ${subsection.title}`,
+              content: searchData?.description || `${section.title} - ${subsection.title}`,
               sectionId: section.id,
               subsectionId: subsection.id,
             });
@@ -141,24 +243,13 @@ export default function DocsPage() {
       }
     });
 
+    // Sort by relevance (higher scores first)
     setSearchResults(results);
   }, []);
 
   // Get current section and subsection info
   const currentSection = navigation.find(s => s.id === activeSection);
   const currentSubsection = currentSection?.subsections.find(ss => ss.id === activeSubsection);
-
-  // Function to highlight matching text
-  const highlightText = (text: string, query: string) => {
-    if (!query.trim()) return text;
-
-    const parts = text.split(new RegExp(`(${query})`, 'gi'));
-    return parts.map((part, i) => 
-      part.toLowerCase() === query.toLowerCase() ? 
-        <span key={i} className="bg-[#ffb546]/30 text-[#141722]">{part}</span> : 
-        part
-    );
-  };
 
   // Numbered step component
   const NumberedStep = ({ number, title, children, isLast = false }: { number: number; title: string; children: React.ReactNode; isLast?: boolean }): React.ReactElement => (
@@ -183,6 +274,144 @@ export default function DocsPage() {
     const key = `${activeSection}-${activeSubsection}`;
     
     const contentMap: Record<string, React.ReactElement> = {
+      'getting-started-welcome': (
+        <div className="space-y-8">
+          <div className="bg-gradient-to-r from-[#ffb546]/10 to-[#fff0c1]/10 rounded-2xl border border-[#ffb546]/20 p-6">
+            <p className="text-[#7c7c7c] leading-relaxed font-inter">
+              Welcome to Summit Bullion! Use the cards below to explore our platform, learn about our services, and quickly access all major sections of the Help Center.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Getting Started Card */}
+            <button
+              onClick={() => handleNavigate('getting-started', 'buy-physical')}
+              className="bg-white rounded-2xl border border-[#e5ddd0] p-6 hover:shadow-lg hover:border-[#ffb546] transition-all duration-200 text-left group"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#ffb546] to-[#ffd000] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <svg className="w-5 h-5 text-[#7c7c7c] group-hover:text-[#ffb546] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <h3 className="text-[#141722] font-semibold text-lg mb-2 font-inter">Buying Physical Metals</h3>
+              <p className="text-[#7c7c7c] text-sm font-inter">
+                Start investing in physical gold and silver with just a few clicks.
+              </p>
+            </button>
+
+            {/* SB-GOLD Token Card */}
+            <button
+              onClick={() => handleNavigate('sbgold-token', 'what-is-sbgold')}
+              className="bg-white rounded-2xl border border-[#e5ddd0] p-6 hover:shadow-lg hover:border-[#ffb546] transition-all duration-200 text-left group"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#ffb546] to-[#ffd000] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <svg className="w-5 h-5 text-[#7c7c7c] group-hover:text-[#ffb546] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <h3 className="text-[#141722] font-semibold text-lg mb-2 font-inter">What is SB-GOLD</h3>
+              <p className="text-[#7c7c7c] text-sm font-inter">
+                Learn about our tokenized gold asset backed 1:1 by physical gold.
+              </p>
+            </button>
+
+            {/* Liquidity Card */}
+            <button
+              onClick={() => handleNavigate('features', 'liquidity')}
+              className="bg-white rounded-2xl border border-[#e5ddd0] p-6 hover:shadow-lg hover:border-[#ffb546] transition-all duration-200 text-left group"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#ffb546] to-[#ffd000] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                  </svg>
+                </div>
+                <svg className="w-5 h-5 text-[#7c7c7c] group-hover:text-[#ffb546] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <h3 className="text-[#141722] font-semibold text-lg mb-2 font-inter">Liquidity Provision</h3>
+              <p className="text-[#7c7c7c] text-sm font-inter">
+                Provide liquidity to SB-GOLD pools and earn yield.
+              </p>
+            </button>
+
+            {/* Whitepaper Card */}
+            <button
+              onClick={() => handleNavigate('whitepaper', 'history')}
+              className="bg-white rounded-2xl border border-[#e5ddd0] p-6 hover:shadow-lg hover:border-[#ffb546] transition-all duration-200 text-left group"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#ffb546] to-[#ffd000] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <svg className="w-5 h-5 text-[#7c7c7c] group-hover:text-[#ffb546] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <h3 className="text-[#141722] font-semibold text-lg mb-2 font-inter">Company History</h3>
+              <p className="text-[#7c7c7c] text-sm font-inter">
+                Learn about Summit Bullion&apos;s mission, vision, and what makes us different.
+              </p>
+            </button>
+
+            {/* Roadmap Card */}
+            <button
+              onClick={() => handleNavigate('roadmap')}
+              className="bg-white rounded-2xl border border-[#e5ddd0] p-6 hover:shadow-lg hover:border-[#ffb546] transition-all duration-200 text-left group"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#ffb546] to-[#ffd000] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                </div>
+                <svg className="w-5 h-5 text-[#7c7c7c] group-hover:text-[#ffb546] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <h3 className="text-[#141722] font-semibold text-lg mb-2 font-inter">Roadmap</h3>
+              <p className="text-[#7c7c7c] text-sm font-inter">
+                Explore our development plans and upcoming features.
+              </p>
+            </button>
+
+            {/* Support Card */}
+            <button
+              onClick={() => handleNavigate('support', 'faq')}
+              className="bg-white rounded-2xl border border-[#e5ddd0] p-6 hover:shadow-lg hover:border-[#ffb546] transition-all duration-200 text-left group"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#ffb546] to-[#ffd000] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <svg className="w-5 h-5 text-[#7c7c7c] group-hover:text-[#ffb546] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <h3 className="text-[#141722] font-semibold text-lg mb-2 font-inter">FAQ</h3>
+              <p className="text-[#7c7c7c] text-sm font-inter">
+                Find answers to frequently asked questions.
+              </p>
+            </button>
+          </div>
+        </div>
+      ),
+
       'getting-started-buy-physical': (
         <div className="space-y-6">
           <p className="text-[#7c7c7c] leading-relaxed font-inter">
@@ -205,41 +434,6 @@ export default function DocsPage() {
             <NumberedStep number={4} title="Receive Your Order" isLast>
               <p>Your metals will be shipped securely to your U.S. address with full insurance.</p>
             </NumberedStep>
-          </div>
-        </div>
-      ),
-
-      'getting-started-kyc-verification': (
-        <div className="space-y-6">
-          <p className="text-[#7c7c7c] leading-relaxed font-inter">
-            Complete KYC verification to unlock advanced features like minting SB-GOLD tokens and providing liquidity.
-          </p>
-
-          <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-            <h4 className="text-[#141722] font-semibold mb-4 font-inter">KYC Benefits</h4>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ffb546] mt-2 flex-shrink-0"></div>
-                <span className="text-[#7c7c7c] text-sm font-inter">Mint SB-GOLD tokens backed by physical gold</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ffb546] mt-2 flex-shrink-0"></div>
-                <span className="text-[#7c7c7c] text-sm font-inter">Redeem tokens for physical gold delivery</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ffb546] mt-2 flex-shrink-0"></div>
-                <span className="text-[#7c7c7c] text-sm font-inter">Provide liquidity and earn yield</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ffb546] mt-2 flex-shrink-0"></div>
-                <span className="text-[#7c7c7c] text-sm font-inter">Access institutional features</span>
-              </li>
-            </ul>
-            <div className="mt-4 pt-4 border-t border-[#e5ddd0]">
-              <p className="text-[#7c7c7c] text-sm font-inter">
-                <strong className="text-[#141722]">One-time fee:</strong> $25 per wallet
-              </p>
-            </div>
           </div>
         </div>
       ),
@@ -369,44 +563,6 @@ export default function DocsPage() {
         </div>
       ),
 
-      'sbgold-token-trading': (
-        <div className="space-y-6">
-          <p className="text-[#7c7c7c] leading-relaxed font-inter">
-            Trade SB-GOLD on decentralized exchanges with a 1% token tax that supports the ecosystem.
-          </p>
-
-          <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-            <h4 className="text-[#141722] font-semibold mb-4 font-inter">Token Tax Allocation</h4>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-[#7c7c7c] text-sm font-inter">Protocol Treasury (peg defense & growth)</span>
-                <span className="text-[#141722] font-semibold text-sm">35%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#7c7c7c] text-sm font-inter">SB-GOLD LP Rewards</span>
-                <span className="text-[#141722] font-semibold text-sm">25%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#7c7c7c] text-sm font-inter">Team & Operations</span>
-                <span className="text-[#141722] font-semibold text-sm">15%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#7c7c7c] text-sm font-inter">Zzzz Buyback + Burn</span>
-                <span className="text-[#141722] font-semibold text-sm">10%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#7c7c7c] text-sm font-inter">SBX Buyback + Burn</span>
-                <span className="text-[#141722] font-semibold text-sm">10%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#7c7c7c] text-sm font-inter">Risk/Emergency Fund</span>
-                <span className="text-[#141722] font-semibold text-sm">5%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
-
       'features-liquidity': (
         <div className="space-y-6">
           <p className="text-[#7c7c7c] leading-relaxed font-inter">
@@ -433,31 +589,6 @@ export default function DocsPage() {
                 <span className="text-[#7c7c7c] text-sm font-inter"><strong className="text-[#141722]">Maintain Exposure:</strong> Keep underlying gold exposure while earning yield</span>
               </li>
             </ul>
-          </div>
-        </div>
-      ),
-
-      'features-payments': (
-        <div className="space-y-6">
-          <p className="text-[#7c7c7c] leading-relaxed font-inter">
-            Flexible payment options powered by Alchemy Pay for seamless transactions.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-              <h4 className="text-[#141722] font-semibold mb-2 font-inter">Credit/Debit Cards</h4>
-              <p className="text-[#7c7c7c] text-sm font-inter">Major cards accepted with 1% processing fee</p>
-            </div>
-            
-            <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-              <h4 className="text-[#141722] font-semibold mb-2 font-inter">Bank Transfers</h4>
-              <p className="text-[#7c7c7c] text-sm font-inter">ACH and wire transfers for larger purchases</p>
-            </div>
-            
-            <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-              <h4 className="text-[#141722] font-semibold mb-2 font-inter">Cryptocurrency</h4>
-              <p className="text-[#7c7c7c] text-sm font-inter">Pay with Bitcoin, Ethereum, Solana, and more</p>
-            </div>
           </div>
         </div>
       ),
@@ -706,174 +837,7 @@ export default function DocsPage() {
         </div>
       ),
 
-      'whitepaper-fees': (
-        <div className="space-y-6">
-          <p className="text-[#7c7c7c] leading-relaxed font-inter">
-            Transparent fee structure across physical sales and digital token operations, designed to sustain the ecosystem while maintaining competitive pricing.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-              <h4 className="text-[#141722] font-semibold mb-3 font-inter">Physical Sales</h4>
-              <ul className="text-[#7c7c7c] text-sm space-y-2 font-inter">
-                <li>• Upstate wholesale spread (variable) + 2% company margin</li>
-                <li>• +1% processing fee (Alchemy Pay) passed to customers</li>
-                <li>• 100% profits to Advanced Financial Technologies LLC</li>
-              </ul>
-            </div>
-            
-            <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-              <h4 className="text-[#141722] font-semibold mb-3 font-inter">Digital (SB-GOLD)</h4>
-              <ul className="text-[#7c7c7c] text-sm space-y-2 font-inter">
-                <li>• Mint: +1% over wholesale quote</li>
-                <li>• Redeem: $25 flat shipping for physical delivery (weekly)</li>
-                <li>• Secondary Market Trading: Target 1% token tax</li>
-                <li>• KYC NFT Badge: $25 one-time per wallet</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-            <h4 className="text-[#141722] font-semibold mb-4 font-inter">Fee Allocation — Digital SB-GOLD</h4>
-            <p className="text-[#7c7c7c] text-sm mb-4 font-inter">
-              Revenue from Mint/Redeem, KYC NFT Badge, and Transaction Fees is allocated as follows:
-            </p>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center pb-2 border-b border-[#e5ddd0]">
-                <span className="text-[#7c7c7c] text-sm font-inter">Protocol Treasury (peg defense, growth)</span>
-                <span className="text-[#141722] font-semibold text-sm">35%</span>
-              </div>
-              <div className="flex justify-between items-center pb-2 border-b border-[#e5ddd0]">
-                <span className="text-[#7c7c7c] text-sm font-inter">SB-GOLD LP Rewards (if enabled)</span>
-                <span className="text-[#141722] font-semibold text-sm">25%</span>
-              </div>
-              <div className="flex justify-between items-center pb-2 border-b border-[#e5ddd0]">
-                <span className="text-[#7c7c7c] text-sm font-inter">Team & Operations</span>
-                <span className="text-[#141722] font-semibold text-sm">15%</span>
-              </div>
-              <div className="flex justify-between items-center pb-2 border-b border-[#e5ddd0]">
-                <span className="text-[#7c7c7c] text-sm font-inter">Zzzz Buyback + Burn (legacy token)</span>
-                <span className="text-[#141722] font-semibold text-sm">10%</span>
-              </div>
-              <div className="flex justify-between items-center pb-2 border-b border-[#e5ddd0]">
-                <span className="text-[#7c7c7c] text-sm font-inter">SBX Buyback + Burn (future token)</span>
-                <span className="text-[#141722] font-semibold text-sm">10%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#7c7c7c] text-sm font-inter">Risk/Emergency Fund</span>
-                <span className="text-[#141722] font-semibold text-sm">5%</span>
-              </div>
-            </div>
-            <p className="text-[#7c7c7c] text-sm mt-4 font-inter">
-              This structure strengthens reserves while keeping community alignment through LP rewards and buybacks—without compromising allocated status.
-            </p>
-          </div>
-        </div>
-      ),
-
-      'whitepaper-projections': (
-        <div className="space-y-6">
-          <p className="text-[#7c7c7c] leading-relaxed font-inter">
-            Revenue scenarios based on DEX volume and minting activity, demonstrating the protocol&apos;s economic sustainability at different scales.
-          </p>
-
-          <div className="bg-gradient-to-br from-[#ffb546]/5 to-[#fff0c1]/5 rounded-2xl border border-[#ffb546]/20 p-6 mb-6">
-            <h4 className="text-[#141722] font-semibold mb-3 font-inter">Model Assumptions</h4>
-            <ul className="text-[#7c7c7c] text-sm space-y-2 font-inter">
-              <li>• <strong className="text-[#141722]">Token tax:</strong> 1.00% on all secondary SB-GOLD trades (protocol revenue)</li>
-              <li>• <strong className="text-[#141722]">Raydium pool fee:</strong> 0.50% (paid by traders; assumed 100% to LPs, $0 to protocol)</li>
-              <li>• <strong className="text-[#141722]">Mint fee:</strong> 1.00% of mint flow</li>
-              <li>• <strong className="text-[#141722]">KYC badges:</strong> $25 each</li>
-              <li>• <strong className="text-[#141722]">Redemptions:</strong> $25 + shipping (set to $0 in these scenarios)</li>
-            </ul>
-            <p className="text-[#7c7c7c] text-sm mt-3 font-inter italic">
-              Note: Effective trader cost on swaps becomes 1.50% (1.00% token tax + 0.50% pool fee to LPs)
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-              <h4 className="text-[#141722] font-semibold mb-3 font-inter">Scenario A — $5M Monthly DEX Volume</h4>
-              <div className="grid grid-cols-2 gap-3 text-sm font-inter">
-                <div>
-                  <p className="text-[#7c7c7c]">Token tax @1%</p>
-                  <p className="text-[#141722] font-semibold">$50,000</p>
-                </div>
-                <div>
-                  <p className="text-[#7c7c7c]">Mint fee @1% ($5M flow)</p>
-                  <p className="text-[#141722] font-semibold">$50,000</p>
-                </div>
-                <div>
-                  <p className="text-[#7c7c7c]">KYC revenue (300 badges)</p>
-                  <p className="text-[#141722] font-semibold">$7,500</p>
-                </div>
-                <div>
-                  <p className="text-[#7c7c7c]">Pool fee to LPs @0.50%</p>
-                  <p className="text-[#141722] font-semibold">$25,000</p>
-                </div>
-                <div className="col-span-2 pt-2 border-t border-[#e5ddd0]">
-                  <p className="text-[#7c7c7c] font-semibold">Total Monthly Protocol Revenue</p>
-                  <p className="text-[#141722] font-bold text-lg">$107,500</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-              <h4 className="text-[#141722] font-semibold mb-3 font-inter">Scenario Mid — $15M Monthly DEX Volume</h4>
-              <div className="grid grid-cols-2 gap-3 text-sm font-inter">
-                <div>
-                  <p className="text-[#7c7c7c]">Token tax @1%</p>
-                  <p className="text-[#141722] font-semibold">$150,000</p>
-                </div>
-                <div>
-                  <p className="text-[#7c7c7c]">Mint fee @1% ($15M flow)</p>
-                  <p className="text-[#141722] font-semibold">$150,000</p>
-                </div>
-                <div>
-                  <p className="text-[#7c7c7c]">KYC revenue (900 badges)</p>
-                  <p className="text-[#141722] font-semibold">$22,500</p>
-                </div>
-                <div>
-                  <p className="text-[#7c7c7c]">Pool fee to LPs @0.50%</p>
-                  <p className="text-[#141722] font-semibold">$75,000</p>
-                </div>
-                <div className="col-span-2 pt-2 border-t border-[#e5ddd0]">
-                  <p className="text-[#7c7c7c] font-semibold">Total Monthly Protocol Revenue</p>
-                  <p className="text-[#141722] font-bold text-lg">$322,500</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-              <h4 className="text-[#141722] font-semibold mb-3 font-inter">Scenario B — $30M Monthly DEX Volume</h4>
-              <div className="grid grid-cols-2 gap-3 text-sm font-inter">
-                <div>
-                  <p className="text-[#7c7c7c]">Token tax @1%</p>
-                  <p className="text-[#141722] font-semibold">$300,000</p>
-                </div>
-                <div>
-                  <p className="text-[#7c7c7c]">Mint fee @1% ($30M flow)</p>
-                  <p className="text-[#141722] font-semibold">$300,000</p>
-                </div>
-                <div>
-                  <p className="text-[#7c7c7c]">KYC revenue (1,800 badges)</p>
-                  <p className="text-[#141722] font-semibold">$45,000</p>
-                </div>
-                <div>
-                  <p className="text-[#7c7c7c]">Pool fee to LPs @0.50%</p>
-                  <p className="text-[#141722] font-semibold">$150,000</p>
-                </div>
-                <div className="col-span-2 pt-2 border-t border-[#e5ddd0]">
-                  <p className="text-[#7c7c7c] font-semibold">Total Monthly Protocol Revenue</p>
-                  <p className="text-[#141722] font-bold text-lg">$645,000</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
-
-      'whitepaper-compliance': (
+      'legal-compliance': (
         <div className="space-y-6">
           <p className="text-[#7c7c7c] leading-relaxed font-inter">
             Summit Bullion operates within strict compliance frameworks, with comprehensive security measures, custody procedures, and risk management protocols.
@@ -1309,139 +1273,6 @@ export default function DocsPage() {
         </div>
       ),
 
-      'legal-payment-info': (
-        <div className="space-y-6">
-          <p className="text-[#7c7c7c] leading-relaxed font-inter">
-            Summit Bullion accepts multiple payment methods to make purchasing precious metals convenient and accessible.
-          </p>
-
-          <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-            <h4 className="text-[#141722] font-semibold mb-4 font-inter">Accepted Payment Methods</h4>
-            <div className="space-y-4">
-              <div>
-                <h5 className="text-[#ffb546] font-semibold text-sm mb-2 font-inter">Credit & Debit Cards</h5>
-                <p className="text-[#7c7c7c] text-sm font-inter">
-                  We accept Visa, Mastercard, American Express, and Discover. A 1% processing fee is applied to all card transactions 
-                  to cover payment processing costs via Alchemy Pay.
-                </p>
-              </div>
-              
-              <div>
-                <h5 className="text-[#ffb546] font-semibold text-sm mb-2 font-inter">Bank Transfers</h5>
-                <p className="text-[#7c7c7c] text-sm font-inter">
-                  ACH and wire transfers are available for larger purchases. Processing times vary: ACH transfers typically take 3-5 business days, 
-                  while wire transfers are processed within 1 business day.
-                </p>
-              </div>
-              
-              <div>
-                <h5 className="text-[#ffb546] font-semibold text-sm mb-2 font-inter">Cryptocurrency</h5>
-                <p className="text-[#7c7c7c] text-sm font-inter">
-                  Pay with Bitcoin, Ethereum, Solana, USDC, and other popular cryptocurrencies via Alchemy Pay. 
-                  Crypto payments are processed instantly upon blockchain confirmation.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-            <h4 className="text-[#141722] font-semibold mb-3 font-inter">Payment Security</h4>
-            <p className="text-[#7c7c7c] text-sm font-inter mb-3">
-              All payments are processed through secure, encrypted channels. We never store your complete payment information on our servers. 
-              Our payment processor, Alchemy Pay, is PCI DSS compliant and uses industry-standard security measures.
-            </p>
-            <ul className="space-y-2">
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ffb546] mt-2 flex-shrink-0"></div>
-                <span className="text-[#7c7c7c] text-sm font-inter">256-bit SSL encryption for all transactions</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ffb546] mt-2 flex-shrink-0"></div>
-                <span className="text-[#7c7c7c] text-sm font-inter">PCI DSS Level 1 compliance</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ffb546] mt-2 flex-shrink-0"></div>
-                <span className="text-[#7c7c7c] text-sm font-inter">Fraud detection and prevention systems</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      ),
-
-      'legal-shipping-info': (
-        <div className="space-y-6">
-          <p className="text-[#7c7c7c] leading-relaxed font-inter">
-            We offer secure, insured shipping for all physical precious metals orders within the United States.
-          </p>
-
-          <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-            <h4 className="text-[#141722] font-semibold mb-4 font-inter">Shipping Details</h4>
-            <div className="space-y-4">
-              <div>
-                <h5 className="text-[#ffb546] font-semibold text-sm mb-2 font-inter">Shipping Regions</h5>
-                <p className="text-[#7c7c7c] text-sm font-inter">
-                  We currently ship to all U.S. addresses. International shipping will be available in future updates. 
-                  P.O. boxes and APO/FPO addresses are accepted for orders under a certain weight and value threshold.
-                </p>
-              </div>
-              
-              <div>
-                <h5 className="text-[#ffb546] font-semibold text-sm mb-2 font-inter">Shipping Costs</h5>
-                <p className="text-[#7c7c7c] text-sm font-inter mb-2">
-                  Standard shipping costs are calculated based on order value and weight:
-                </p>
-                <ul className="text-[#7c7c7c] text-sm space-y-1 font-inter">
-                  <li>• Orders under $1,000: $25 flat rate</li>
-                  <li>• Orders $1,000-$5,000: $35 flat rate</li>
-                  <li>• Orders over $5,000: Free insured shipping</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h5 className="text-[#ffb546] font-semibold text-sm mb-2 font-inter">Processing Time</h5>
-                <p className="text-[#7c7c7c] text-sm font-inter">
-                  Orders are typically processed within 1-2 business days. During high-volume periods, processing may take up to 3-5 business days. 
-                  You will receive tracking information via email once your order ships.
-                </p>
-              </div>
-              
-              <div>
-                <h5 className="text-[#ffb546] font-semibold text-sm mb-2 font-inter">SB-GOLD Token Redemptions</h5>
-                <p className="text-[#7c7c7c] text-sm font-inter">
-                  Physical gold redemptions from SB-GOLD tokens are processed in weekly batches. Shipping cost is a flat $25 fee, 
-                  fully insured for the declared value of your gold.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
-            <h4 className="text-[#141722] font-semibold mb-3 font-inter">Insurance & Security</h4>
-            <p className="text-[#7c7c7c] text-sm font-inter mb-3">
-              All shipments are fully insured for their declared value. We use discreet packaging with no external markings indicating precious metals contents.
-            </p>
-            <ul className="space-y-2">
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ffb546] mt-2 flex-shrink-0"></div>
-                <span className="text-[#7c7c7c] text-sm font-inter">Full insurance coverage on all shipments</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ffb546] mt-2 flex-shrink-0"></div>
-                <span className="text-[#7c7c7c] text-sm font-inter">Signature required for delivery</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ffb546] mt-2 flex-shrink-0"></div>
-                <span className="text-[#7c7c7c] text-sm font-inter">Discreet, tamper-evident packaging</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ffb546] mt-2 flex-shrink-0"></div>
-                <span className="text-[#7c7c7c] text-sm font-inter">Real-time tracking information</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      ),
-
       'legal-terms': (
         <div className="space-y-6">
           <p className="text-[#7c7c7c] leading-relaxed font-inter">
@@ -1705,11 +1536,11 @@ export default function DocsPage() {
   return (
     <div className="min-h-screen w-full bg-[#fcf8f1]">
       {/* Sidebar */}
-      <div className="fixed top-0 left-0 w-[280px] h-full bg-[#f8f0e1] border-r border-[#e5ddd0] hidden min-[900px]:block z-40">
-        <div className="p-6 h-full overflow-y-auto">
+      <div className="fixed top-0 left-0 w-[280px] h-full bg-white border-r border-[#e5ddd0] hidden min-[900px]:block z-40 shadow-sm">
+        <div className="p-6 h-full overflow-y-auto scrollbar-thin">
           <button
             onClick={() => router.push('/')}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity mb-8"
+            className="flex items-center gap-3 hover:opacity-70 transition-all duration-200 mb-6 group"
           >
             <Image
               src="/images/wordmark-logo.svg"
@@ -1717,38 +1548,49 @@ export default function DocsPage() {
               width={200}
               height={24}
               style={{ width: 'auto', height: '24px' }}
+              className="group-hover:scale-[1.02] transition-transform duration-200"
             />
+          </button>
+
+          {/* Search in Sidebar - Trigger */}
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="mb-6 w-full h-[38px] pl-9 pr-3 rounded-lg bg-[#fcf8f1] border border-[#e5ddd0] text-[#7c7c7c] text-sm text-left hover:border-[#ffb546] transition-all font-inter flex items-center relative"
+          >
+            <Search className="absolute left-3 h-4 w-4 text-[#7c7c7c]" />
+            <span>Search...</span>
+            <kbd className="ml-auto text-xs bg-white px-2 py-0.5 rounded border border-[#e5ddd0]">⌘K</kbd>
           </button>
           
           <nav>
-            <h3 className="text-[#141722] text-xs font-inter font-semibold mb-4 uppercase tracking-wider">Documentation</h3>
-            <div className="flex flex-col gap-1">
-              {navigation.map((section) => (
-                <div key={section.id}>
+            <h3 className="text-[#7c7c7c] text-xs font-inter font-bold mb-5 uppercase tracking-wider px-2">Documentation</h3>
+            <div className="flex flex-col gap-2">
+              {navigation.map((section, index) => (
+                <div key={section.id} className={index > 0 ? 'mt-2' : ''}>
                   <button
                     onClick={() => {
                       if (section.subsections.length === 0) {
                         handleNavigate(section.id);
                       }
                     }}
-                    className={`w-full text-left text-[#141722] text-sm py-2.5 px-4 rounded-lg font-inter font-medium ${
+                    className={`w-full text-left text-sm py-2.5 px-3 rounded-xl font-inter font-semibold transition-all duration-200 cursor-pointer ${
                       section.subsections.length === 0 && activeSection === section.id
                         ? 'bg-[#fcf8f1] text-[#ffb546]'
-                        : ''
+                        : 'text-[#141722] hover:bg-[#fcf8f1]'
                     }`}
                   >
                     <span>{section.title}</span>
                   </button>
                   {section.subsections.length > 0 && (
-                    <div className="ml-4 mt-1 space-y-1 border-l-2 border-[#e5ddd0] pl-2">
+                    <div className="ml-3 mt-1.5 space-y-0.5 border-l-2 border-[#e5ddd0] pl-3">
                       {section.subsections.map((subsection) => (
                         <button
                           key={subsection.id}
                           onClick={() => handleNavigate(section.id, subsection.id)}
-                          className={`w-full text-left text-sm py-2 px-4 rounded-lg transition-all font-inter ${
+                          className={`w-full text-left text-sm py-2 px-3 rounded-lg transition-all duration-200 font-inter cursor-pointer ${
                             activeSection === section.id && activeSubsection === subsection.id
-                              ? 'bg-[#fcf8f1] text-[#ffb546] font-medium'
-                              : 'text-[#7c7c7c] hover:text-[#141722] hover:bg-[#fcf8f1]'
+                              ? 'bg-[#fcf8f1] text-[#000000] font-medium'
+                              : 'text-[#7c7c7c] hover:text-[#141722] hover:bg-[#fcf8f1] hover:translate-x-0.5'
                           }`}
                         >
                           {subsection.title}
@@ -1765,93 +1607,21 @@ export default function DocsPage() {
 
       {/* Main Content */}
       <div className="min-[900px]:ml-[280px]">
-        {/* Header */}
-        <header className="sticky top-0 z-50 bg-[#fcf8f1] border-b border-[#e5ddd0]">
-          <div className="flex items-center justify-between h-[65px] px-[18px] min-[900px]:px-8 max-w-[1200px] mx-auto">
-            <div className="flex items-center gap-4 w-full">
-              <button
-                onClick={() => router.push('/')}
-                className="min-[900px]:hidden"
-              >
-                <Image
-                  src="/images/mobile-hero-logo.svg"
-                  alt="Summit Bullion"
-                  width={40}
-                  height={40}
-                  style={{ width: 'auto', height: '32px' }}
-                />
-              </button>
-              
-              <div className="hidden min-[900px]:block w-[400px] relative">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7c7c7c]" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    placeholder="Search documentation..."
-                    className="w-full h-[38px] pl-10 pr-4 rounded-full bg-white border border-[#e5ddd0] text-[#141722] placeholder:text-[#7c7c7c] text-sm focus:outline-none focus:border-[#ffb546] focus:ring-2 focus:ring-[#ffb546]/20 transition-all font-inter shadow-sm"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => handleSearch('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7c7c7c] hover:text-[#141722] transition-colors"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-
-                  {/* Search Results Dropdown */}
-                  {searchResults.length > 0 && searchQuery && (
-                    <div className="absolute mt-2 w-[400px] bg-white border border-[#e5ddd0] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden z-50">
-                      <div className="max-h-[400px] overflow-y-auto">
-                        {searchResults.map((result, index) => (
-                          <button
-                            key={index}
-                            onClick={() => {
-                              handleNavigate(result.sectionId, result.subsectionId);
-                              setSearchQuery('');
-                              setSearchResults([]);
-                            }}
-                            className="block w-full text-left p-4 hover:bg-[#fcf8f1] border-b border-[#e5ddd0] last:border-0 transition-colors"
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium text-[#141722] font-inter">
-                                {highlightText(result.title, searchQuery)}
-                              </span>
-                              <span className="text-xs text-[#7c7c7c] font-inter">
-                                {result.section}
-                              </span>
-                            </div>
-                            <p className="text-sm text-[#7c7c7c] font-inter">
-                              {highlightText(result.content, searchQuery)}
-                            </p>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
         {/* Content */}
-        <main className="p-[18px] min-[900px]:p-8 max-w-[1000px] mx-auto">
+        <main className="p-[18px] min-[900px]:p-10 max-w-[1000px] mx-auto pt-8">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 mb-6">
-            <span className="text-[#7c7c7c] text-xs font-inter uppercase tracking-wide">{currentSection?.title}</span>
+          <div className="flex items-center gap-2 mb-8 pt-2">
+            <span className="text-[#7c7c7c] text-xs font-inter font-semibold uppercase tracking-wider">{currentSection?.title}</span>
             {currentSubsection && (
               <>
-                <span className="text-[#7c7c7c]">/</span>
-                <span className="text-[#141722] text-xs font-inter font-medium uppercase tracking-wide">{currentSubsection.title}</span>
+                <span className="text-[#e5ddd0] font-bold">/</span>
+                <span className="text-[#ffb546] text-xs font-inter font-semibold uppercase tracking-wider">{currentSubsection.title}</span>
               </>
             )}
           </div>
 
           {/* Page Title */}
-          <h1 className="text-3xl min-[900px]:text-4xl font-inter font-semibold text-[#141722] mb-8">
+          <h1 className="text-3xl min-[900px]:text-4xl font-inter font-bold text-[#141722] mb-10 leading-tight">
             {currentSubsection?.title || currentSection?.title}
       </h1>
 
@@ -1861,6 +1631,145 @@ export default function DocsPage() {
           </div>
         </main>
       </div>
+
+      {/* Search Modal Overlay */}
+      {isSearchOpen && (
+        <div 
+          className="fixed inset-0 bg-[#141722]/60 backdrop-blur-sm z-50 flex items-start justify-center p-4 pt-[10vh]"
+          onClick={() => {
+            setIsSearchOpen(false);
+            setSearchQuery('');
+            setSearchResults([]);
+          }}
+        >
+          <div 
+            className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 border border-[#e5ddd0]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Search Input */}
+            <div className="relative border-b border-[#e5ddd0]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#7c7c7c]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Search..."
+                autoFocus
+                className="w-full h-[60px] pl-12 pr-12 bg-transparent text-[#141722] placeholder:text-[#7c7c7c] text-base focus:outline-none font-inter"
+              />
+              <button
+                onClick={() => {
+                  setIsSearchOpen(false);
+                  setSearchQuery('');
+                  setSearchResults([]);
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7c7c7c] hover:text-[#141722] transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Recent Searches / Initial State */}
+            {!searchQuery && (
+              <div className="p-6">
+                <h3 className="text-[#7c7c7c] text-xs font-semibold uppercase tracking-wider mb-4 font-inter">
+                  Recent searches
+                </h3>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      handleNavigate('getting-started', 'buy-physical');
+                      setIsSearchOpen(false);
+                    }}
+                    className="w-full text-left p-3 rounded-lg hover:bg-[#fcf8f1] transition-colors group"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#fff0c1] to-[#ffb546]/20 flex items-center justify-center flex-shrink-0 group-hover:from-[#ffb546] group-hover:to-[#ffd000] transition-all duration-200">
+                        <span className="text-[#ffb546] group-hover:text-white font-bold text-sm transition-colors">#</span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-[#141722] text-sm font-medium mb-1 group-hover:text-[#ffb546] transition-colors">Buying Physical Metals</div>
+                        <div className="text-[#7c7c7c] text-xs">Getting Started • Start investing in physical gold and silver</div>
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleNavigate('sbgold-token', 'what-is-sbgold');
+                      setIsSearchOpen(false);
+                    }}
+                    className="w-full text-left p-3 rounded-lg hover:bg-[#fcf8f1] transition-all duration-200 group"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#fff0c1] to-[#ffb546]/20 flex items-center justify-center flex-shrink-0 group-hover:from-[#ffb546] group-hover:to-[#ffd000] transition-all duration-200">
+                        <span className="text-[#ffb546] group-hover:text-white font-bold text-sm transition-colors">#</span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-[#141722] text-sm font-medium mb-1 group-hover:text-[#ffb546] transition-colors">What is SB-GOLD</div>
+                        <div className="text-[#7c7c7c] text-xs">SB-GOLD Token • Learn about tokenized gold assets</div>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Search Results */}
+            {searchQuery && searchResults.length > 0 && (
+              <div className="max-h-[500px] overflow-y-auto">
+                <div className="px-6 py-3 border-b border-[#e5ddd0] bg-[#fcf8f1]/50">
+                  <p className="text-xs text-[#7c7c7c] font-semibold uppercase tracking-wider">
+                    {searchResults.length} {searchResults.length === 1 ? 'Result' : 'Results'}
+                  </p>
+                </div>
+                {searchResults.map((result, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      handleNavigate(result.sectionId, result.subsectionId);
+                      setIsSearchOpen(false);
+                      setSearchQuery('');
+                      setSearchResults([]);
+                    }}
+                    className="w-full text-left px-6 py-4 hover:bg-[#fcf8f1] transition-all duration-200 border-b border-[#e5ddd0] last:border-0 group"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#fff0c1] to-[#ffb546]/20 flex items-center justify-center flex-shrink-0 group-hover:from-[#ffb546] group-hover:to-[#ffd000] transition-all duration-200">
+                        <span className="text-[#ffb546] group-hover:text-white font-bold text-sm transition-colors">#</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="text-[#141722] text-sm font-semibold group-hover:text-[#ffb546] transition-colors">{result.title}</h4>
+                          <svg className="w-4 h-4 text-[#7c7c7c] opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs text-[#ffb546] font-medium">{result.section}</span>
+                          {result.subsection && (
+                            <>
+                              <span className="text-[#e5ddd0]">•</span>
+                              <span className="text-xs text-[#7c7c7c]">{result.subsection}</span>
+                            </>
+                          )}
+                        </div>
+                        <p className="text-xs text-[#7c7c7c] leading-relaxed line-clamp-2">{result.content}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* No Results */}
+            {searchQuery && searchResults.length === 0 && (
+              <div className="p-8 text-center">
+                <div className="text-[#7c7c7c] text-sm">No results found for &quot;{searchQuery}&quot;</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
