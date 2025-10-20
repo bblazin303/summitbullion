@@ -131,7 +131,7 @@ const NavBar: React.FC = () => {
           <div className="flex-shrink-0 flex items-center gap-2 md:gap-3">
             {/* Connect Wallet Button (Desktop) */}
             <button className="hidden md:block bg-[#141722] text-[#efe9e0] px-1.5 sm:px-2 md:px-3 lg:px-4 2xl:px-[28px] py-1 sm:py-1.5 md:py-2 lg:py-2.5 2xl:py-[17px] rounded-[42px] font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14px] uppercase tracking-wider hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer">
-              Connect wallet
+              Sign in
             </button>
 
             {/* Shopping Cart Button (Desktop) */}
@@ -515,7 +515,7 @@ const NavBar: React.FC = () => {
             {/* Connect Wallet Button - Positioned at bottom */}
             <div className="mt-auto mb-8">
               <button className="w-full inline-flex px-8 py-4 justify-center items-center gap-[10px] rounded-[42px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-lg uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300 cursor-pointer">
-                Connect wallet
+                Sign in
               </button>
             </div>
           </div>

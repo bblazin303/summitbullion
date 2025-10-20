@@ -81,7 +81,7 @@ const MarketplaceBanner: React.FC = () => {
               {/* Stat 3 */}
               <div className="flex flex-col gap-2 sm:gap-3">
                 <div className="font-inter font-semibold text-[28px] sm:text-[32px] lg:text-[36px] text-white tracking-[-0.8px] lg:tracking-[-1.08px] leading-none">
-                  3000+
+                  2700+
                 </div>
                 <div className="font-inter font-medium text-[14px] sm:text-[15px] lg:text-[17px] text-[rgba(255,255,255,0.72)] leading-[1.3]">
                   Products Available
@@ -92,7 +92,7 @@ const MarketplaceBanner: React.FC = () => {
             {/* CTA Button */}
             <div>
               <button className="bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] px-12 sm:px-16 lg:px-[70px] py-3 sm:py-4 lg:py-[17.5px] rounded-full font-inter font-medium text-[12px] sm:text-[13px] lg:text-[14px] uppercase text-black hover:shadow-lg transition-all duration-300">
-                Buy Now
+                Learn More
               </button>
             </div>
           </div>

@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
+import Image, { StaticImageData } from 'next/image';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { useCart } from '@/context/CartContext';
+import type { Inventory } from '@/types/platformGold';
+import { fetchInventoryById, applyMarkup, getMetalDisplayName } from '@/lib/platformGoldApi';
 
-// Import product images
+// Import product images (fallback)
 import ProductImage1 from '/public/images/product-image1.png';
 import ProductImage2 from '/public/images/product-image2.png';
 import ProductImage3 from '/public/images/product-image3.png';
@@ -29,81 +31,110 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const relatedProductsRef = useRef<HTMLDivElement>(null);
   const { addToCart } = useCart();
+  const [productData, setProductData] = useState<Inventory | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Product database (in a real app, this would be fetched from an API)
-  const productDatabase = {
-    '1': {
-      id: '1',
-      brand: 'ELEMETAL',
-      name: '1 g Fine Gold Grain',
-      price: 82.50,
-      originalPrice: 120,
-      discount: 31,
-      metal: 'Gold',
-      images: [ProductImage1, ProductImage1, ProductImage1],
-      recentSales: 15,
-      volumePricing: [
-        { quantity: '1-9', checkWire: 82.50, crypto: 84.50, ccPaypal: 85.00 },
-        { quantity: '10-24', checkWire: 80.00, crypto: 82.00, ccPaypal: 82.50 },
-        { quantity: '25+', checkWire: 78.00, crypto: 80.00, ccPaypal: 80.50 }
-      ],
-      description: '1g fine gold grain represents an accessible entry point into precious metal investment. Each grain is refined to the highest purity standards, making it perfect for those starting their journey into gold ownership or looking to add small increments to their portfolio.'
-    },
-    '2': {
-      id: '2',
-      brand: 'ELEMETAL',
-      name: '1 oz Gold Bar',
-      price: 260,
-      originalPrice: 300,
-      discount: 40,
-      metal: 'Gold',
-      images: [ProductImage2, ProductImage2, ProductImage2],
-      recentSales: 10,
-      volumePricing: [
-        { quantity: '1-9', checkWire: 260.94, crypto: 264.94, ccPaypal: 262.94 },
-        { quantity: '10-24', checkWire: 250.94, crypto: 256.94, ccPaypal: 256.64 },
-        { quantity: '25+', checkWire: 225.94, crypto: 230.94, ccPaypal: 242.24 }
-      ],
-      description: '1oz gold bars, long-considered a premium bullion product - combine top-tier purity and security, making it a favored addition to any dealer or collector\'s holdings. These sealed bullion products represent an opportunity for many collectors looking to add to their bullion collection with the timeless allure of gold.'
-    },
-    '3': {
-      id: '3',
-      brand: 'ELEMETAL',
-      name: '10 oz Gold Bar',
-      price: 2625,
-      originalPrice: 3000,
-      discount: 13,
-      metal: 'Gold',
-      images: [ProductImage3, ProductImage3, ProductImage3],
-      recentSales: 5,
-      volumePricing: [
-        { quantity: '1-9', checkWire: 2625.00, crypto: 2650.00, ccPaypal: 2680.00 },
-        { quantity: '10-24', checkWire: 2600.00, crypto: 2625.00, ccPaypal: 2655.00 },
-        { quantity: '25+', checkWire: 2575.00, crypto: 2600.00, ccPaypal: 2630.00 }
-      ],
-      description: '10oz gold bars offer serious investors a substantial holding in one of the world\'s most valued precious metals. Each bar is meticulously crafted and sealed for authenticity, representing a significant step in wealth preservation.'
-    },
-    '4': {
-      id: '4',
-      brand: 'UNITY MINT',
-      name: '1 oz Silver Unity Bar',
-      price: 32.50,
-      originalPrice: 40,
-      discount: 19,
-      metal: 'Silver',
-      images: [ProductImage4, ProductImage4, ProductImage4],
-      recentSales: 25,
-      volumePricing: [
-        { quantity: '1-9', checkWire: 32.50, crypto: 33.50, ccPaypal: 34.00 },
-        { quantity: '10-24', checkWire: 31.00, crypto: 32.00, ccPaypal: 32.50 },
-        { quantity: '25+', checkWire: 30.00, crypto: 31.00, ccPaypal: 31.50 }
-      ],
-      description: '1oz Silver Unity Bars represent both beauty and value. Crafted with precision and sealed for protection, these bars offer an affordable entry into precious metal investment while maintaining the highest quality standards.'
-    }
+  // Fetch product data from Platform Gold API
+  useEffect(() => {
+    const loadProduct = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await fetchInventoryById(parseInt(productId));
+        
+        if (!data) {
+          setError('Product not found');
+        } else {
+          setProductData(data);
+        }
+      } catch (err) {
+        console.error('Failed to load product:', err);
+        setError('Failed to load product details. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProduct();
+  }, [productId]);
+
+  // Helper function to get fallback image
+  const getFallbackImage = (metalSymbol: string): StaticImageData => {
+    const imageMap: { [key: string]: StaticImageData } = {
+      'XAU': ProductImage2,
+      'XAG': ProductImage4,
+      'XPT': ProductImage3,
+      'XPD': ProductImage3
+    };
+    return imageMap[metalSymbol] || ProductImage1;
   };
 
-  // Get product data based on productId, fallback to product 2 if not found
-  const product = productDatabase[productId as keyof typeof productDatabase] || productDatabase['2'];
+  // Transform API data to component format
+  const getTransformedProduct = () => {
+    if (!productData) return null;
+
+    const markedUpPrice = applyMarkup(productData.askPrice, 2);
+    const originalPrice = productData.askPrice * 1.15; // Show 15% higher as "original"
+    const discount = Math.round(((originalPrice - markedUpPrice) / originalPrice) * 100);
+
+    // Get images
+    const images: (string | StaticImageData)[] = [
+      productData.mainImage,
+      productData.altImage1,
+      productData.altImage2,
+      productData.altImage3
+    ].filter(Boolean) as string[];
+
+    // Fallback to static images if no images
+    if (images.length === 0) {
+      const fallback = getFallbackImage(productData.metalSymbol);
+      images.push(fallback, fallback, fallback);
+    }
+
+    // Generate volume pricing tiers
+    const volumePricing = [
+      {
+        quantity: `1-${productData.minAskQty > 1 ? productData.minAskQty - 1 : 9}`,
+        checkWire: markedUpPrice,
+        crypto: markedUpPrice * 1.02,
+        ccPaypal: markedUpPrice * 1.03
+      },
+      {
+        quantity: `${productData.minAskQty > 1 ? productData.minAskQty : 10}-24`,
+        checkWire: markedUpPrice * 0.98,
+        crypto: markedUpPrice * 1.00,
+        ccPaypal: markedUpPrice * 1.01
+      },
+      {
+        quantity: '25+',
+        checkWire: markedUpPrice * 0.96,
+        crypto: markedUpPrice * 0.98,
+        ccPaypal: markedUpPrice * 0.99
+      }
+    ];
+
+    return {
+      id: productData.id.toString(),
+      brand: productData.manufacturer || 'Platform Gold',
+      name: productData.name,
+      price: markedUpPrice,
+      originalPrice: originalPrice,
+      discount: discount,
+      metal: getMetalDisplayName(productData.metalSymbol),
+      images: images,
+      recentSales: Math.floor(productData.sellQuantity / 10) || 5,
+      volumePricing: volumePricing,
+      description: `${productData.name} - ${productData.purity} purity ${getMetalDisplayName(productData.metalSymbol)}. ${productData.metalOz} troy ounces of precious metal content. ${productData.iraEligible ? 'IRA Eligible. ' : ''}This product is available for immediate delivery with ${productData.sellQuantity} units in stock.`,
+      metalOz: productData.metalOz,
+      purity: productData.purity,
+      sku: productData.sku,
+      year: productData.year,
+      sellQuantity: productData.sellQuantity
+    };
+  };
+
+  const product = getTransformedProduct();
 
   const tabs = [
     'OVERVIEW',
@@ -113,14 +144,23 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
     'LIQUIDITY'
   ];
 
-  // Tab content
-  const tabContent = {
-    'OVERVIEW': '1oz gold bars, long-considered a premium bullion product – combine top-tier purity and security, making it a favored addition to any dealer or collector\'s holdings. These sealed bullion products represent an opportunity for many collectors looking to add to their bullion collection with the timeless allure of gold.',
-    'PURITY & SPECS': 'Purity: Nearly all 1oz Gold Bars sold by Elemetal are crafted from .9999+ pure gold, ensuring a premium product that meets the highest industry standards.\n\nTangible Metal: Gold bars provide a physical bullion asset that can be held, stored, and passed down through generations. Collecting gold offers a sense of permanence associated with the bullion product that is often unmatched by other consumable items.',
-    'DESIGN & CRAFTSMANSHIP': 'Design: 1oz gold bars, including those by Elemetal, often feature sleek, refined designs. Elemetal bars showcase aesthetics with clean lines, displaying the purity and weight prominently. Their design emphasizes the bar\'s weight and purity, appealing to both dealers and collectors seeking elegance and authenticity.',
-    'COLLECTABILITY': 'Collectability: Gold bars are highly collectible due to their intrinsic value, historical significance, and aesthetic appeal. Gold often represents wealth, making them attractive to collectors. The rarity and craftsmanship of certain bars can also add to their allure, turning them into sought-after pieces for collections.',
-    'LIQUIDITY': 'Universal Acceptance: Gold is recognized and accepted worldwide, making it a highly liquid asset. Sealed and Certified gold bars can easily be bought, sold, or traded, offering collectors flexibility and convenience in managing their metal holdings.'
+  // Tab content - dynamic based on product data
+  const getTabContent = () => {
+    if (!product) return {};
+    
+    const metalName = product.metal;
+    const purity = product.purity || '.999+ pure';
+    
+    return {
+      'OVERVIEW': product.description,
+      'PURITY & SPECS': `Purity: This ${metalName} product is crafted from ${purity} metal, ensuring a premium product that meets the highest industry standards.\n\nWeight: ${product.metalOz} troy ounces of precious ${metalName}.\n\nSKU: ${product.sku}\n\nTangible Metal: ${metalName} provides a physical bullion asset that can be held, stored, and passed down through generations.`,
+      'DESIGN & CRAFTSMANSHIP': `Design: ${product.name} features refined design and craftsmanship. ${product.brand} products showcase aesthetics with clean lines, displaying the purity and weight prominently. The design emphasizes authenticity and quality, appealing to both dealers and collectors.`,
+      'COLLECTABILITY': `Collectability: ${metalName} bullion is highly collectible due to its intrinsic value, historical significance, and aesthetic appeal. This product from ${product.brand} represents wealth and quality, making it attractive to collectors worldwide.${product.year ? ` Year: ${product.year}` : ''}`,
+      'LIQUIDITY': `Universal Acceptance: ${metalName} is recognized and accepted worldwide, making it a highly liquid asset. This product can easily be bought, sold, or traded, offering flexibility and convenience in managing your precious metal holdings. Current availability: ${product.sellQuantity} units in stock.`
+    };
   };
+
+  const tabContent = getTabContent();
 
   // Related products
   const relatedProducts = [
@@ -198,15 +238,44 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
   };
 
   const handleAddToCart = () => {
+    if (!product) return;
+    
     addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.images[0],
+      image: product.images[0] as StaticImageData | string,
       brand: product.brand,
       quantity: quantity
     });
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#ffc633]"></div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !product) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center bg-white px-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-8 max-w-md">
+          <h2 className="text-2xl font-bold text-red-800 mb-4">Error</h2>
+          <p className="text-red-700">{error || 'Product not found'}</p>
+          <Link 
+            href="/marketplace" 
+            className="mt-6 inline-block bg-black text-white px-6 py-3 rounded-full hover:bg-[#ffc633] transition-colors"
+          >
+            Back to Marketplace
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -244,24 +313,44 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                     selectedImage === index ? 'border-[rgba(0,0,0,0.1)]' : 'border-transparent'
                   }`}
                 >
-                  <Image
-                    src={image}
-                    alt={`Product view ${index + 1}`}
-                    fill
-                    className="object-cover"
-                  />
+                  {typeof image === 'string' ? (
+                    <Image
+                      src={image}
+                      alt={`Product view ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <Image
+                      src={image}
+                      alt={`Product view ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  )}
                 </button>
               ))}
             </div>
 
             {/* Main Image */}
             <div className="relative w-full lg:w-[342px] h-[300px] sm:h-[400px] lg:h-[597px] rounded-[24px] sm:rounded-[36px] lg:rounded-[72px] overflow-hidden">
-              <Image
-                src={product.images[selectedImage]}
-                alt={product.name}
-                fill
-                className="object-cover"
-              />
+              {typeof product.images[selectedImage] === 'string' ? (
+                <Image
+                  src={product.images[selectedImage] as string}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              ) : (
+                <Image
+                  src={product.images[selectedImage]}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                />
+              )}
             </div>
           </div>
 
