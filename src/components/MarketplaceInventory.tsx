@@ -44,6 +44,7 @@ const MarketplaceInventory: React.FC = () => {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [currentOffset, setCurrentOffset] = useState<number>(0);
   const [hasMoreFromAPI, setHasMoreFromAPI] = useState<boolean>(true);
+  const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
   // Use known counts as default (from Platform Gold API analysis)
   // "All" shows total products in database (impressive number)
   // Specific metals show actual available counts (accurate filtering)
@@ -959,13 +960,12 @@ const MarketplaceInventory: React.FC = () => {
                 <div className="flex-1" />
 
                 {/* Skeleton Price */}
-                <div className="space-y-2 mb-6">
+                <div className="space-y-2">
                   <div className="bg-gray-200 h-6 w-2/3 rounded"></div>
-                  <div className="bg-gray-200 h-5 w-1/2 rounded"></div>
                 </div>
 
                 {/* Skeleton Button */}
-                <div className="bg-gray-200 h-[50px] w-full rounded-[42px]"></div>
+                <div className="bg-gray-200 h-[50px] w-full rounded-[42px] mt-6"></div>
               </div>
             </div>
           ))}
@@ -993,10 +993,13 @@ const MarketplaceInventory: React.FC = () => {
             </div>
           ) : (
             products.map((product) => (
-          <Link 
+          <div 
             key={product.id}
-            href={`/marketplace/${product.id}`}
-            className="bg-white rounded-[24px] sm:rounded-[36px] p-4 sm:p-6 flex flex-col relative min-h-[460px] sm:min-h-[500px] lg:min-h-[534px] hover:shadow-lg transition-shadow duration-300"
+            onClick={() => {
+              setLoadingProductId(product.id.toString());
+              router.push(`/marketplace/${product.id}`);
+            }}
+            className="bg-white rounded-[24px] sm:rounded-[36px] p-4 sm:p-6 flex flex-col relative min-h-[460px] sm:min-h-[500px] lg:min-h-[534px] hover:shadow-lg transition-shadow duration-300 cursor-pointer"
           >
             {/* Best Value Badge */}
             {product.badge && (
@@ -1032,12 +1035,20 @@ const MarketplaceInventory: React.FC = () => {
             {/* Product Info */}
             <div className="flex flex-col gap-3 sm:gap-4 flex-1">
               {/* Title */}
-              <h3 className="font-inter font-semibold text-[20px] sm:text-[22px] lg:text-[24px] leading-[1.14] text-black">
+              <h3 className="font-inter font-semibold text-[20px] sm:text-[22px] lg:text-[24px] leading-[1.14] text-black overflow-hidden text-ellipsis" style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical'
+              }}>
                 {product.title}
               </h3>
 
               {/* Description */}
-              <p className="font-inter font-medium text-[14px] sm:text-[15px] lg:text-[16px] leading-[1.57] text-[#7c7c7c]">
+              <p className="font-inter font-medium text-[14px] sm:text-[15px] lg:text-[16px] leading-[1.57] text-[#7c7c7c] overflow-hidden text-ellipsis" style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical'
+              }}>
                 {product.description}
               </p>
 
@@ -1045,14 +1056,14 @@ const MarketplaceInventory: React.FC = () => {
               <div className="flex-1" />
 
               {/* Price Section */}
-              <div className="flex flex-col gap-[6px] mb-6">
+              <div className="flex flex-col gap-[6px]">
                 {/* USD Price */}
                 <div className="font-inter font-medium text-[18px] sm:text-[19px] lg:text-[20px] leading-[1.37] text-black">
                   ${product.priceUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                 </div>
 
-                {/* SOL Price */}
-                <div className="flex items-center gap-[6px]">
+                {/* SOL Price - Commented out */}
+                {/* <div className="flex items-center gap-[6px]">
                   <div className="relative w-[19px] h-[19px]">
                     <Image
                       src={SolLogo}
@@ -1064,15 +1075,18 @@ const MarketplaceInventory: React.FC = () => {
                   <span className="font-inter font-medium text-[15px] sm:text-[16px] text-[#8a8a8a] leading-normal">
                     {product.solAmount}
                   </span>
-                </div>
+                </div> */}
               </div>
 
               {/* View Product Button */}
-              <div className="bg-[#141722] text-[#efe9e0] px-7 py-[17px] rounded-[42px] font-inter font-medium text-[13px] sm:text-[14px] uppercase tracking-wider hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 w-full text-center">
-                View Product
+              <div className="bg-[#141722] text-[#efe9e0] px-7 py-[17px] rounded-[42px] font-inter font-medium text-[13px] sm:text-[14px] uppercase tracking-wider hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 w-full text-center flex items-center justify-center gap-2 mt-6">
+                {loadingProductId === product.id.toString() && (
+                  <div className="w-4 h-4 border-2 rounded-full animate-spin border-current border-t-transparent" />
+                )}
+                <span>View Product</span>
               </div>
             </div>
-          </Link>
+          </div>
             ))
           )}
         </div>
@@ -1107,13 +1121,12 @@ const MarketplaceInventory: React.FC = () => {
                     <div className="flex-1" />
 
                     {/* Skeleton Price */}
-                    <div className="space-y-2 mb-6">
+                    <div className="space-y-2">
                       <div className="bg-gray-200 h-6 w-2/3 rounded"></div>
-                      <div className="bg-gray-200 h-5 w-1/2 rounded"></div>
                     </div>
 
                     {/* Skeleton Button */}
-                    <div className="bg-gray-200 h-[50px] w-full rounded-[42px]"></div>
+                    <div className="bg-gray-200 h-[50px] w-full rounded-[42px] mt-6"></div>
                   </div>
                 </div>
         ))}

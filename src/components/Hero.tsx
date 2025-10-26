@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 import NavBar from './NavBar';
 
@@ -28,6 +29,12 @@ const Hero: React.FC = () => {
   const cryptoLogosRef = useRef<HTMLDivElement>(null);
   const heroImageRef = useRef<HTMLDivElement>(null);
   const reputationRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  // Prefetch marketplace data as soon as Hero loads for instant navigation
+  useEffect(() => {
+    router.prefetch('/marketplace');
+  }, [router]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {

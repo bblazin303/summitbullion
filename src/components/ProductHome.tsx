@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 
 // Import product images
@@ -22,6 +23,32 @@ const ProductHome: React.FC = () => {
   const titleRef = useRef<HTMLDivElement>(null);
   const productsRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const router = useRouter();
+
+  // Prefetch marketplace inventory data for faster navigation
+  useEffect(() => {
+    // Prefetch the marketplace route
+    router.prefetch('/marketplace');
+    
+    // Prefetch the inventory API data in the background
+    const prefetchInventory = async () => {
+      try {
+        console.log('🚀 Prefetching marketplace inventory...');
+        // Fetch first batch of inventory
+        await fetch('/api/platform-gold/inventory?limit=100&offset=0');
+        // Prefetch metadata (counts)
+        await fetch('/api/platform-gold/metadata');
+        console.log('✅ Marketplace inventory prefetched successfully');
+      } catch (error) {
+        console.error('❌ Failed to prefetch inventory:', error);
+      }
+    };
+    
+    // Start prefetching after a short delay to not block initial page load
+    const timeoutId = setTimeout(prefetchInventory, 1000);
+    
+    return () => clearTimeout(timeoutId);
+  }, [router]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -153,24 +180,32 @@ const ProductHome: React.FC = () => {
             {/* Product Info */}
             <div className="flex flex-col gap-3 sm:gap-4 flex-1">
               {/* Title */}
-              <h3 className="font-inter font-semibold text-[18px] sm:text-[20px] lg:text-[24px] leading-[1.1] text-black">
+              <h3 className="font-inter font-semibold text-[18px] sm:text-[20px] lg:text-[24px] leading-[1.1] text-black overflow-hidden text-ellipsis" style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical'
+              }}>
                 {product.title}
               </h3>
 
               {/* Description */}
-              <p className="font-inter font-medium text-[14px] sm:text-[15px] lg:text-[16px] leading-[1.4] text-[#7c7c7c] flex-1">
+              <p className="font-inter font-medium text-[14px] sm:text-[15px] lg:text-[16px] leading-[1.4] text-[#7c7c7c] flex-1 overflow-hidden text-ellipsis" style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical'
+              }}>
                 {product.description}
               </p>
 
               {/* Price Section */}
-              <div className="flex flex-col gap-[4px] sm:gap-[6px] mb-4 sm:mb-6">
+              <div className="flex flex-col gap-[4px] sm:gap-[6px]">
                 {/* USD Price */}
                 <div className="font-inter font-medium text-[16px] sm:text-[18px] lg:text-[20px] leading-[1.2] text-black">
                   {product.price}
                 </div>
 
-                {/* SOL Price */}
-                <div className="flex items-center gap-[4px] sm:gap-[6px]">
+                {/* SOL Price - Commented out */}
+                {/* <div className="flex items-center gap-[4px] sm:gap-[6px]">
                   <div className="relative w-[16px] h-[16px] sm:w-[19px] sm:h-[19px]">
                     <Image
                       src={SolLogo}
@@ -182,7 +217,7 @@ const ProductHome: React.FC = () => {
                   <span className="font-inter font-medium text-[14px] sm:text-[15px] lg:text-[16px] text-[#8a8a8a]">
                     {product.solAmount}
                   </span>
-                </div>
+                </div> */}
               </div>
 
               {/* Add to Cart Button */}

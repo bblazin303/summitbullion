@@ -29,6 +29,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('OVERVIEW');
   const [selectedPricingTier, setSelectedPricingTier] = useState(0);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const relatedProductsRef = useRef<HTMLDivElement>(null);
   const { addToCart } = useCart();
@@ -212,6 +213,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
     return () => ctx.revert();
   }, []);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isImageModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isImageModalOpen]);
+
   const handleQuantityChange = (delta: number) => {
     const newQuantity = Math.max(1, quantity + delta);
     setQuantity(newQuantity);
@@ -298,13 +312,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
       <div ref={contentRef} className="bg-white px-4 sm:px-8 md:px-16 lg:px-[120px] 2xl:px-[200px] pt-[120px] sm:pt-[140px] lg:pt-[160px] pb-12">
         {/* Breadcrumb */}
         <div className="flex items-center gap-3 mb-8">
-          <Link href="/" className="text-[16px] text-[rgba(0,0,0,0.6)] hover:text-black transition-colors">
+          <Link href="/" className="text-[16px] text-[rgba(0,0,0,0.6)] hover:text-[#ffc633] transition-colors">
             Home
           </Link>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="rotate-[-90deg]">
             <path d="M12 6L8 10L4 6" stroke="rgba(0,0,0,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <Link href="/marketplace" className="text-[16px] text-[rgba(0,0,0,0.6)] hover:text-black transition-colors">
+          <Link href="/marketplace" className="text-[16px] text-[rgba(0,0,0,0.6)] hover:text-[#ffc633] transition-colors">
             Shop
           </Link>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="rotate-[-90deg]">
@@ -324,8 +338,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`relative w-[55px] h-[96px] rounded-[7px] overflow-hidden border-2 transition-all ${
-                    selectedImage === index ? 'border-[rgba(0,0,0,0.1)]' : 'border-transparent'
+                  className={`relative w-[55px] h-[96px] rounded-[7px] overflow-hidden border-2 transition-all bg-white ${
+                    selectedImage === index ? 'border-black/30' : 'border-[rgba(0,0,0,0.1)]'
                   }`}
                 >
                   {typeof image === 'string' ? (
@@ -333,7 +347,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                       src={image}
                       alt={`Product view ${index + 1}`}
                       fill
-                      className="object-cover"
+                      className="object-contain p-1"
                       unoptimized
                     />
                   ) : (
@@ -341,7 +355,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                       src={image}
                       alt={`Product view ${index + 1}`}
                       fill
-                      className="object-cover"
+                      className="object-contain p-1"
                     />
                   )}
                 </button>
@@ -349,13 +363,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
             </div>
 
             {/* Main Image */}
-            <div className="relative w-full lg:w-[342px] h-[300px] sm:h-[400px] lg:h-[597px] rounded-[24px] sm:rounded-[36px] lg:rounded-[72px] overflow-hidden">
+            <div className="relative w-full lg:w-[342px] h-[300px] sm:h-[400px] lg:h-[597px] rounded-[24px] sm:rounded-[36px] lg:rounded-[72px] overflow-hidden bg-white">
               {typeof product.images[selectedImage] === 'string' ? (
                 <Image
                   src={product.images[selectedImage] as string}
                   alt={product.name}
                   fill
-                  className="object-cover"
+                  className="object-contain p-4"
                   unoptimized
                 />
               ) : (
@@ -363,9 +377,21 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                   src={product.images[selectedImage]}
                   alt={product.name}
                   fill
-                  className="object-cover"
+                  className="object-contain p-4"
                 />
               )}
+              
+              {/* Maximize Button */}
+              <button
+                onClick={() => setIsImageModalOpen(true)}
+                className="absolute bottom-4 right-4 bg-white/90 hover:bg-white p-2.5 rounded-full transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
+                aria-label="Maximize image"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 3h3m0 0v3m0-3l-5 5M6 17H3m0 0v-3m0 3l5-5"/>
+                  <path d="M3 3h3M17 17h-3M3 17v-3M17 3v3"/>
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -373,20 +399,24 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
           <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-[24px] sm:rounded-[36px] p-4 sm:p-6 h-fit">
             <div className="flex flex-col gap-[18px]">
               {/* Brand */}
-              <div className="font-inter font-medium text-[12px] text-[#7c7c7c] uppercase tracking-wider">
+              <div className="font-inter font-medium text-[12px] text-[#7c7c7c] uppercase tracking-wider truncate">
                 {product.brand}
               </div>
 
               {/* Product Name */}
-              <h1 className="font-inter font-bold text-[24px] sm:text-[32px] lg:text-[40px] text-black leading-tight sm:leading-none">
+              <h1 className="font-inter font-bold text-[24px] sm:text-[32px] lg:text-[40px] text-black leading-tight overflow-hidden text-ellipsis" style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical'
+              }}>
                 {product.name}
               </h1>
 
               {/* Price */}
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <div className="flex items-start gap-2 sm:gap-3">
-                  <span className="font-inter font-bold text-[24px] sm:text-[32px] text-black">${product.price}</span>
-                  <span className="font-inter font-bold text-[24px] sm:text-[32px] text-[#7c7c7c] line-through">${product.originalPrice}</span>
+                  <span className="font-inter font-bold text-[24px] sm:text-[32px] text-black">${product.price.toFixed(2)}</span>
+                  <span className="font-inter font-bold text-[24px] sm:text-[32px] text-[#7c7c7c] line-through">${product.originalPrice.toFixed(2)}</span>
                 </div>
                 <div className="bg-[rgba(51,146,255,0.1)] px-[12px] sm:px-[14px] py-[4px] sm:py-[6px] rounded-full">
                   <span className="font-inter font-medium text-[14px] sm:text-[16px] text-[#3392ff]">-{product.discount}%</span>
@@ -432,9 +462,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                     }`}
                   >
                     <div>{row.quantity}</div>
-                    <div>${row.checkWire}</div>
-                    <div>${row.crypto}</div>
-                    <div>${row.ccPaypal}</div>
+                    <div>${row.checkWire.toFixed(2)}</div>
+                    <div>${row.crypto.toFixed(2)}</div>
+                    <div>${row.ccPaypal.toFixed(2)}</div>
                   </button>
                 ))}
               </div>
@@ -553,10 +583,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
 
                 {/* Product Info */}
                 <div className="p-6 flex flex-col gap-4 flex-1">
-                  <h3 className="font-inter font-semibold text-[24px] text-black leading-[1.14]">
+                  <h3 className="font-inter font-semibold text-[24px] text-black leading-[1.14] overflow-hidden text-ellipsis" style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical'
+                  }}>
                     {relatedProduct.name}
                   </h3>
-                  <p className="font-inter font-medium text-[16px] text-[#7c7c7c] leading-[1.57]">
+                  <p className="font-inter font-medium text-[16px] text-[#7c7c7c] leading-[1.57] overflow-hidden text-ellipsis" style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical'
+                  }}>
                     From fractional gold to full ounces - find the perfect precious met
                   </p>
 
@@ -602,6 +640,83 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
           </div>
         </div>
       </div>
+
+      {/* Image Modal Overlay */}
+      {isImageModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 sm:p-8"
+          onClick={() => setIsImageModalOpen(false)}
+        >
+          {/* Modal Content */}
+          <div 
+            className="relative w-full h-full max-w-6xl max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setIsImageModalOpen(false)}
+              className="absolute -top-12 right-0 text-white hover:text-[#ffc633] transition-colors cursor-pointer z-10"
+              aria-label="Close"
+            >
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M24 8L8 24M8 8l16 16"/>
+              </svg>
+            </button>
+
+            {/* Image Container */}
+            <div className="relative w-full h-full bg-white rounded-[24px] overflow-hidden">
+              {typeof product.images[selectedImage] === 'string' ? (
+                <Image
+                  src={product.images[selectedImage] as string}
+                  alt={product.name}
+                  fill
+                  className="object-contain p-8"
+                  unoptimized
+                />
+              ) : (
+                <Image
+                  src={product.images[selectedImage]}
+                  alt={product.name}
+                  fill
+                  className="object-contain p-8"
+                />
+              )}
+            </div>
+
+            {/* Thumbnail Navigation */}
+            {product.images.length > 1 && (
+              <div className="flex gap-3 justify-center mt-6 overflow-x-auto pb-2">
+                {product.images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`relative w-[80px] h-[80px] flex-shrink-0 rounded-[12px] overflow-hidden border-2 transition-all bg-white ${
+                      selectedImage === index ? 'border-[#ffc633]' : 'border-white/30 hover:border-white/60'
+                    }`}
+                  >
+                    {typeof image === 'string' ? (
+                      <Image
+                        src={image}
+                        alt={`View ${index + 1}`}
+                        fill
+                        className="object-contain p-2"
+                        unoptimized
+                      />
+                    ) : (
+                      <Image
+                        src={image}
+                        alt={`View ${index + 1}`}
+                        fill
+                        className="object-contain p-2"
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

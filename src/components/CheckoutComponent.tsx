@@ -112,7 +112,7 @@ const CheckoutComponent: React.FC = () => {
             <div key={item.id} className="flex flex-col gap-4">
               <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-4 items-center pb-6 border-b border-[rgba(0,0,0,0.1)]">
                 {/* Product Info */}
-                <div className="flex gap-3 md:gap-4">
+                <div className="flex gap-3 md:gap-4 min-w-0">
                   <div className="bg-[#f0eeed] rounded-[6px] w-[60px] sm:w-[70px] md:w-[90px] h-[60px] sm:h-[70px] md:h-[90px] flex-shrink-0 overflow-hidden p-2">
                     <div className="relative w-full h-full">
                       <Image
@@ -123,8 +123,12 @@ const CheckoutComponent: React.FC = () => {
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1 sm:gap-2 min-w-0">
-                    <h3 className="font-inter font-semibold text-[16px] sm:text-[20px] md:text-[24px] text-black leading-tight">
+                  <div className="flex flex-col gap-1 sm:gap-2 min-w-0 flex-1">
+                    <h3 className="font-inter font-semibold text-[16px] sm:text-[20px] md:text-[24px] text-black leading-tight overflow-hidden text-ellipsis" style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}>
                       {item.name}
                     </h3>
                     <div className="flex flex-col gap-1">

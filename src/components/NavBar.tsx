@@ -234,8 +234,17 @@ const NavBar: React.FC = () => {
 
               {/* Cart Dropdown */}
               {isCartOpen && (() => {
-                console.log('Desktop cart dropdown rendering');
-                console.log('Cart items:', cart);
+                console.log('🛒 Desktop cart dropdown rendering');
+                console.log('🛒 Cart items:', cart);
+                console.log('🛒 Cart items count:', cart.length);
+                console.log('🛒 Cart items details:', cart.map(item => ({
+                  id: item.id,
+                  name: item.name,
+                  brand: item.brand,
+                  quantity: item.quantity,
+                  hasImage: !!item.image,
+                  hasPricing: !!item.pricing
+                })));
                 return (
                 <div
                   ref={desktopCartDropdownRef}
@@ -260,7 +269,7 @@ const NavBar: React.FC = () => {
                     ) : (
                       <div className="p-4 space-y-4">
                         {cart.map((item) => (
-                          <div key={item.id} className="flex gap-4 bg-[#fcf8f1] rounded-[18px] p-4">
+                          <div key={item.id} className="flex gap-4 bg-[#fcf8f1] rounded-[18px] p-4 overflow-hidden">
                             {/* Product Image */}
                             <div className="relative w-[80px] h-[80px] flex-shrink-0 bg-white rounded-[12px] overflow-hidden">
                               <Image
@@ -272,12 +281,16 @@ const NavBar: React.FC = () => {
                             </div>
 
                             {/* Product Info */}
-                            <div className="flex-1 flex flex-col justify-between">
-                              <div>
-                                <p className="font-inter font-medium text-[12px] text-[#7c7c7c] uppercase">
+                            <div className="flex-1 flex flex-col justify-between min-w-0">
+                              <div className="min-w-0 overflow-hidden">
+                                <p className="font-inter font-medium text-[12px] text-[#7c7c7c] uppercase truncate">
                                   {item.brand}
                                 </p>
-                                <h4 className="font-inter font-semibold text-[16px] text-black leading-tight mt-1">
+                                <h4 className="font-inter font-semibold text-[16px] text-black leading-tight mt-1 overflow-hidden text-ellipsis" style={{
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical'
+                                }}>
                                   {item.name}
                                 </h4>
                               </div>
@@ -381,8 +394,9 @@ const NavBar: React.FC = () => {
 
               {/* Cart Dropdown Mobile */}
               {isCartOpen && (() => {
-                console.log('Mobile cart dropdown rendering');
-                console.log('Cart items:', cart);
+                console.log('📱 Mobile cart dropdown rendering');
+                console.log('📱 Cart items:', cart);
+                console.log('📱 Cart items count:', cart.length);
                 return (
                 <div
                   ref={mobileCartDropdownRef}
@@ -407,7 +421,7 @@ const NavBar: React.FC = () => {
                     ) : (
                       <div className="p-3 space-y-3">
                         {cart.map((item) => (
-                          <div key={item.id} className="flex gap-3 bg-[#fcf8f1] rounded-[18px] p-3">
+                          <div key={item.id} className="flex gap-3 bg-[#fcf8f1] rounded-[18px] p-3 overflow-hidden">
                             {/* Product Image */}
                             <div className="relative w-[60px] h-[60px] flex-shrink-0 bg-white rounded-[12px] overflow-hidden">
                               <Image
@@ -420,11 +434,15 @@ const NavBar: React.FC = () => {
 
                             {/* Product Info */}
                             <div className="flex-1 flex flex-col justify-between min-w-0">
-                              <div>
-                                <p className="font-inter font-medium text-[10px] text-[#7c7c7c] uppercase">
+                              <div className="min-w-0 overflow-hidden">
+                                <p className="font-inter font-medium text-[10px] text-[#7c7c7c] uppercase truncate">
                                   {item.brand}
                                 </p>
-                                <h4 className="font-inter font-semibold text-[14px] text-black leading-tight mt-1 truncate">
+                                <h4 className="font-inter font-semibold text-[14px] text-black leading-tight mt-1 overflow-hidden text-ellipsis" style={{
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical'
+                                }}>
                                   {item.name}
                                 </h4>
                               </div>

@@ -42,11 +42,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Load cart from API when user logs in
   useEffect(() => {
     const loadCart = async () => {
-      if (!user?.userId || !user.idToken) {
+      if (!user?.userId) {
         // User logged out - clear local cart
+        console.log('👤 No user ID, clearing cart');
         setCart([]);
         return;
       }
+
+      console.log('👤 User logged in, loading cart for:', user.userId);
+      console.log('👤 Has idToken:', !!user.idToken);
 
       try {
         setIsLoading(true);
@@ -54,6 +58,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Determine auth type
         const isEmailAuth = !user.idToken;
         const headers: Record<string, string> = {};
+        
+        console.log('👤 Auth type:', isEmailAuth ? 'email' : 'oauth');
         
         if (!isEmailAuth && user.idToken) {
           headers['Authorization'] = `Bearer ${user.idToken}`;
@@ -63,6 +69,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const queryParams = isEmailAuth
           ? `?userId=${user.userId}&authType=email`
           : '';
+        
+        console.log('👤 Fetching cart from:', `/api/cart${queryParams}`);
         
         // Call API route to get cart
         const response = await fetch(`/api/cart${queryParams}`, {
@@ -77,6 +85,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         console.log('📦 Cart API Response:', data);
         console.log('📦 Cart items from API:', data.cart?.items);
+        console.log('📦 API success status:', data.success);
+        console.log('📦 Cart object exists:', !!data.cart);
+        console.log('📦 Items array exists:', !!data.cart?.items);
+        console.log('📦 Items array length:', data.cart?.items?.length);
         
         if (data.success && data.cart && data.cart.items) {
           // Convert API cart items to local CartItem format (with backward compatibility)
@@ -91,30 +103,36 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             quantity: number; 
             image: string; 
             manufacturer: string;
-          }) => ({
-            id: item.id,
-            name: item.name,
-            // Handle both nested pricing (new) and flat pricing (old)
-            pricing: item.pricing ? {
-              basePrice: item.pricing.basePrice,
-              markupPercentage: item.pricing.markupPercentage,
-              markup: item.pricing.markup,
-              finalPrice: item.pricing.finalPrice,
-            } : {
-              // Backward compatibility for old flat structure
-              basePrice: item.basePrice || item.price || 0,
-              markupPercentage: item.markupPercentage || 0,
-              markup: item.markup || 0,
-              finalPrice: item.price || 0,
-            },
-            quantity: item.quantity,
-            image: item.image,
-            brand: item.manufacturer,
-          }));
+          }) => {
+            console.log('📦 Mapping item:', item.name);
+            return {
+              id: item.id,
+              name: item.name,
+              // Handle both nested pricing (new) and flat pricing (old)
+              pricing: item.pricing ? {
+                basePrice: item.pricing.basePrice,
+                markupPercentage: item.pricing.markupPercentage,
+                markup: item.pricing.markup,
+                finalPrice: item.pricing.finalPrice,
+              } : {
+                // Backward compatibility for old flat structure
+                basePrice: item.basePrice || item.price || 0,
+                markupPercentage: item.markupPercentage || 0,
+                markup: item.markup || 0,
+                finalPrice: item.price || 0,
+              },
+              quantity: item.quantity,
+              image: item.image,
+              brand: item.manufacturer,
+            };
+          });
+          console.log('📦 Mapped local cart items count:', localCartItems.length);
           console.log('📦 Mapped local cart items:', localCartItems);
           setCart(localCartItems);
+          console.log('📦 Cart state updated with', localCartItems.length, 'items');
         } else {
           console.warn('⚠️ Cart API returned no items or unsuccessful response');
+          console.warn('⚠️ Response data:', JSON.stringify(data, null, 2));
         }
       } catch (error) {
         console.error('Error loading cart from API:', error);
