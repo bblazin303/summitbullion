@@ -2,10 +2,9 @@
 
 import { useEffect, useRef } from 'react';
 import { useUser } from '@account-kit/react';
-import { createUserProfile, getUserProfile, updateUserProfile } from '@/lib/firebaseHelpers';
 
 /**
- * Hook that automatically syncs Alchemy auth to Firebase
+ * Hook that automatically syncs Alchemy auth to Firebase via API route
  * Creates/updates user profile in Firestore when user logs in
  */
 export function useFirebaseSync() {
@@ -16,75 +15,105 @@ export function useFirebaseSync() {
   useEffect(() => {
     // If no user, reset the synced ID
     if (!user) {
+      console.log('🔴 No user detected, clearing sync');
       syncedUserIdRef.current = null;
       return;
     }
 
+    console.log('👤 User detected:', {
+      userId: user.userId,
+      email: user.email,
+      hasIdToken: !!user.idToken,
+      alreadySynced: syncedUserIdRef.current === user.userId,
+      isSyncing: isSyncingRef.current
+    });
+
     // Skip if already synced this user
     if (syncedUserIdRef.current === user.userId) {
+      console.log('⏭️ User already synced, skipping');
       return;
     }
 
     // Skip if currently syncing
     if (isSyncingRef.current) {
+      console.log('⏳ Sync already in progress, skipping');
       return;
     }
 
-    // Sync user to Firebase
-    const syncUserToFirebase = async () => {
+    // Sync user to Firebase via API route
+    const syncUserToAPI = async () => {
       if (!user.email) {
         console.warn('⚠️ User logged in but no email provided');
         return;
       }
 
+      // Handle email auth (no idToken) vs Google OAuth (has idToken)
+      const isEmailAuth = !user.idToken;
+      
+      if (isEmailAuth) {
+        console.log('📧 Email auth detected - using alternative sync method');
+      }
+
       try {
         isSyncingRef.current = true;
-        console.log('🔄 Syncing user to Firebase...', {
+        console.log('🔄 Syncing user to Firebase via API...', {
           userId: user.userId,
           email: user.email,
-          wallet: user.address
+          wallet: user.address,
+          authType: isEmailAuth ? 'email' : 'google'
         });
 
-        // Check if user already exists in Firebase
-        const existingUser = await getUserProfile(user.userId);
+        // Prepare request headers and body based on auth type
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Add JWT token for Google OAuth users only
+        if (!isEmailAuth && user.idToken) {
+          headers['Authorization'] = `Bearer ${user.idToken}`;
+        }
 
-        if (existingUser) {
-          // User exists - update their profile
-          console.log('✅ User exists, updating profile...');
-          await updateUserProfile(user.userId, {
+        // Call API route to sync user
+        const response = await fetch('/api/user/sync', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            // For email auth, we send user data directly (no JWT to verify)
+            userId: user.userId,
             email: user.email,
-            walletAddress: user.address,
-            solanaAddress: user.solanaAddress,
-            alchemyOrgId: user.orgId,
-            accountType: user.type,
-            updatedAt: new Date(),
-          });
-          console.log('✅ User profile updated in Firebase');
-        } else {
-          // New user - create profile
-          console.log('🆕 New user, creating profile...');
-          await createUserProfile(
-            user.userId,
-            user.email,
-            user.address,
-            user.orgId,
-            user.type,
-            user.solanaAddress
-          );
-          console.log('✅ User profile created in Firebase');
+            walletAddress: user.address, // EVM wallet address from Alchemy
+            solanaAddress: user.solanaAddress, // Solana wallet address
+            accountType: user.type, // 'sca' or 'eoa'
+            orgId: user.orgId, // Alchemy organization ID
+            authType: isEmailAuth ? 'email' : 'google', // Indicate auth method
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to sync user');
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+          if (data.isNewUser) {
+            console.log('✅ New user profile created in Firebase');
+          } else {
+            console.log('✅ User profile updated in Firebase');
+          }
         }
 
         // Mark this user as synced
         syncedUserIdRef.current = user.userId;
       } catch (error) {
-        console.error('❌ Error syncing user to Firebase:', error);
+        console.error('❌ Error syncing user to API:', error);
       } finally {
         isSyncingRef.current = false;
       }
     };
 
-    syncUserToFirebase();
-  }, [user]);
+    syncUserToAPI();
+  }, [user?.userId, user?.email, user?.address, user?.idToken, user?.solanaAddress, user?.type]);
 
   return {
     isSynced: syncedUserIdRef.current === user?.userId,

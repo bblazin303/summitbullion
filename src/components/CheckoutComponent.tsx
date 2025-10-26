@@ -163,7 +163,7 @@ const CheckoutComponent: React.FC = () => {
                 <div className="flex items-center md:justify-center relative">
                   <div className="flex flex-col gap-1">
                     <p className="font-inter font-medium text-[14px] sm:text-[16px] text-black">
-                      ${(item.price * item.quantity).toFixed(2)} USD
+                      ${(item.pricing.finalPrice * item.quantity).toFixed(2)} USD
                     </p>
                     <div className="flex items-center gap-1">
                       <div className="relative w-[12px] h-[12px]">

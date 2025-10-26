@@ -1,21 +1,7 @@
-// Firebase Helper Functions
-// Common operations for users, carts, and orders
+// Firebase Admin Helper Functions
+// Server-side operations with full admin privileges
 
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
-  collection,
-  query,
-  where,
-  getDocs,
-  serverTimestamp,
-  Timestamp,
-  deleteDoc,
-  DocumentData
-} from 'firebase/firestore';
-import { firestore } from './firebase';
+import { adminDb } from './firebase-admin';
 import { User, KYCStatus, ShippingAddress } from '@/types/user';
 import { Cart, CartItem } from '@/types/cart';
 import { Order } from '@/types/order';
@@ -36,7 +22,11 @@ export async function createUserProfile(
   accountType: 'sca' | 'eoa' = 'sca',
   solanaAddress?: string
 ): Promise<User> {
-  const userRef = doc(firestore, 'users', uid);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const userRef = adminDb.collection('users').doc(uid);
   
   const userData: User = {
     uid,
@@ -50,10 +40,10 @@ export async function createUserProfile(
     updatedAt: new Date(),
   };
   
-  await setDoc(userRef, {
+  await userRef.set({
     ...userData,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
   });
   
   return userData;
@@ -63,19 +53,25 @@ export async function createUserProfile(
  * Get user profile from Firestore
  */
 export async function getUserProfile(uid: string): Promise<User | null> {
-  const userRef = doc(firestore, 'users', uid);
-  const userSnap = await getDoc(userRef);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const userRef = adminDb.collection('users').doc(uid);
+  const userSnap = await userRef.get();
   
-  if (!userSnap.exists()) {
+  if (!userSnap.exists) {
     return null;
   }
   
   const data = userSnap.data();
+  if (!data) return null;
+
   return {
     ...data,
-    createdAt: data.createdAt?.toDate(),
-    updatedAt: data.updatedAt?.toDate(),
-    kycCompletedAt: data.kycCompletedAt?.toDate(),
+    createdAt: data.createdAt?.toDate?.() || data.createdAt,
+    updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+    kycCompletedAt: data.kycCompletedAt?.toDate?.() || data.kycCompletedAt,
   } as User;
 }
 
@@ -86,11 +82,15 @@ export async function updateUserProfile(
   uid: string,
   updates: Partial<Omit<User, 'uid' | 'createdAt'>>
 ): Promise<void> {
-  const userRef = doc(firestore, 'users', uid);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const userRef = adminDb.collection('users').doc(uid);
   
-  await updateDoc(userRef, {
+  await userRef.update({
     ...updates,
-    updatedAt: serverTimestamp(),
+    updatedAt: new Date(),
   });
 }
 
@@ -105,12 +105,15 @@ export async function updateUserKYC(
     kycCompletedAt?: Date;
   }
 ): Promise<void> {
-  const userRef = doc(firestore, 'users', uid);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const userRef = adminDb.collection('users').doc(uid);
   
-  await updateDoc(userRef, {
+  await userRef.update({
     ...updates,
-    ...(updates.kycCompletedAt && { kycCompletedAt: Timestamp.fromDate(updates.kycCompletedAt) }),
-    updatedAt: serverTimestamp(),
+    updatedAt: new Date(),
   });
 }
 
@@ -121,19 +124,23 @@ export async function addSavedAddress(
   uid: string,
   address: ShippingAddress
 ): Promise<void> {
-  const userRef = doc(firestore, 'users', uid);
-  const userSnap = await getDoc(userRef);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const userRef = adminDb.collection('users').doc(uid);
+  const userSnap = await userRef.get();
   
-  if (!userSnap.exists()) {
+  if (!userSnap.exists) {
     throw new Error('User not found');
   }
   
   const userData = userSnap.data();
-  const savedAddresses = userData.savedAddresses || [];
+  const savedAddresses = userData?.savedAddresses || [];
   
-  await updateDoc(userRef, {
+  await userRef.update({
     savedAddresses: [...savedAddresses, address],
-    updatedAt: serverTimestamp(),
+    updatedAt: new Date(),
   });
 }
 
@@ -145,21 +152,27 @@ export async function addSavedAddress(
  * Get user's cart from Firestore
  */
 export async function getCart(uid: string): Promise<Cart | null> {
-  const cartRef = doc(firestore, 'users', uid, 'cart', 'current');
-  const cartSnap = await getDoc(cartRef);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const cartRef = adminDb.collection('users').doc(uid).collection('cart').doc('current');
+  const cartSnap = await cartRef.get();
   
-  if (!cartSnap.exists()) {
+  if (!cartSnap.exists) {
     return null;
   }
   
   const data = cartSnap.data();
+  if (!data) return null;
+
   return {
     ...data,
-    items: data.items.map((item: DocumentData) => ({
+    items: (data.items || []).map((item: any) => ({
       ...item,
-      addedAt: item.addedAt?.toDate(),
+      addedAt: item.addedAt?.toDate?.() || item.addedAt,
     })),
-    updatedAt: data.updatedAt?.toDate(),
+    updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
   } as Cart;
 }
 
@@ -170,14 +183,18 @@ export async function addToCart(
   uid: string,
   item: CartItem
 ): Promise<void> {
-  const cartRef = doc(firestore, 'users', uid, 'cart', 'current');
-  const cartSnap = await getDoc(cartRef);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const cartRef = adminDb.collection('users').doc(uid).collection('cart').doc('current');
+  const cartSnap = await cartRef.get();
   
   let items: CartItem[] = [];
   
-  if (cartSnap.exists()) {
+  if (cartSnap.exists) {
     const existingCart = cartSnap.data();
-    items = existingCart.items || [];
+    items = existingCart?.items || [];
     
     // Check if item already in cart
     const existingItemIndex = items.findIndex(i => i.id === item.id);
@@ -192,18 +209,39 @@ export async function addToCart(
     items = [item];
   }
   
-  const subtotal = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+  const subtotal = items.reduce((sum, i) => sum + (i.pricing.finalPrice * i.quantity), 0);
   const itemCount = items.reduce((count, i) => count + i.quantity, 0);
   
-  await setDoc(cartRef, {
+  await cartRef.set({
     userId: uid,
     items: items.map(i => ({
-      ...i,
-      addedAt: i.addedAt instanceof Date ? Timestamp.fromDate(i.addedAt) : i.addedAt,
+      // Product identifiers
+      id: i.id,
+      inventoryId: i.inventoryId,
+      sku: i.sku,
+      name: i.name,
+      
+      // Nested pricing breakdown - grouped together in Firebase Console
+      pricing: {
+        basePrice: i.pricing.basePrice,
+        markupPercentage: i.pricing.markupPercentage,
+        markup: i.pricing.markup,
+        finalPrice: i.pricing.finalPrice,
+      },
+      
+      // Product details
+      quantity: i.quantity,
+      image: i.image,
+      manufacturer: i.manufacturer,
+      metalSymbol: i.metalSymbol,
+      metalOz: i.metalOz,
+      
+      // Timestamp
+      addedAt: i.addedAt instanceof Date ? i.addedAt : new Date(),
     })),
     subtotal,
     itemCount,
-    updatedAt: serverTimestamp(),
+    updatedAt: new Date(),
   });
 }
 
@@ -215,15 +253,19 @@ export async function updateCartItemQuantity(
   itemId: string,
   quantity: number
 ): Promise<void> {
-  const cartRef = doc(firestore, 'users', uid, 'cart', 'current');
-  const cartSnap = await getDoc(cartRef);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const cartRef = adminDb.collection('users').doc(uid).collection('cart').doc('current');
+  const cartSnap = await cartRef.get();
   
-  if (!cartSnap.exists()) {
+  if (!cartSnap.exists) {
     throw new Error('Cart not found');
   }
   
   const cart = cartSnap.data();
-  let items: CartItem[] = cart.items || [];
+  let items: CartItem[] = cart?.items || [];
   
   if (quantity <= 0) {
     // Remove item
@@ -236,14 +278,14 @@ export async function updateCartItemQuantity(
     }
   }
   
-  const subtotal = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+  const subtotal = items.reduce((sum, i) => sum + (i.pricing.finalPrice * i.quantity), 0);
   const itemCount = items.reduce((count, i) => count + i.quantity, 0);
   
-  await updateDoc(cartRef, {
+  await cartRef.update({
     items,
     subtotal,
     itemCount,
-    updatedAt: serverTimestamp(),
+    updatedAt: new Date(),
   });
 }
 
@@ -261,8 +303,12 @@ export async function removeFromCart(
  * Clear entire cart
  */
 export async function clearCart(uid: string): Promise<void> {
-  const cartRef = doc(firestore, 'users', uid, 'cart', 'current');
-  await deleteDoc(cartRef);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const cartRef = adminDb.collection('users').doc(uid).collection('cart').doc('current');
+  await cartRef.delete();
 }
 
 // =============================================================================
@@ -273,16 +319,19 @@ export async function clearCart(uid: string): Promise<void> {
  * Create a new order in Firestore
  */
 export async function createOrder(order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-  const ordersRef = collection(firestore, 'orders');
-  const orderRef = doc(ordersRef);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const ordersRef = adminDb.collection('orders');
+  const orderRef = ordersRef.doc();
   
-  await setDoc(orderRef, {
+  await orderRef.set({
     ...order,
     id: orderRef.id,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-    shippingAddress: order.shippingAddress,
-    paymentCompletedAt: order.paymentCompletedAt ? Timestamp.fromDate(order.paymentCompletedAt) : null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    paymentCompletedAt: order.paymentCompletedAt || null,
   });
   
   return orderRef.id;
@@ -292,19 +341,25 @@ export async function createOrder(order: Omit<Order, 'id' | 'createdAt' | 'updat
  * Get order by ID
  */
 export async function getOrder(orderId: string): Promise<Order | null> {
-  const orderRef = doc(firestore, 'orders', orderId);
-  const orderSnap = await getDoc(orderRef);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const orderRef = adminDb.collection('orders').doc(orderId);
+  const orderSnap = await orderRef.get();
   
-  if (!orderSnap.exists()) {
+  if (!orderSnap.exists) {
     return null;
   }
   
   const data = orderSnap.data();
+  if (!data) return null;
+
   return {
     ...data,
-    createdAt: data.createdAt?.toDate(),
-    updatedAt: data.updatedAt?.toDate(),
-    paymentCompletedAt: data.paymentCompletedAt?.toDate(),
+    createdAt: data.createdAt?.toDate?.() || data.createdAt,
+    updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+    paymentCompletedAt: data.paymentCompletedAt?.toDate?.() || data.paymentCompletedAt,
   } as Order;
 }
 
@@ -312,18 +367,21 @@ export async function getOrder(orderId: string): Promise<Order | null> {
  * Get all orders for a user
  */
 export async function getUserOrders(uid: string): Promise<Order[]> {
-  const ordersRef = collection(firestore, 'orders');
-  const q = query(ordersRef, where('userId', '==', uid));
-  const querySnapshot = await getDocs(q);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const ordersRef = adminDb.collection('orders');
+  const querySnapshot = await ordersRef.where('userId', '==', uid).get();
   
   const orders: Order[] = [];
   querySnapshot.forEach((doc) => {
     const data = doc.data();
     orders.push({
       ...data,
-      createdAt: data.createdAt?.toDate(),
-      updatedAt: data.updatedAt?.toDate(),
-      paymentCompletedAt: data.paymentCompletedAt?.toDate(),
+      createdAt: data.createdAt?.toDate?.() || data.createdAt,
+      updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+      paymentCompletedAt: data.paymentCompletedAt?.toDate?.() || data.paymentCompletedAt,
     } as Order);
   });
   
@@ -338,11 +396,15 @@ export async function updateOrderStatus(
   orderId: string,
   updates: Partial<Order>
 ): Promise<void> {
-  const orderRef = doc(firestore, 'orders', orderId);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const orderRef = adminDb.collection('orders').doc(orderId);
   
-  await updateDoc(orderRef, {
+  await orderRef.update({
     ...updates,
-    updatedAt: serverTimestamp(),
+    updatedAt: new Date(),
   });
 }
 

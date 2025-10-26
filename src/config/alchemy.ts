@@ -15,7 +15,7 @@ const uiConfig: AlchemyAccountsUIConfig = {
         { type: "social" as const, authProviderId: "google", mode: "popup" as const },
       ],
     ],
-    addPasskeyOnSignup: true, // Fixed: was "addPasskey"
+    addPasskeyOnSignup: false, // Disabled - too cumbersome for marketplace
   },
 };
 

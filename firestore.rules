@@ -3,29 +3,33 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // TEMPORARY: Open permissions for development
-    // TODO: Move to server-side API routes with proper authentication
+    // PRODUCTION-READY RULES
+    // All writes go through API routes with Firebase Admin SDK
+    // Client can only read certain data
     
-    // Users collection - temporarily allow all operations for development
+    // Users collection - Client CANNOT write directly (only via API routes)
     match /users/{userId} {
-      allow read, write: if true;
+      // No direct client access - all operations through API routes
+      allow read, write: if false;
+      
+      // Cart subcollection - No direct client access
+      match /cart/{cartId} {
+        allow read, write: if false;
+      }
     }
     
-    // Carts collection - temporarily allow all operations for development
-    match /carts/{userId} {
-      allow read, write: if true;
-    }
-    
-    // Orders collection - temporarily allow all operations for development
+    // Orders collection - Client CANNOT write directly
     match /orders/{orderId} {
-      allow read, write: if true;
+      // All operations through API routes only
+      allow read, write: if false;
     }
     
-    // Products collection - read-only for all users
+    // Products collection - Read-only for all users (if you add products later)
     match /products/{productId} {
       allow read: if true;
       allow write: if false;
     }
   }
 }
+
 

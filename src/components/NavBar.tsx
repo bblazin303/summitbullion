@@ -131,7 +131,7 @@ const NavBar: React.FC = () => {
                 pathname === '/marketplace' ? 'text-[#ffb546]' : 'text-[#141722] hover:text-[#ffb546]'
               }`}
             >
-              Products
+              Shop
             </Link>
             <Link href="/docs" className="font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14.136px] text-[#141722] uppercase tracking-wider hover:text-[#ffb546] transition-colors whitespace-nowrap">
               Docs
@@ -305,7 +305,7 @@ const NavBar: React.FC = () => {
                                 {/* Price & Remove */}
                                 <div className="flex items-center gap-3">
                                   <p className="font-inter font-bold text-[16px] text-black">
-                                    ${(item.price * item.quantity).toFixed(2)}
+                                    ${(item.pricing.finalPrice * item.quantity).toFixed(2)}
                                   </p>
                                   <button
                                     onClick={() => removeFromCart(item.id)}
@@ -452,7 +452,7 @@ const NavBar: React.FC = () => {
                                 {/* Price & Remove */}
                                 <div className="flex items-center gap-2">
                                   <p className="font-inter font-bold text-[14px] text-black">
-                                    ${(item.price * item.quantity).toFixed(2)}
+                                    ${(item.pricing.finalPrice * item.quantity).toFixed(2)}
                                   </p>
                                   <button
                                     onClick={() => removeFromCart(item.id)}
@@ -565,7 +565,7 @@ const NavBar: React.FC = () => {
                   pathname === '/marketplace' ? 'text-[#ffb546]' : 'text-[#141722] hover:text-[#ffb546]'
                 }`}
               >
-                Products
+                Shop
               </Link>
               <Link 
                 href="/docs" 
