@@ -6,18 +6,27 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { gsap } from 'gsap';
 import { useCart } from '@/context/CartContext';
+import { useAuthModal, useUser, useLogout, useSignerStatus } from '@account-kit/react';
 import ShoppingCartIcon from '/public/images/icons/shoppingcart.svg';
 
 const NavBar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const desktopCartButtonRef = useRef<HTMLButtonElement>(null);
   const mobileCartButtonRef = useRef<HTMLButtonElement>(null);
   const desktopCartDropdownRef = useRef<HTMLDivElement>(null);
   const mobileCartDropdownRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { cart, getCartCount, getCartTotal, removeFromCart, updateQuantity } = useCart();
+  
+  // Alchemy Authentication
+  const user = useUser();
+  const { openAuthModal } = useAuthModal();
+  const { logout } = useLogout();
+  const signerStatus = useSignerStatus();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -27,7 +36,7 @@ const NavBar: React.FC = () => {
     setIsMobileMenuOpen(false);
   };
 
-  // Close cart dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -35,20 +44,25 @@ const NavBar: React.FC = () => {
       const clickedInsideMobileButton = mobileCartButtonRef.current?.contains(target);
       const clickedInsideDesktopDropdown = desktopCartDropdownRef.current?.contains(target);
       const clickedInsideMobileDropdown = mobileCartDropdownRef.current?.contains(target);
+      const clickedInsideUserMenu = userMenuRef.current?.contains(target);
       
       if (!clickedInsideDesktopButton && !clickedInsideMobileButton && !clickedInsideDesktopDropdown && !clickedInsideMobileDropdown) {
         setIsCartOpen(false);
       }
+      
+      if (!clickedInsideUserMenu) {
+        setIsUserMenuOpen(false);
+      }
     };
 
-    if (isCartOpen) {
+    if (isCartOpen || isUserMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isCartOpen]);
+  }, [isCartOpen, isUserMenuOpen]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -127,12 +141,69 @@ const NavBar: React.FC = () => {
             </a>
           </div>
 
-          {/* Right Column - Connect Wallet Button & Shopping Cart / Mobile Menu */}
+          {/* Right Column - Auth Button & Shopping Cart / Mobile Menu */}
           <div className="flex-shrink-0 flex items-center gap-2 md:gap-3">
-            {/* Connect Wallet Button (Desktop) */}
-            <button className="hidden md:block bg-[#141722] text-[#efe9e0] px-1.5 sm:px-2 md:px-3 lg:px-4 2xl:px-[28px] py-1 sm:py-1.5 md:py-2 lg:py-2.5 2xl:py-[17px] rounded-[42px] font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14px] uppercase tracking-wider hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer">
-              Sign in
-            </button>
+            {/* Auth Button (Desktop) */}
+            <div className="hidden md:block relative">
+              {signerStatus.isInitializing ? (
+                <button className="bg-[#141722] text-[#efe9e0] px-1.5 sm:px-2 md:px-3 lg:px-4 2xl:px-[28px] py-1 sm:py-1.5 md:py-2 lg:py-2.5 2xl:py-[17px] rounded-[42px] font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14px] uppercase tracking-wider opacity-50 cursor-wait">
+                  Loading...
+                </button>
+              ) : user ? (
+                <>
+                  <button 
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="bg-[#141722] text-[#efe9e0] px-1.5 sm:px-2 md:px-3 lg:px-4 2xl:px-[28px] py-1 sm:py-1.5 md:py-2 lg:py-2.5 2xl:py-[17px] rounded-[42px] font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14px] uppercase tracking-wider hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer"
+                  >
+                    {user.email ? user.email.slice(0, 12) + (user.email.length > 12 ? '...' : '') : 'Account'}
+                  </button>
+                  
+                  {/* User Dropdown Menu */}
+                  {isUserMenuOpen && (
+                    <div 
+                      ref={userMenuRef}
+                      className="absolute right-0 mt-2 w-[240px] bg-white rounded-[18px] shadow-[0_8px_31.1px_-9px_rgba(0,0,0,0.25)] overflow-hidden z-50"
+                    >
+                      <div className="p-4 border-b border-[rgba(0,0,0,0.1)]">
+                        <p className="font-inter font-semibold text-[14px] text-black truncate">
+                          {user.email || 'Account'}
+                        </p>
+                        {user.address && (
+                          <p className="font-inter font-normal text-[12px] text-[#7c7c7c] mt-1">
+                            {user.address.slice(0, 6)}...{user.address.slice(-4)}
+                          </p>
+                        )}
+                      </div>
+                      <div className="p-2">
+                        <Link
+                          href="/orders"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="block w-full text-left px-4 py-2 font-inter text-[14px] text-[#141722] hover:bg-[#fcf8f1] rounded-[12px] transition-colors"
+                        >
+                          My Orders
+                        </Link>
+                        <button
+                          onClick={() => {
+                            logout();
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 font-inter text-[14px] text-[#ff3333] hover:bg-[#fcf8f1] rounded-[12px] transition-colors"
+                        >
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <button 
+                  onClick={openAuthModal}
+                  className="bg-[#141722] text-[#efe9e0] px-1.5 sm:px-2 md:px-3 lg:px-4 2xl:px-[28px] py-1 sm:py-1.5 md:py-2 lg:py-2.5 2xl:py-[17px] rounded-[42px] font-inter font-medium text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs 2xl:text-[14px] uppercase tracking-wider hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer"
+                >
+                  Sign in
+                </button>
+              )}
+            </div>
 
             {/* Shopping Cart Button (Desktop) */}
             <div className="hidden md:block relative">
@@ -512,11 +583,52 @@ const NavBar: React.FC = () => {
               </a>
             </div>
 
-            {/* Connect Wallet Button - Positioned at bottom */}
-            <div className="mt-auto mb-8">
-              <button className="w-full inline-flex px-8 py-4 justify-center items-center gap-[10px] rounded-[42px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-lg uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300 cursor-pointer">
-                Sign in
-              </button>
+            {/* Auth Section - Positioned at bottom */}
+            <div className="mt-auto mb-8 space-y-4">
+              {signerStatus.isInitializing ? (
+                <button className="w-full inline-flex px-8 py-4 justify-center items-center gap-[10px] rounded-[42px] bg-[#141722] font-inter font-medium text-lg uppercase tracking-wider text-[#efe9e0] opacity-50 cursor-wait">
+                  Loading...
+                </button>
+              ) : user ? (
+                <>
+                  <div className="bg-white rounded-[18px] p-4 mb-4 border border-[rgba(0,0,0,0.1)]">
+                    <p className="font-inter font-semibold text-[14px] text-black truncate">
+                      {user.email || 'Account'}
+                    </p>
+                    {user.address && (
+                      <p className="font-inter font-normal text-[12px] text-[#7c7c7c] mt-1">
+                        Wallet: {user.address.slice(0, 6)}...{user.address.slice(-4)}
+                      </p>
+                    )}
+                  </div>
+                  <Link
+                    href="/orders"
+                    onClick={closeMobileMenu}
+                    className="w-full inline-flex px-8 py-4 justify-center items-center gap-[10px] rounded-[42px] bg-[#141722] font-inter font-medium text-lg uppercase tracking-wider text-[#efe9e0] hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300"
+                  >
+                    My Orders
+                  </Link>
+                  <button 
+                    onClick={() => {
+                      logout();
+                      closeMobileMenu();
+                    }}
+                    className="w-full inline-flex px-8 py-4 justify-center items-center gap-[10px] rounded-[42px] border-2 border-[#ff3333] font-inter font-medium text-lg uppercase tracking-wider text-[#ff3333] hover:bg-[#ff3333] hover:text-white transition-all duration-300 cursor-pointer"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <button 
+                  onClick={() => {
+                    openAuthModal();
+                    closeMobileMenu();
+                  }}
+                  className="w-full inline-flex px-8 py-4 justify-center items-center gap-[10px] rounded-[42px] bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] font-inter font-medium text-lg uppercase tracking-wider text-black hover:shadow-lg transition-all duration-300 cursor-pointer"
+                >
+                  Sign in
+                </button>
+              )}
             </div>
           </div>
         </div>

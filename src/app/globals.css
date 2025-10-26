@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@config "../../tailwind.config.ts";
 
 :root {
   --background: #ffffff;
@@ -16,10 +17,18 @@
   --font-family-inter: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Force light mode for Summit Bullion */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #fcf8f1;
+    --foreground: #141722;
+  }
+
+  /* Keep Alchemy modal light even in dark mode */
+  .alchemy-modal,
+  [class*="akui"],
+  [class*="modal"] {
+    color-scheme: light !important;
   }
 }
 
@@ -27,6 +36,95 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Alchemy Modal Customization - Summit Bullion Theme */
+.alchemy-modal,
+[class*="akui"],
+[class*="modal"] {
+  /* Modal background - Clean white */
+  --akui-bg-surface-default: #FFFFFF !important;
+  --akui-bg-surface-inset: #FFFFFF !important;
+
+  /* Text colors */
+  --akui-fg-primary: #141722 !important;
+  --akui-fg-secondary: #7c7c7c !important;
+  --akui-fg-accent-brand: #FFB546 !important;
+
+  /* Button colors - Black with gold hover */
+  --akui-btn-primary: #141722 !important;
+  --akui-btn-primary-hover: #FFB546 !important;
+  --akui-btn-primary-fg: #FFFFFF !important;
+
+  /* Borders - Subtle gray */
+  --akui-border-default: rgba(188, 188, 188, 0.4) !important;
+  --akui-border-input-default: rgba(188, 188, 188, 0.5) !important;
+  --akui-border-input-focused: #FFB546 !important;
+
+  /* Border radius */
+  --akui-border-radius-modal: 24px !important;
+  --akui-border-radius-btn: 42px !important;
+  --akui-border-radius-input: 42px !important;
+
+  /* Input backgrounds - White */
+  --akui-bg-input-default: #FFFFFF !important;
+}
+
+/* Direct overrides for buttons - Black with gold hover */
+.akui-btn-primary,
+button[class*="primary"],
+button[class*="primary"]:disabled,
+button[class*="primary"][disabled] {
+  background: #141722 !important;
+  color: #FFFFFF !important;
+  border-radius: 42px !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  transition: all 0.2s ease !important;
+  border: none !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+}
+
+/* Primary button hover - Simple gold background */
+.akui-btn-primary:hover:not(:disabled),
+button[class*="primary"]:hover:not(:disabled) {
+  background: #FFB546 !important;
+  color: #141722 !important;
+}
+
+/* Secondary button (Skip, etc.) - Light gray with readable text */
+.akui-btn-secondary,
+button[class*="secondary"] {
+  background: #f3f4f6 !important;
+  color: #141722 !important;
+  border-radius: 42px !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  transition: all 0.2s ease !important;
+  border: none !important;
+}
+
+/* Secondary button hover - Slightly darker */
+.akui-btn-secondary:hover,
+button[class*="secondary"]:hover {
+  background: #e5e7eb !important;
+}
+
+/* Softer divider lines */
+[class*="divider"],
+hr {
+  border-color: rgba(188, 188, 188, 0.3) !important;
+  opacity: 0.5 !important;
+}
+
+/* Social buttons - Subtle hover (just slightly darker border) */
+button[class*="auth"]:hover,
+button[class*="Auth"]:hover {
+  border-color: rgba(20, 23, 34, 0.15) !important;
+  background: rgba(20, 23, 34, 0.02) !important;
 }
 
 .font-inter {

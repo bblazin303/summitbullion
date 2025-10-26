@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // TEMPORARY: Open permissions for development
+    // TODO: Move to server-side API routes with proper authentication
+    
+    // Users collection - temporarily allow all operations for development
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+    
+    // Carts collection - temporarily allow all operations for development
+    match /carts/{userId} {
+      allow read, write: if true;
+    }
+    
+    // Orders collection - temporarily allow all operations for development
+    match /orders/{orderId} {
+      allow read, write: if true;
+    }
+    
+    // Products collection - read-only for all users
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
+

@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
+import { AlchemyProviders } from "./providers";
+import { FirebaseSyncProvider } from "@/components/FirebaseSyncProvider";
+import { cookieToInitialState } from "@account-kit/core";
+import { config } from "@/config/alchemy";
+import { headers } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -88,11 +93,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Get initial auth state from cookies for Alchemy
+  const headersList = await headers();
+  const initialState = cookieToInitialState(
+    config,
+    headersList.get("cookie") ?? undefined
+  );
+
   return (
     <html lang="en" className="bg-[#fcf8f1]">
       <head>
@@ -119,9 +131,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased bg-[#fcf8f1]`}
       >
-        <CartProvider>
-          {children}
-        </CartProvider>
+        <AlchemyProviders initialState={initialState}>
+          <FirebaseSyncProvider>
+            <CartProvider>
+              {children}
+            </CartProvider>
+          </FirebaseSyncProvider>
+        </AlchemyProviders>
       </body>
     </html>
   );

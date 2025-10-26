@@ -7,6 +7,7 @@ import { gsap } from 'gsap';
 import { useCart } from '@/context/CartContext';
 import type { Inventory } from '@/types/platformGold';
 import { fetchInventoryById, applyMarkup, getMetalDisplayName } from '@/lib/platformGoldApi';
+import { useAuthenticatedAction } from '@/hooks/useAuthenticatedAction';
 
 // Import product images (fallback)
 import ProductImage1 from '/public/images/product-image1.png';
@@ -31,6 +32,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const relatedProductsRef = useRef<HTMLDivElement>(null);
   const { addToCart } = useCart();
+  const { executeIfAuthenticated } = useAuthenticatedAction();
   const [productData, setProductData] = useState<Inventory | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -240,13 +242,16 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
   const handleAddToCart = () => {
     if (!product) return;
     
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images[0] as StaticImageData | string,
-      brand: product.brand,
-      quantity: quantity
+    // Require authentication before adding to cart
+    executeIfAuthenticated(() => {
+      addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0] as StaticImageData | string,
+        brand: product.brand,
+        quantity: quantity
+      });
     });
   };
 
