@@ -15,28 +15,30 @@ export function useFirebaseSync() {
   useEffect(() => {
     // If no user, reset the synced ID
     if (!user) {
-      console.log('🔴 No user detected, clearing sync');
       syncedUserIdRef.current = null;
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('firebase_synced_user');
+      }
       return;
     }
 
-    console.log('👤 User detected:', {
-      userId: user.userId,
-      email: user.email,
-      hasIdToken: !!user.idToken,
-      alreadySynced: syncedUserIdRef.current === user.userId,
-      isSyncing: isSyncingRef.current
-    });
+    // Check if already synced in this session (persists across page navigations)
+    const sessionSyncedUser = typeof window !== 'undefined' 
+      ? sessionStorage.getItem('firebase_synced_user') 
+      : null;
+    
+    if (sessionSyncedUser === user.userId) {
+      syncedUserIdRef.current = user.userId;
+      return;
+    }
 
     // Skip if already synced this user
     if (syncedUserIdRef.current === user.userId) {
-      console.log('⏭️ User already synced, skipping');
       return;
     }
 
     // Skip if currently syncing
     if (isSyncingRef.current) {
-      console.log('⏳ Sync already in progress, skipping');
       return;
     }
 
@@ -49,19 +51,9 @@ export function useFirebaseSync() {
 
       // Handle email auth (no idToken) vs Google OAuth (has idToken)
       const isEmailAuth = !user.idToken;
-      
-      if (isEmailAuth) {
-        console.log('📧 Email auth detected - using alternative sync method');
-      }
 
       try {
         isSyncingRef.current = true;
-        console.log('🔄 Syncing user to Firebase via API...', {
-          userId: user.userId,
-          email: user.email,
-          wallet: user.address,
-          authType: isEmailAuth ? 'email' : 'google'
-        });
 
         // Prepare request headers and body based on auth type
         const headers: Record<string, string> = {
@@ -95,16 +87,11 @@ export function useFirebaseSync() {
 
         const data = await response.json();
 
-        if (data.success) {
-          if (data.isNewUser) {
-            console.log('✅ New user profile created in Firebase');
-          } else {
-            console.log('✅ User profile updated in Firebase');
-          }
-        }
-
-        // Mark this user as synced
+        // Mark this user as synced (both in ref and sessionStorage)
         syncedUserIdRef.current = user.userId;
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('firebase_synced_user', user.userId);
+        }
       } catch (error) {
         console.error('❌ Error syncing user to API:', error);
       } finally {

@@ -37,20 +37,23 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [cartLoaded, setCartLoaded] = useState(false);
   const user = useUser();
 
-  // Load cart from API when user logs in
+  // Load cart from API when user logs in (only once per session)
   useEffect(() => {
     const loadCart = async () => {
       if (!user?.userId) {
         // User logged out - clear local cart
-        console.log('👤 No user ID, clearing cart');
         setCart([]);
+        setCartLoaded(false);
         return;
       }
 
-      console.log('👤 User logged in, loading cart for:', user.userId);
-      console.log('👤 Has idToken:', !!user.idToken);
+      // Skip if cart already loaded for this user in this session
+      if (cartLoaded) {
+        return;
+      }
 
       try {
         setIsLoading(true);
@@ -58,8 +61,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Determine auth type
         const isEmailAuth = !user.idToken;
         const headers: Record<string, string> = {};
-        
-        console.log('👤 Auth type:', isEmailAuth ? 'email' : 'oauth');
         
         if (!isEmailAuth && user.idToken) {
           headers['Authorization'] = `Bearer ${user.idToken}`;
@@ -69,8 +70,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const queryParams = isEmailAuth
           ? `?userId=${user.userId}&authType=email`
           : '';
-        
-        console.log('👤 Fetching cart from:', `/api/cart${queryParams}`);
         
         // Call API route to get cart
         const response = await fetch(`/api/cart${queryParams}`, {
@@ -82,13 +81,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         
         const data = await response.json();
-        
-        console.log('📦 Cart API Response:', data);
-        console.log('📦 Cart items from API:', data.cart?.items);
-        console.log('📦 API success status:', data.success);
-        console.log('📦 Cart object exists:', !!data.cart);
-        console.log('📦 Items array exists:', !!data.cart?.items);
-        console.log('📦 Items array length:', data.cart?.items?.length);
         
         if (data.success && data.cart && data.cart.items) {
           // Convert API cart items to local CartItem format (with backward compatibility)
@@ -104,7 +96,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             image: string; 
             manufacturer: string;
           }) => {
-            console.log('📦 Mapping item:', item.name);
             return {
               id: item.id,
               name: item.name,
@@ -126,13 +117,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               brand: item.manufacturer,
             };
           });
-          console.log('📦 Mapped local cart items count:', localCartItems.length);
-          console.log('📦 Mapped local cart items:', localCartItems);
           setCart(localCartItems);
-          console.log('📦 Cart state updated with', localCartItems.length, 'items');
-        } else {
-          console.warn('⚠️ Cart API returned no items or unsuccessful response');
-          console.warn('⚠️ Response data:', JSON.stringify(data, null, 2));
+          setCartLoaded(true); // Mark cart as loaded
         }
       } catch (error) {
         console.error('Error loading cart from API:', error);
@@ -142,7 +128,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     loadCart();
-  }, [user?.userId, user?.idToken]);
+  }, [user?.userId, user?.idToken, cartLoaded]);
 
   const addToCart = async (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
     const newItem = { ...item, quantity: item.quantity || 1 };
@@ -211,8 +197,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       } catch (error) {
         console.error('❌ Error syncing cart to API:', error);
-        // Remove the item from local state since API failed
-        console.warn('⚠️ Rolling back - removing item from local cart');
+        // Remove the item from local state since API failed (rollback)
         setCart((prevCart) => prevCart.filter((item) => item.id !== newItem.id));
       }
     }
@@ -253,7 +238,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } catch (error) {
         console.error('❌ Error removing item from cart API:', error);
         // Rollback to previous state on error
-        console.warn('⚠️ Rolling back cart state due to API error');
         setCart(previousCart);
       }
     }
@@ -353,7 +337,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       setIsLoading(true);
-      console.log('🔄 Force reloading cart from Firebase...');
       
       const isEmailAuth = !user.idToken;
       const headers: Record<string, string> = {};
@@ -407,7 +390,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           brand: item.manufacturer,
         }));
         setCart(localCartItems);
-        console.log('✅ Cart reloaded successfully from Firebase');
       } else {
         setCart([]);
       }

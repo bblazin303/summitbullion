@@ -28,8 +28,6 @@ export async function POST(request: NextRequest) {
     // Handle different auth types
     if (authType === 'email') {
       // Email auth: Trust client-provided data (Alchemy already authenticated them)
-      console.log('📧 Email auth sync request');
-      
       if (!userId || !email) {
         return NextResponse.json(
           { success: false, error: 'Missing userId or email for email auth' },
@@ -41,7 +39,6 @@ export async function POST(request: NextRequest) {
       verifiedEmail = email;
     } else {
       // Google OAuth: Verify JWT token
-      console.log('🔐 Google OAuth sync request');
       const user = await requireAuth();
       verifiedUserId = user.userId;
       verifiedEmail = user.email;
@@ -68,8 +65,6 @@ export async function POST(request: NextRequest) {
         accountType: accountType || 'sca',
       });
       
-      console.log('✅ User profile updated:', verifiedUserId);
-      
       return NextResponse.json({
         success: true,
         message: 'User profile updated',
@@ -85,8 +80,6 @@ export async function POST(request: NextRequest) {
         accountType || 'sca',
         solanaAddress
       );
-      
-      console.log('✅ New user profile created:', verifiedUserId);
       
       return NextResponse.json({
         success: true,

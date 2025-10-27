@@ -152,38 +152,27 @@ export async function addSavedAddress(
  * Get user's cart from Firestore
  */
 export async function getCart(uid: string): Promise<Cart | null> {
-  console.log('🔧 getCart called with uid:', uid);
-  
   if (!adminDb) {
     console.error('❌ Firebase Admin not initialized');
     throw new Error('Firebase Admin not initialized');
   }
 
   const cartRef = adminDb.collection('users').doc(uid).collection('cart').doc('current');
-  console.log('🔧 Cart reference path:', cartRef.path);
-  
   const cartSnap = await cartRef.get();
-  console.log('🔧 Cart snapshot exists:', cartSnap.exists);
   
   if (!cartSnap.exists) {
-    console.log('🔧 Cart document does not exist for user:', uid);
     return null;
   }
   
   const data = cartSnap.data();
-  console.log('🔧 Raw cart data from Firestore:', data);
-  console.log('🔧 Items in raw data:', data?.items);
-  console.log('🔧 Items count:', data?.items?.length);
   
   if (!data) {
-    console.log('🔧 Cart data is empty');
     return null;
   }
 
   const cartObject = {
     ...data,
     items: (data.items || []).map((item: any) => {
-      console.log('🔧 Processing item:', item.name || item.id);
       return {
         ...item,
         addedAt: item.addedAt?.toDate?.() || item.addedAt,
@@ -191,8 +180,6 @@ export async function getCart(uid: string): Promise<Cart | null> {
     }),
     updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
   } as Cart;
-  
-  console.log('🔧 Returning cart with', cartObject.items?.length, 'items');
   
   return cartObject;
 }

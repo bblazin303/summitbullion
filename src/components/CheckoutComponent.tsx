@@ -1,49 +1,85 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-
-// Import payment icons
-import VisaLogo from '/public/images/icons/Visa.svg';
-import MastercardLogo from '/public/images/icons/Mastercard.svg';
-import PaypalLogo from '/public/images/icons/Paypal.svg';
-import ApplePayLogo from '/public/images/icons/ApplePay.svg';
-import GooglePayLogo from '/public/images/icons/GooglePay.svg';
-import SolLogo from '/public/images/icons/sol-logo.svg';
+import StripePaymentForm from '@/components/StripePaymentForm';
+import { ShippingAddressForm } from '@/components/ShippingAddressForm';
+import { ShippingAddress } from '@/types/user';
 
 const CheckoutComponent: React.FC = () => {
-  const { cart, updateQuantity, removeFromCart, getCartTotal, getCartCount } = useCart();
+  const { cart, updateQuantity, removeFromCart, getCartTotal } = useCart();
+  const [checkoutStep, setCheckoutStep] = useState<'address' | 'payment'>('address');
   const [paymentMethod, setPaymentMethod] = useState<'credit' | 'crypto'>('credit');
-  const [timeLeft, setTimeLeft] = useState({ hours: 2, minutes: 30, seconds: 25 });
+  const [shippingAddress, setShippingAddress] = useState<Partial<ShippingAddress>>({
+    country: 'US', // Default to US
+  });
+  const [shippingErrors, setShippingErrors] = useState<string[]>([]);
+  const [isShippingValid, setIsShippingValid] = useState(false);
 
-  console.log('CheckoutComponent rendered');
-  console.log('Cart contents:', cart);
-  console.log('Cart count:', getCartCount());
+  // Validate shipping address
+  const validateShippingAddress = (address: Partial<ShippingAddress>): boolean => {
+    const errors: string[] = [];
+    
+    if (!address.addressee?.trim()) {
+      errors.push('Full name is required');
+    }
+    
+    if (!address.addr1?.trim()) {
+      errors.push('Street address is required');
+    }
+    
+    if (!address.city?.trim()) {
+      errors.push('City is required');
+    }
+    
+    if (!address.state?.trim()) {
+      errors.push('State is required');
+    }
+    
+    if (!address.zip?.trim()) {
+      errors.push('ZIP code is required');
+    } else if (!/^\d{5}(-\d{4})?$/.test(address.zip)) {
+      errors.push('ZIP code must be 5 digits (e.g., 90210)');
+    }
+    
+    setShippingErrors(errors);
+    setIsShippingValid(errors.length === 0);
+    return errors.length === 0;
+  };
 
-  // Countdown timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { hours: prev.hours, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        }
-        return prev;
-      });
-    }, 1000);
+  // Handle shipping address changes
+  const handleShippingAddressChange = (address: Partial<ShippingAddress>) => {
+    setShippingAddress(address);
+    // Validate on change (but don't show errors until user tries to proceed)
+    validateShippingAddress(address);
+  };
 
-    return () => clearInterval(timer);
-  }, []);
+  // Handle "Continue to Payment" button
+  const handleContinueToPayment = () => {
+    if (validateShippingAddress(shippingAddress)) {
+      setCheckoutStep('payment');
+      // Scroll to top of payment section
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
-  const formatTime = (num: number) => String(num).padStart(2, '0');
+  // Handle "Back to Address" button
+  const handleBackToAddress = () => {
+    setCheckoutStep('address');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Debug logs - DISABLED FOR NOW
+  // console.log('CheckoutComponent rendered');
+  // console.log('Cart contents:', cart);
+  // console.log('Cart count:', getCartCount());
+
   const deliveryFee = 15;
   const subtotal = getCartTotal();
   const total = subtotal + deliveryFee;
+
 
   if (cart.length === 0) {
     return (
@@ -98,6 +134,46 @@ const CheckoutComponent: React.FC = () => {
             <span className="text-[#ffc633]">My</span>
             <span className="text-black"> Cart</span>
           </h1>
+
+          {/* Progress Indicator */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Step 1 - Clickable when on payment step */}
+            <button
+              onClick={() => checkoutStep === 'payment' && handleBackToAddress()}
+              disabled={checkoutStep === 'address'}
+              className={`flex items-center gap-2 transition-opacity ${
+                checkoutStep === 'payment' ? 'cursor-pointer hover:opacity-70' : 'cursor-default'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-inter font-semibold text-[14px] transition-all ${
+                checkoutStep === 'address' ? 'bg-[#141722] text-white' : 'bg-[#FFB546] text-black'
+              }`}>
+                {checkoutStep === 'payment' ? '✓' : '1'}
+              </div>
+              <span className={`hidden sm:inline font-inter text-[14px] transition-all ${
+                checkoutStep === 'address' ? 'font-semibold text-black' : 'text-[#7c7c7c]'
+              }`}>
+                Shipping Address
+              </span>
+            </button>
+
+            {/* Separator */}
+            <div className="w-12 h-[2px] bg-[rgba(0,0,0,0.1)]"></div>
+
+            {/* Step 2 - Not clickable */}
+            <div className="flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-inter font-semibold text-[14px] ${
+                checkoutStep === 'payment' ? 'bg-[#141722] text-white' : 'bg-[rgba(0,0,0,0.1)] text-[#7c7c7c]'
+              }`}>
+                2
+              </div>
+              <span className={`hidden sm:inline font-inter text-[14px] ${
+                checkoutStep === 'payment' ? 'font-semibold text-black' : 'text-[#7c7c7c]'
+              }`}>
+                Payment
+              </span>
+            </div>
+          </div>
 
           {/* Table Headers - Hidden on mobile */}
           <div className="hidden md:grid grid-cols-[2fr_1fr_1fr] gap-4 pb-4 border-b border-[rgba(0,0,0,0.1)] items-center flex-shrink-0">
@@ -169,19 +245,6 @@ const CheckoutComponent: React.FC = () => {
                     <p className="font-inter font-medium text-[14px] sm:text-[16px] text-black">
                       ${(item.pricing.finalPrice * item.quantity).toFixed(2)} USD
                     </p>
-                    <div className="flex items-center gap-1">
-                      <div className="relative w-[12px] h-[12px]">
-                        <Image
-                          src={SolLogo}
-                          alt="SOL"
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                      <span className="font-inter font-medium text-[12px] text-[#8a8a8a]">
-                        186.8862
-                      </span>
-                    </div>
                   </div>
                   <button
                     onClick={() => removeFromCart(item.id)}
@@ -241,23 +304,49 @@ const CheckoutComponent: React.FC = () => {
           </Link>
         </div>
 
-        {/* Right Column - Payment Section */}
+        {/* Right Column - Address or Payment Section */}
         <div className="w-full xl:h-full xl:overflow-y-auto xl:pr-2 checkout-scrollbar">
           <div className="bg-white border border-[rgba(0,0,0,0.1)] rounded-[18px] md:rounded-[24px] p-4 sm:p-5 md:p-6">
-            {/* Delivery Timer */}
-            <div className="bg-white border border-neutral-200 rounded-[62px] h-[34px] px-3 sm:px-5 flex items-center mb-4 md:mb-6 overflow-hidden">
-              <p className="font-inter font-normal text-[12px] sm:text-[14px] text-[#141722] whitespace-nowrap overflow-hidden text-ellipsis">
-                Order in <span className="font-bold text-[#ff3333]">{formatTime(timeLeft.hours)}:{formatTime(timeLeft.minutes)}:{formatTime(timeLeft.seconds)}</span> to get next day delivery
-              </p>
-            </div>
+            
+            {/* STEP 1: Shipping Address */}
+            {checkoutStep === 'address' && (
+              <>
+                <h2 className="font-inter font-semibold text-[18px] sm:text-[20px] md:text-[24px] text-black mb-2">
+                  Shipping Address
+                </h2>
+                <p className="font-inter font-normal text-[11px] sm:text-[12px] text-[#8a8a8a] mb-6">
+                  Enter your delivery information
+                </p>
 
-            {/* Payment Method */}
-            <div className="mb-4 md:mb-6">
-              <h2 className="font-inter font-semibold text-[18px] sm:text-[20px] md:text-[24px] text-black mb-2">Payment Method</h2>
-              <p className="font-inter font-normal text-[11px] sm:text-[12px] text-[#8a8a8a] mb-4">Choose your preferred method of payment</p>
-            </div>
+                {/* Shipping Address Form */}
+                <div className="mb-6">
+                  <ShippingAddressForm
+                    value={shippingAddress}
+                    onChange={handleShippingAddressChange}
+                    errors={shippingErrors}
+                  />
+                </div>
 
-            <div className="border-t border-[rgba(0,0,0,0.1)] pt-6 mb-0"></div>
+                {/* Continue to Payment Button */}
+                <button
+                  onClick={handleContinueToPayment}
+                  disabled={!isShippingValid}
+                  className="w-full bg-[#141722] text-[#efe9e0] font-inter font-medium text-[14px] uppercase py-[17px] rounded-[42px] hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:to-[#FFB546] hover:text-black transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Continue to Payment
+                </button>
+              </>
+            )}
+
+            {/* STEP 2: Payment Method */}
+            {checkoutStep === 'payment' && (
+              <>
+                <h2 className="font-inter font-semibold text-[18px] sm:text-[20px] md:text-[24px] text-black mb-2">
+                  Payment Method
+                </h2>
+                <p className="font-inter font-normal text-[11px] sm:text-[12px] text-[#8a8a8a] mb-6">
+                  Choose your preferred method of payment
+                </p>
 
             {/* Payment Options */}
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">
@@ -272,7 +361,7 @@ const CheckoutComponent: React.FC = () => {
                   onChange={() => setPaymentMethod('credit')}
                   className="sr-only"
                 />
-                <span className="font-inter font-medium text-[12px] sm:text-[13px] text-[#1a1a1a]">Pay with Credit Card</span>
+                <span className="font-inter font-medium text-[12px] sm:text-[13px] text-[#1a1a1a]">Checkout with Stripe</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -290,121 +379,42 @@ const CheckoutComponent: React.FC = () => {
               </label>
             </div>
 
-            {/* Payment Logos */}
-            <div className="flex items-center gap-2 sm:gap-3 mb-6 flex-wrap">
-              <div className="relative w-[40px] sm:w-[46px] h-[26px] sm:h-[30px]">
-                <Image src={VisaLogo} alt="Visa" fill className="object-contain" />
-              </div>
-              <div className="relative w-[40px] sm:w-[46px] h-[26px] sm:h-[30px]">
-                <Image src={MastercardLogo} alt="Mastercard" fill className="object-contain" />
-              </div>
-              <div className="relative w-[40px] sm:w-[46px] h-[26px] sm:h-[30px]">
-                <Image src={PaypalLogo} alt="PayPal" fill className="object-contain" />
-              </div>
-              <div className="relative w-[40px] sm:w-[46px] h-[26px] sm:h-[30px]">
-                <Image src={ApplePayLogo} alt="Apple Pay" fill className="object-contain" />
-              </div>
-              <div className="relative w-[40px] sm:w-[46px] h-[26px] sm:h-[30px]">
-                <Image src={GooglePayLogo} alt="Google Pay" fill className="object-contain" />
-              </div>
-            </div>
+            {/* Embedded Stripe Payment Form */}
+            {paymentMethod === 'credit' && checkoutStep === 'payment' && (
+              <StripePaymentForm
+                shippingAddress={shippingAddress}
+                isShippingValid={isShippingValid}
+              />
+            )}
 
-            {/* Card Details */}
-            <div className="mb-6">
-              <label className="block font-inter font-normal text-[12px] text-[#141722] mb-2 px-3">
-                Card Details
-              </label>
-              <div className="border border-[rgba(0,0,0,0.1)] rounded-[12px] px-4 py-3 flex items-center gap-3">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <rect x="2" y="5" width="20" height="14" rx="2" stroke="#8a8a8a" strokeWidth="2"/>
-                  <path d="M2 10H22" stroke="#8a8a8a" strokeWidth="2"/>
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Add a credit card"
-                  className="flex-1 font-inter font-normal text-[12px] text-black placeholder:text-[#8a8a8a] outline-none bg-transparent"
-                />
-                <input
-                  type="text"
-                  placeholder="MM"
-                  maxLength={2}
-                  className="w-[30px] font-inter font-normal text-[12px] text-black placeholder:text-[#8a8a8a] outline-none bg-transparent text-center"
-                />
-                <input
-                  type="text"
-                  placeholder="YY"
-                  maxLength={2}
-                  className="w-[30px] font-inter font-normal text-[12px] text-black placeholder:text-[#8a8a8a] outline-none bg-transparent text-center"
-                />
-                <input
-                  type="text"
-                  placeholder="CVC"
-                  maxLength={3}
-                  className="w-[40px] font-inter font-normal text-[12px] text-black placeholder:text-[#8a8a8a] outline-none bg-transparent text-center"
-                />
+            {/* Crypto Payment Placeholder */}
+            {paymentMethod === 'crypto' && (
+              <div className="mb-6 p-8 text-center bg-white rounded-[12px] border border-[rgba(0,0,0,0.1)]">
+                <p className="font-inter text-[16px] text-[#7c7c7c]">
+                  Crypto payment options coming soon!
+                </p>
               </div>
-            </div>
+            )}
 
-            {/* Billing Address */}
-            <div className="mb-6">
-              <label className="block font-inter font-normal text-[12px] text-[#141722] mb-2 px-3">
-                Billing Address
-              </label>
-              <div className="flex gap-3 mb-3">
-                <input
-                  type="text"
-                  placeholder="Street Address"
-                  className="flex-1 border border-[rgba(0,0,0,0.1)] rounded-[12px] px-4 py-3 font-inter font-normal text-[12px] text-[#8a8a8a] outline-none focus:border-[#ffb546] transition-colors"
-                />
-                <input
-                  type="text"
-                  placeholder="Apt"
-                  className="w-[120px] border border-[rgba(0,0,0,0.1)] rounded-[12px] px-4 py-3 font-inter font-normal text-[12px] text-[#8a8a8a] outline-none focus:border-[#ffb546] transition-colors"
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <input
-                  type="text"
-                  placeholder="City"
-                  className="border border-[rgba(0,0,0,0.1)] rounded-[12px] px-4 py-3 font-inter font-normal text-[12px] text-[#8a8a8a] outline-none focus:border-[#ffb546] transition-colors"
-                />
-                <input
-                  type="text"
-                  placeholder="State"
-                  className="border border-[rgba(0,0,0,0.1)] rounded-[12px] px-4 py-3 font-inter font-normal text-[12px] text-[#8a8a8a] outline-none focus:border-[#ffb546] transition-colors"
-                />
-                <input
-                  type="text"
-                  placeholder="Zip"
-                  className="border border-[rgba(0,0,0,0.1)] rounded-[12px] px-4 py-3 font-inter font-normal text-[12px] text-[#8a8a8a] outline-none focus:border-[#ffb546] transition-colors"
-                />
-              </div>
-            </div>
-
-            <div className="border-t border-[rgba(0,0,0,0.1)] pt-6 mb-0"></div>
-
-            {/* Mobile Summary */}
-            <div className="flex flex-col gap-3 mb-6 xl:hidden">
-              <div className="flex items-center justify-between font-inter font-semibold text-[16px] sm:text-[18px]">
-                <span className="text-black">Subtotal</span>
-                <span className="text-[#8a8a8a]">${subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between font-inter font-semibold text-[16px] sm:text-[18px]">
-                <span className="text-black">Delivery Fee</span>
-                <span className="text-[#8a8a8a]">${deliveryFee}</span>
-              </div>
-              <div className="border-t border-[rgba(0,0,0,0.1)] pt-3">
-                <div className="flex items-center justify-between font-inter text-[18px] sm:text-[20px]">
-                  <span className="font-semibold text-black">Total</span>
-                  <span className="font-bold text-black">${total.toFixed(2)} USD</span>
+                {/* Mobile Summary */}
+                <div className="flex flex-col gap-3 mb-6 xl:hidden">
+                  <div className="flex items-center justify-between font-inter font-semibold text-[16px] sm:text-[18px]">
+                    <span className="text-black">Subtotal</span>
+                    <span className="text-[#8a8a8a]">${subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center justify-between font-inter font-semibold text-[16px] sm:text-[18px]">
+                    <span className="text-black">Delivery Fee</span>
+                    <span className="text-[#8a8a8a]">${deliveryFee}</span>
+                  </div>
+                  <div className="border-t border-[rgba(0,0,0,0.1)] pt-3">
+                    <div className="flex items-center justify-between font-inter text-[18px] sm:text-[20px]">
+                      <span className="font-semibold text-black">Total</span>
+                      <span className="font-bold text-black">${total.toFixed(2)} USD</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Checkout Button */}
-            <button className="w-full bg-[#141722] text-[#efe9e0] font-inter font-medium text-[14px] uppercase py-[17px] rounded-[42px] hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer">
-              Checkout
-            </button>
+              </>
+            )}
           </div>
         </div>
         </div>

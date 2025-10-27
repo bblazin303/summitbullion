@@ -11,6 +11,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    // Suppress pino-pretty warnings from WalletConnect dependencies
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        'pino-pretty': false,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;
