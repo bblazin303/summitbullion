@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { StaticImageData } from 'next/image';
 import { useUser } from '@account-kit/react';
+import { useConsistentUserId } from '@/hooks/useConsistentUserId';
 
 export interface CartItemPricing {
   basePrice: number;
@@ -36,39 +37,64 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start as true until we know if there's a user
   const [cartLoaded, setCartLoaded] = useState(false);
+  const [lastUserId, setLastUserId] = useState<string | null>(null);
   const user = useUser();
+  const { userId: consistentUserId, email, isEmailAuth } = useConsistentUserId();
 
-  // Load cart from API when user logs in (only once per session)
+  // Load cart from API when user logs in
   useEffect(() => {
     const loadCart = async () => {
-      if (!user?.userId) {
-        // User logged out - clear local cart
+      // Wait for user to be determined (user is null when loading, undefined when logged out)
+      if (user === null) {
+        // Still loading user, don't do anything yet
+        return;
+      }
+      
+      if (!consistentUserId) {
+        // User is definitely logged out - clear local cart
         setCart([]);
         setCartLoaded(false);
+        setLastUserId(null);
+        setIsLoading(false);
         return;
       }
 
-      // Skip if cart already loaded for this user in this session
+      // If user changed, reset everything and reload
+      if (lastUserId && lastUserId !== consistentUserId) {
+        console.log('🔄 User changed, resetting cart:', lastUserId, '->', consistentUserId);
+        setCart([]);
+        setCartLoaded(false);
+        setLastUserId(consistentUserId);
+        // Will reload on next effect run
+        return;
+      }
+
+      // Set lastUserId if not set
+      if (!lastUserId) {
+        setLastUserId(consistentUserId);
+      }
+
+      // Skip if cart already loaded for this user
       if (cartLoaded) {
+        setIsLoading(false);
         return;
       }
 
       try {
         setIsLoading(true);
+        console.log('🔄 Loading cart from API for user:', consistentUserId);
         
-        // Determine auth type
-        const isEmailAuth = !user.idToken;
         const headers: Record<string, string> = {};
         
         if (!isEmailAuth && user.idToken) {
           headers['Authorization'] = `Bearer ${user.idToken}`;
         }
         
-        // For email auth, send userId in query params
+        // For email auth, send email in query params (will be converted to consistent userId on backend)
         const queryParams = isEmailAuth
-          ? `?userId=${user.userId}&authType=email`
+          ? `?email=${encodeURIComponent(email!)}&authType=email`
           : '';
         
         // Call API route to get cart
@@ -117,18 +143,21 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               brand: item.manufacturer,
             };
           });
+          console.log('✅ Cart loaded successfully:', localCartItems.length, 'items');
           setCart(localCartItems);
           setCartLoaded(true); // Mark cart as loaded
+        } else {
+          console.log('⚠️ No cart data in API response');
         }
       } catch (error) {
-        console.error('Error loading cart from API:', error);
+        console.error('❌ Error loading cart from API:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadCart();
-  }, [user?.userId, user?.idToken, cartLoaded]);
+  }, [consistentUserId, user?.idToken, email, isEmailAuth]); // Don't include cartLoaded in deps to avoid infinite loop
 
   const addToCart = async (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
     const newItem = { ...item, quantity: item.quantity || 1 };
@@ -151,7 +180,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     // Sync to API if user is logged in
-    if (user?.userId) {
+    if (consistentUserId) {
       try {
         // Convert to API CartItem format with nested pricing
         const apiItem = {
@@ -172,15 +201,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           manufacturer: newItem.brand,
         };
         
-        // Determine auth type
-        const isEmailAuth = !user.idToken;
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
         };
         
-        if (!isEmailAuth && user.idToken) {
+        if (!isEmailAuth && user?.idToken) {
           headers['Authorization'] = `Bearer ${user.idToken}`;
-        }
+      }
+        
+        console.log('➕ Adding to cart for user:', consistentUserId);
         
         const response = await fetch('/api/cart/add', {
           method: 'POST',
@@ -188,7 +217,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           body: JSON.stringify({
             item: apiItem,
             authType: isEmailAuth ? 'email' : 'google',
-            userId: user.userId,
+            userId: consistentUserId,
+            email: email, // Send email for consistent userId generation
           }),
         });
         
@@ -211,16 +241,17 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCart((prevCart) => prevCart.filter((item) => item.id !== id));
 
     // Sync to API if user is logged in
-    if (user?.userId) {
+    if (consistentUserId) {
       try {
-        const isEmailAuth = !user.idToken;
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
         };
         
-        if (!isEmailAuth && user.idToken) {
+        if (!isEmailAuth && user?.idToken) {
           headers['Authorization'] = `Bearer ${user.idToken}`;
         }
+        
+        console.log('➖ Removing from cart for user:', consistentUserId);
         
         const response = await fetch('/api/cart/remove', {
           method: 'DELETE',
@@ -228,7 +259,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           body: JSON.stringify({
             itemId: id,
             authType: isEmailAuth ? 'email' : 'google',
-            userId: user.userId,
+            userId: consistentUserId,
+            email: email, // Send email for consistent userId generation
           }),
         });
         
@@ -257,14 +289,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
 
     // Sync to API if user is logged in
-    if (user?.userId) {
+    if (consistentUserId) {
       try {
-        const isEmailAuth = !user.idToken;
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
         };
         
-        if (!isEmailAuth && user.idToken) {
+        if (!isEmailAuth && user?.idToken) {
           headers['Authorization'] = `Bearer ${user.idToken}`;
         }
         
@@ -275,7 +306,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             itemId: id,
             quantity,
             authType: isEmailAuth ? 'email' : 'google',
-            userId: user.userId,
+            userId: consistentUserId,
+            email: email, // Send email for consistent userId generation
           }),
         });
         
@@ -293,16 +325,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCart([]);
 
     // Sync to API if user is logged in
-    if (user?.userId) {
+    if (consistentUserId) {
       try {
-        const isEmailAuth = !user.idToken;
         const queryParams = isEmailAuth
-          ? `?authType=email&userId=${user.userId}`
+          ? `?authType=email&email=${encodeURIComponent(email!)}`
           : '';
         
         const headers: Record<string, string> = {};
         
-        if (!isEmailAuth && user.idToken) {
+        if (!isEmailAuth && user?.idToken) {
           headers['Authorization'] = `Bearer ${user.idToken}`;
         }
         
@@ -330,7 +361,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Force reload cart from Firebase (useful for fixing sync issues)
   const reloadCart = async () => {
-    if (!user?.userId) {
+    if (!consistentUserId) {
       setCart([]);
       return;
     }
@@ -338,15 +369,14 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       setIsLoading(true);
       
-      const isEmailAuth = !user.idToken;
       const headers: Record<string, string> = {};
       
-      if (!isEmailAuth && user.idToken) {
+      if (!isEmailAuth && user?.idToken) {
         headers['Authorization'] = `Bearer ${user.idToken}`;
       }
       
       const queryParams = isEmailAuth
-        ? `?userId=${user.userId}&authType=email`
+        ? `?email=${encodeURIComponent(email!)}&authType=email`
         : '';
       
       const response = await fetch(`/api/cart${queryParams}`, {

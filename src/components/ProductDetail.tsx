@@ -413,14 +413,17 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
               </h1>
 
               {/* Price */}
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <div className="flex items-start gap-2 sm:gap-3">
-                  <span className="font-inter font-bold text-[24px] sm:text-[32px] text-black">${product.price.toFixed(2)}</span>
-                  <span className="font-inter font-bold text-[24px] sm:text-[32px] text-[#7c7c7c] line-through">${product.originalPrice.toFixed(2)}</span>
+              <div className="flex flex-col gap-1">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <span className="font-inter font-bold text-[24px] sm:text-[32px] text-black">${product.price.toFixed(2)}*</span>
+                    <span className="font-inter font-bold text-[24px] sm:text-[32px] text-[#7c7c7c] line-through">${product.originalPrice.toFixed(2)}</span>
+                  </div>
+                  <div className="bg-[rgba(51,146,255,0.1)] px-[12px] sm:px-[14px] py-[4px] sm:py-[6px] rounded-full">
+                    <span className="font-inter font-medium text-[14px] sm:text-[16px] text-[#3392ff]">-{product.discount}%</span>
+                  </div>
                 </div>
-                <div className="bg-[rgba(51,146,255,0.1)] px-[12px] sm:px-[14px] py-[4px] sm:py-[6px] rounded-full">
-                  <span className="font-inter font-medium text-[14px] sm:text-[16px] text-[#3392ff]">-{product.discount}%</span>
-                </div>
+                <span className="font-inter text-[11px] text-[#7c7c7c]">*Estimated price based on current market rates</span>
               </div>
 
               {/* Divider */}

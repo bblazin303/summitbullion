@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
@@ -9,7 +9,7 @@ import { ShippingAddressForm } from '@/components/ShippingAddressForm';
 import { ShippingAddress } from '@/types/user';
 
 const CheckoutComponent: React.FC = () => {
-  const { cart, updateQuantity, removeFromCart, getCartTotal } = useCart();
+  const { cart, updateQuantity, removeFromCart, getCartTotal, isLoading } = useCart();
   const [checkoutStep, setCheckoutStep] = useState<'address' | 'payment'>('address');
   const [paymentMethod, setPaymentMethod] = useState<'credit' | 'crypto'>('credit');
   const [shippingAddress, setShippingAddress] = useState<Partial<ShippingAddress>>({
@@ -80,6 +80,14 @@ const CheckoutComponent: React.FC = () => {
   const subtotal = getCartTotal();
   const total = subtotal + deliveryFee;
 
+  // Show loading state while cart is being fetched
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ffc633]"></div>
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (
@@ -182,8 +190,8 @@ const CheckoutComponent: React.FC = () => {
             <p className="font-inter font-normal text-[16px] sm:text-[20px] text-[rgba(0,0,0,0.6)] text-center">Price</p>
           </div>
 
-          {/* Cart Items - Scrollable when more than 3 items */}
-          <div className={`flex flex-col gap-6 ${cart.length > 3 ? 'xl:overflow-y-auto xl:flex-1 xl:pr-4 checkout-scrollbar' : ''}`}>
+          {/* Cart Items - Scrollable after 2.25 items */}
+          <div className={`flex flex-col gap-6 ${cart.length > 2 ? 'overflow-y-auto max-h-[400px] sm:max-h-[450px] md:max-h-[500px] xl:max-h-[550px] pr-2 checkout-scrollbar' : ''}`}>
           {cart.map((item) => (
             <div key={item.id} className="flex flex-col gap-4">
               <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-4 items-center pb-6 border-b border-[rgba(0,0,0,0.1)]">
@@ -261,23 +269,28 @@ const CheckoutComponent: React.FC = () => {
           </div>
 
           {/* Summary & Continue Shopping - Desktop Only */}
-          <div className="hidden xl:flex flex-col 2xl:flex-row items-start 2xl:items-end justify-between gap-6 flex-shrink-0">
+          <div className="hidden xl:flex flex-col 2xl:flex-row items-start 2xl:items-end justify-between gap-6 flex-shrink-0 pt-6 border-t border-[rgba(0,0,0,0.1)]">
             {/* Summary */}
             <div className="flex flex-col gap-3 xl:gap-4 w-full 2xl:min-w-[400px] 2xl:w-auto 2xl:order-2">
-              <div className="flex items-center justify-between font-inter font-semibold text-[18px] xl:text-[20px] 2xl:text-[24px]">
-                <span className="text-black">Subtotal</span>
-                <span className="text-[#8a8a8a]">${subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between font-inter font-semibold text-[18px] xl:text-[20px] 2xl:text-[24px]">
-                <span className="text-black">Delivery Fee</span>
-                <span className="text-[#8a8a8a]">${deliveryFee}</span>
-              </div>
-              <div className="border-t border-[rgba(0,0,0,0.1)] pt-3 xl:pt-4">
-                <div className="flex items-center justify-between font-inter text-[18px] xl:text-[20px] 2xl:text-[24px]">
-                  <span className="font-semibold text-black">Total</span>
-                  <span className="font-bold text-black">${total.toFixed(2)} USD</span>
-                </div>
-              </div>
+              {checkoutStep === 'address' ? (
+                <>
+                  {/* Address Step - Show Estimated */}
+                  <div className="flex items-center justify-between font-inter text-[18px] xl:text-[20px] 2xl:text-[24px]">
+                    <span className="font-semibold text-black">Estimated Total</span>
+                    <span className="font-bold text-black">${subtotal.toFixed(2)} USD</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Payment Step - Show Final Price (will be updated by StripePaymentForm) */}
+                  <div key="payment-summary" id="final-price-summary" className="flex flex-col gap-3 xl:gap-4">
+                    <div className="flex items-center justify-center py-4">
+                      <div className="w-6 h-6 border-2 border-[#141722] border-t-transparent rounded-full animate-spin"></div>
+                      <span className="ml-3 font-inter text-[14px] text-[#7c7c7c]">Calculating final price...</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Continue Shopping Button */}
@@ -398,18 +411,10 @@ const CheckoutComponent: React.FC = () => {
 
                 {/* Mobile Summary */}
                 <div className="flex flex-col gap-3 mb-6 xl:hidden">
-                  <div className="flex items-center justify-between font-inter font-semibold text-[16px] sm:text-[18px]">
-                    <span className="text-black">Subtotal</span>
-                    <span className="text-[#8a8a8a]">${subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex items-center justify-between font-inter font-semibold text-[16px] sm:text-[18px]">
-                    <span className="text-black">Delivery Fee</span>
-                    <span className="text-[#8a8a8a]">${deliveryFee}</span>
-                  </div>
                   <div className="border-t border-[rgba(0,0,0,0.1)] pt-3">
                     <div className="flex items-center justify-between font-inter text-[18px] sm:text-[20px]">
-                      <span className="font-semibold text-black">Total</span>
-                      <span className="font-bold text-black">${total.toFixed(2)} USD</span>
+                      <span className="font-semibold text-black">Estimated Total</span>
+                      <span className="font-bold text-black">${subtotal.toFixed(2)} USD</span>
                     </div>
                   </div>
                 </div>

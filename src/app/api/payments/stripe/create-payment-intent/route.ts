@@ -3,10 +3,18 @@ import { stripe } from '@/lib/stripe';
 import { requireFlexibleAuth } from '@/lib/auth/verifyAlchemyToken';
 import { getCart } from '@/lib/firebaseAdminHelpers';
 import { ShippingAddress } from '@/types/user';
+import { 
+  fetchPaymentMethods, 
+  fetchShippingInstructions,
+  createSalesOrderQuote,
+  convertToPlatformGoldAddress,
+  formatOrderItems,
+  type PlatformGoldQuoteResponse
+} from '@/lib/platformGoldHelpers';
 
 /**
  * POST /api/payments/stripe/create-payment-intent
- * Creates a Stripe PaymentIntent for embedded checkout
+ * Creates a Stripe PaymentIntent with dynamic pricing from Platform Gold
  */
 export async function POST(request: NextRequest) {
   try {
@@ -35,13 +43,91 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Calculate total (cart subtotal + delivery fee)
-    const deliveryFee = 15;
-    const total = cart.subtotal + deliveryFee;
+    // ========================================================================
+    // DYNAMIC PRICING: Get Platform Gold Quote
+    // ========================================================================
+    console.log('📊 Fetching Platform Gold quote for accurate pricing...');
     
-    console.log('💰 Total amount:', total);
+    let platformGoldQuote: PlatformGoldQuoteResponse;
+    let deliveryFee = 0;
     
-    // Create PaymentIntent
+    try {
+      // Fetch payment methods and shipping instructions
+      const [paymentMethods, shippingInstructions] = await Promise.all([
+        fetchPaymentMethods(),
+        fetchShippingInstructions(),
+      ]);
+      
+      if (!paymentMethods.length || !shippingInstructions.length) {
+        throw new Error('Platform Gold configuration missing');
+      }
+      
+      // Use first available options
+      const paymentMethod = paymentMethods[0];
+      const shippingInstruction = shippingInstructions[0];
+      
+      // Format cart items for Platform Gold
+      const platformGoldItems = cart.items.map(item => ({
+        id: parseInt(item.id),
+        quantity: item.quantity,
+      }));
+      
+      // Create quote request
+      // Note: customerReferenceNumber must be <= 35 characters
+      const timestamp = Date.now().toString().slice(-8); // Last 8 digits of timestamp
+      const userIdShort = user.userId.slice(-10); // Last 10 chars of userId
+      const quoteRequest = {
+        items: platformGoldItems,
+        shippingAddress: convertToPlatformGoldAddress(shippingAddress),
+        email: user.email,
+        paymentMethodId: paymentMethod.id,
+        shippingInstructionId: shippingInstruction.id,
+        customerReferenceNumber: `SB-${userIdShort}-${timestamp}`, // Max 35 chars: "SB-" (3) + userId (10) + "-" (1) + timestamp (8) = 22 chars
+      };
+      
+      // Get quote from Platform Gold
+      platformGoldQuote = await createSalesOrderQuote(quoteRequest);
+      
+      console.log('✅ Platform Gold quote received:');
+      console.log(`   Item cost: $${platformGoldQuote.amount}`);
+      console.log(`   Handling fee: $${platformGoldQuote.handlingFee}`);
+      
+      // IMPORTANT: Platform Gold's amount does NOT include handling fee
+      // We need to add them together to get the true cost
+      const platformGoldTotalCost = platformGoldQuote.amount + platformGoldQuote.handlingFee;
+      console.log(`   Total Platform Gold cost: $${platformGoldTotalCost.toFixed(2)}`);
+      
+      // Store handling fee separately for transparency
+      deliveryFee = platformGoldQuote.handlingFee;
+      
+    } catch (error) {
+      console.error('❌ Error fetching Platform Gold quote:', error);
+      return NextResponse.json(
+        { success: false, error: 'Failed to calculate accurate pricing. Please try again.' },
+        { status: 500 }
+      );
+    }
+    
+    // ========================================================================
+    // APPLY YOUR 2% MARKUP
+    // ========================================================================
+    // Apply 2% markup to the TOTAL Platform Gold cost (items + handling)
+    const platformGoldTotal = platformGoldQuote.amount + platformGoldQuote.handlingFee;
+    const markupPercentage = 2;
+    const markupAmount = platformGoldTotal * (markupPercentage / 100);
+    const subtotalWithMarkup = platformGoldTotal + markupAmount;
+    
+    // Final total
+    const total = subtotalWithMarkup;
+    
+    console.log('💰 Pricing breakdown:');
+    console.log(`   Platform Gold quote: $${platformGoldTotal.toFixed(2)}`);
+    console.log(`   Your ${markupPercentage}% markup: $${markupAmount.toFixed(2)}`);
+    console.log(`   Final total: $${total.toFixed(2)}`);
+    
+    // ========================================================================
+    // CREATE PAYMENT INTENT
+    // ========================================================================
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(total * 100), // Convert to cents
       currency: 'usd',
@@ -54,6 +140,10 @@ export async function POST(request: NextRequest) {
         orderTotal: total.toFixed(2),
         itemCount: cart.itemCount.toString(),
         deliveryFee: deliveryFee.toFixed(2),
+        platformGoldQuoteHandle: platformGoldQuote.handle,
+        platformGoldAmount: platformGoldTotal.toFixed(2),
+        markupAmount: markupAmount.toFixed(2),
+        markupPercentage: markupPercentage.toString(),
         // Store shipping address as JSON string (Stripe metadata values must be strings)
         shippingAddress: JSON.stringify(shippingAddress),
       },
@@ -61,10 +151,18 @@ export async function POST(request: NextRequest) {
     
     console.log('✅ PaymentIntent created:', paymentIntent.id);
     
+    // Return updated pricing to frontend
     return NextResponse.json({
       success: true,
       clientSecret: paymentIntent.client_secret,
-      amount: total,
+      pricing: {
+        subtotal: subtotalWithMarkup,
+        deliveryFee: deliveryFee,
+        total: total,
+        platformGoldQuote: platformGoldTotal,
+        markup: markupAmount,
+        markupPercentage: markupPercentage,
+      },
     });
     
   } catch (error) {

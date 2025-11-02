@@ -8,6 +8,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth/verifyAlchemyToken';
 import { createUserProfile, getUserProfile, updateUserProfile } from '@/lib/firebaseAdminHelpers';
 
+// Helper function to generate consistent userId from email
+function emailToUserId(email: string): string {
+  // Remove special characters and convert to lowercase
+  return email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Parse request body first to determine auth type
@@ -27,21 +33,22 @@ export async function POST(request: NextRequest) {
     
     // Handle different auth types
     if (authType === 'email') {
-      // Email auth: Trust client-provided data (Alchemy already authenticated them)
-      if (!userId || !email) {
+      // For email auth, use email as the consistent userId
+      if (!email) {
         return NextResponse.json(
-          { success: false, error: 'Missing userId or email for email auth' },
+          { success: false, error: 'Missing email for email auth' },
           { status: 400 }
         );
       }
-      
-      verifiedUserId = userId;
+      verifiedUserId = emailToUserId(email); // Use email-based ID for consistency
       verifiedEmail = email;
+      console.log('📧 Email auth - using email-based userId:', verifiedUserId);
     } else {
-      // Google OAuth: Verify JWT token
+      // For Google OAuth, verify JWT token
       const user = await requireAuth();
       verifiedUserId = user.userId;
       verifiedEmail = user.email;
+      console.log('🔐 Google OAuth - using JWT userId:', verifiedUserId);
     }
     
     // Validate required fields

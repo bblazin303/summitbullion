@@ -6,19 +6,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth/verifyAlchemyToken';
 import { clearCart } from '@/lib/firebaseAdminHelpers';
+import { emailToUserId } from '@/lib/userIdHelper';
 
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const authType = searchParams.get('authType');
     const userIdParam = searchParams.get('userId');
+    const emailParam = searchParams.get('email');
     
     let userId: string;
     
     // Handle email auth vs Google OAuth
-    if (authType === 'email' && userIdParam) {
-      console.log('📧 Email auth cart clear request');
-      userId = userIdParam;
+    if (authType === 'email' && emailParam) {
+      userId = emailToUserId(emailParam);
+      console.log('📧 Email auth cart clear - converting email to userId:', emailParam, '->', userId);
     } else {
       console.log('🔐 Google OAuth cart clear request');
       const user = await requireAuth();

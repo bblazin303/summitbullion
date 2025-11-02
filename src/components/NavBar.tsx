@@ -340,11 +340,14 @@ const NavBar: React.FC = () => {
                   {/* Cart Footer */}
                   {cart.length > 0 && (
                     <div className="p-6 border-t border-[rgba(0,0,0,0.1)] bg-[#fcf8f1]">
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center justify-between mb-1">
                         <span className="font-inter font-semibold text-[18px] text-black">Total:</span>
                         <span className="font-inter font-bold text-[24px] text-black">
                           ${getCartTotal().toFixed(2)}
                         </span>
+                      </div>
+                      <div className="text-right mb-4">
+                        <span className="font-inter text-[10px] text-[#7c7c7c]">*Estimated, final at checkout</span>
                       </div>
                       <Link
                         href="/checkout"
@@ -492,11 +495,14 @@ const NavBar: React.FC = () => {
                   {/* Cart Footer */}
                   {cart.length > 0 && (
                     <div className="p-4 border-t border-[rgba(0,0,0,0.1)] bg-[#fcf8f1]">
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center justify-between mb-1">
                         <span className="font-inter font-semibold text-[16px] text-black">Total:</span>
                         <span className="font-inter font-bold text-[20px] text-black">
                           ${getCartTotal().toFixed(2)}
                         </span>
+                      </div>
+                      <div className="text-right mb-3">
+                        <span className="font-inter text-[9px] text-[#7c7c7c]">*Est., final at checkout</span>
                       </div>
                       <Link
                         href="/checkout"

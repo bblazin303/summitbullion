@@ -157,8 +157,12 @@ export async function getCart(uid: string): Promise<Cart | null> {
     throw new Error('Firebase Admin not initialized');
   }
 
+  const cartPath = `users/${uid}/cart/current`;
+  console.log('🔍 Looking for cart at path:', cartPath);
   const cartRef = adminDb.collection('users').doc(uid).collection('cart').doc('current');
   const cartSnap = await cartRef.get();
+  
+  console.log('🔍 Cart document exists?', cartSnap.exists);
   
   if (!cartSnap.exists) {
     return null;

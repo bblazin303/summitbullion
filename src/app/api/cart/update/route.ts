@@ -6,24 +6,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth/verifyAlchemyToken';
 import { updateCartItemQuantity } from '@/lib/firebaseAdminHelpers';
+import { emailToUserId } from '@/lib/userIdHelper';
 
 export async function PUT(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { itemId, quantity, authType, userId: bodyUserId } = body as {
+    const { itemId, quantity, authType, userId: bodyUserId, email } = body as {
       itemId: string;
       quantity: number;
       authType?: 'email' | 'google';
       userId?: string;
+      email?: string;
     };
     
     let userId: string;
     
     // Handle email auth vs Google OAuth
-    if (authType === 'email' && bodyUserId) {
-      console.log('📧 Email auth cart update request');
-      userId = bodyUserId;
+    if (authType === 'email' && email) {
+      userId = emailToUserId(email);
+      console.log('📧 Email auth cart update - converting email to userId:', email, '->', userId);
     } else {
       console.log('🔐 Google OAuth cart update request');
       const user = await requireAuth();

@@ -1059,7 +1059,10 @@ const MarketplaceInventory: React.FC = () => {
               <div className="flex flex-col gap-[6px]">
                 {/* USD Price */}
                 <div className="font-inter font-medium text-[18px] sm:text-[19px] lg:text-[20px] leading-[1.37] text-black">
-                  ${product.priceUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                  ${product.priceUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD*
+                </div>
+                <div className="font-inter text-[10px] text-[#7c7c7c] leading-tight">
+                  *Est. price, final at checkout
                 </div>
 
                 {/* SOL Price - Commented out */}

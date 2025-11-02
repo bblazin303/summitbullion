@@ -133,9 +133,9 @@ export default async function RootLayout({
       >
         <AlchemyProviders initialState={initialState}>
           <FirebaseSyncProvider>
-            <CartProvider>
-              {children}
-            </CartProvider>
+        <CartProvider>
+          {children}
+        </CartProvider>
           </FirebaseSyncProvider>
         </AlchemyProviders>
       </body>

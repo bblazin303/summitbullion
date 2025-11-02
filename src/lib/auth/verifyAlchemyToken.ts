@@ -4,6 +4,7 @@
  */
 
 import { headers } from 'next/headers';
+import { emailToUserId } from '@/lib/userIdHelper';
 
 export interface VerifiedUser {
   userId: string;
@@ -44,14 +45,25 @@ export async function verifyAlchemyToken(): Promise<VerifiedUser | null> {
     // Alchemy's JWT structure includes standard claims
     console.log('🔍 Decoded Alchemy JWT payload:', JSON.stringify(payload, null, 2));
     
+    const email = payload.email;
+    const originalUserId = payload.sub || payload.userId;
+    
+    // IMPORTANT: Use email-based userId for consistency across client/server
+    // Alchemy gives different userIds on client vs server for Google OAuth
+    const consistentUserId = email ? emailToUserId(email) : originalUserId;
+    
     const user = {
-      userId: payload.sub || payload.userId, // Alchemy uses 'sub' claim
-      email: payload.email,
+      userId: consistentUserId, // Use email-based ID for consistency
+      email: email,
       address: payload.address || payload.wallet_address || payload.walletAddress,
       orgId: payload.orgId || payload.org_id,
     };
     
-    console.log('✅ Extracted user data:', user);
+    console.log('✅ Extracted user data (using email-based userId):', {
+      originalUserId,
+      consistentUserId,
+      email
+    });
     return user;
   } catch (error) {
     console.error('❌ Error verifying token:', error);
@@ -80,15 +92,18 @@ export async function requireAuth(): Promise<VerifiedUser> {
 export async function requireFlexibleAuth(body: any): Promise<VerifiedUser> {
   const { authType, userId, email, walletAddress, orgId } = body;
   
-  // If authType is 'email', trust client-provided data
+  // If authType is 'email', trust client-provided data but use email-based userId
   if (authType === 'email') {
-    if (!userId || !email) {
+    if (!email) {
       throw new Error('Unauthorized: Missing email auth credentials');
     }
     
-    console.log('📧 Email auth: Using client-provided credentials');
+    // Convert email to consistent userId
+    const consistentUserId = emailToUserId(email);
+    console.log('📧 Email auth: Using email-based userId:', email, '->', consistentUserId);
+    
     return {
-      userId,
+      userId: consistentUserId, // Use email-based ID for consistency
       email,
       address: walletAddress,
       orgId,

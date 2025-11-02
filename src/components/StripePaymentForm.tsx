@@ -109,13 +109,21 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pricing, setPricing] = useState<{
+    subtotal: number;
+    deliveryFee: number;
+    total: number;
+    platformGoldQuote: number;
+    markup: number;
+    markupPercentage: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!user?.userId) {
       return;
     }
 
-    // Create PaymentIntent on component mount
+    // Create PaymentIntent with dynamic pricing from Platform Gold
     const createPaymentIntent = async () => {
       try {
         const isEmailAuth = !user.idToken;
@@ -146,6 +154,10 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
 
         if (data.success && data.clientSecret) {
           setClientSecret(data.clientSecret);
+          setPricing(data.pricing);
+          
+          // Update the left-side summary with final price
+          updateLeftSideSummary(data.pricing);
         } else {
           throw new Error('No client secret returned');
         }
@@ -158,12 +170,35 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
     };
 
     createPaymentIntent();
-  }, [user?.userId, user?.idToken]);
+  }, [user?.userId, user?.idToken, shippingAddress]);
+  
+  // Function to update the left-side summary with final pricing
+  const updateLeftSideSummary = (pricing: any) => {
+    const summaryElement = document.getElementById('final-price-summary');
+    if (summaryElement) {
+      summaryElement.innerHTML = `
+        <div class="flex items-center justify-between font-inter text-[18px] xl:text-[20px] 2xl:text-[24px]">
+          <span class="font-semibold text-black">Total</span>
+          <span class="font-bold text-black">$${pricing.total.toFixed(2)} USD</span>
+        </div>
+        <div class="text-right">
+          <span class="font-inter text-[10px] text-[#7c7c7c]">Includes all fees and shipping</span>
+        </div>
+      `;
+    }
+  };
+
+  // Cleanup effect to prevent DOM errors when navigating back
+  useEffect(() => {
+    return () => {
+      // Component is unmounting, no cleanup needed since React will handle the DOM
+      // This just ensures we don't have any lingering references
+    };
+  }, []);
 
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="animate-pulse bg-gray-200 h-12 rounded-[12px]"></div>
         <div className="animate-pulse bg-gray-200 h-32 rounded-[12px]"></div>
         <div className="animate-pulse bg-gray-200 h-12 rounded-[42px]"></div>
       </div>
