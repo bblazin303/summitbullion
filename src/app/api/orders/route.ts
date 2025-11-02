@@ -50,8 +50,14 @@ export async function GET(request: NextRequest) {
         paymentStatus: data.paymentStatus,
         paymentId: data.paymentId,
         status: data.status,
+        // Platform Gold fields
         platformGoldOrderId: data.platformGoldOrderId,
+        platformGoldTransactionId: data.platformGoldTransactionId,
+        platformGoldHandle: data.platformGoldHandle,
         platformGoldStatus: data.platformGoldStatus,
+        platformGoldMode: data.platformGoldMode,
+        platformGoldError: data.platformGoldError,
+        platformGoldTrackingNumbers: data.platformGoldTrackingNumbers,
         requiredKYC: data.requiredKYC,
         kycStatus: data.kycStatus,
         trackingNumbers: data.trackingNumbers,
@@ -59,6 +65,17 @@ export async function GET(request: NextRequest) {
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
       };
     });
+    
+    console.log(`📦 Found ${orders.length} orders for user ${userId}`);
+    if (orders.length > 0) {
+      console.log('📋 Most recent order:', {
+        id: orders[0].id.slice(-8),
+        total: orders[0].total,
+        platformGoldMode: orders[0].platformGoldMode,
+        platformGoldStatus: orders[0].platformGoldStatus,
+        createdAt: orders[0].createdAt,
+      });
+    }
     
     return NextResponse.json({
       success: true,

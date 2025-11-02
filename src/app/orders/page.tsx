@@ -37,8 +37,13 @@ interface Order {
   paymentStatus: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
   paymentId?: string;
   status: 'pending_fulfillment' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  platformGoldOrderId?: string | null;
+  platformGoldOrderId?: number | null;
+  platformGoldTransactionId?: string | null;
+  platformGoldHandle?: string | null;
   platformGoldStatus?: string | null;
+  platformGoldMode?: 'quote' | 'order';
+  platformGoldError?: string | null;
+  platformGoldTrackingNumbers?: string[];
   requiredKYC: boolean;
   kycStatus?: string | null;
   trackingNumbers?: string[];
@@ -52,6 +57,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [syncingOrderId, setSyncingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.userId) {
@@ -145,6 +151,86 @@ export default function OrdersPage() {
       month: 'long',
       day: 'numeric',
     });
+  };
+
+  const syncOrderStatus = async (orderId: string) => {
+    setSyncingOrderId(orderId);
+    try {
+      const response = await fetch('/api/orders/sync-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to sync order status');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Refresh orders list
+        const isEmailAuth = !user?.idToken;
+        const headers: Record<string, string> = {};
+
+        if (!isEmailAuth && user?.idToken) {
+          headers['Authorization'] = `Bearer ${user.idToken}`;
+        }
+
+        const queryParams = new URLSearchParams();
+        if (isEmailAuth && user?.userId) {
+          queryParams.append('authType', 'email');
+          queryParams.append('userId', user.userId);
+        }
+
+        const url = `/api/orders${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+        const ordersResponse = await fetch(url, { headers });
+        const ordersData = await ordersResponse.json();
+
+        if (ordersData.success) {
+          setOrders(ordersData.orders);
+        }
+      }
+    } catch (err) {
+      console.error('❌ Error syncing order status:', err);
+    } finally {
+      setSyncingOrderId(null);
+    }
+  };
+
+  const getPlatformGoldStatusColor = (status?: string | null) => {
+    if (!status) return 'bg-gray-100 text-gray-800';
+    
+    switch (status) {
+      case 'quote_created':
+        return 'bg-blue-100 text-blue-800';
+      case 'Awaiting Payment':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Pending Fulfillment':
+      case 'Awaiting Shipping Instructions':
+        return 'bg-orange-100 text-orange-800';
+      case 'Partially Fulfilled':
+        return 'bg-purple-100 text-purple-800';
+      case 'Fulfillment Complete':
+        return 'bg-green-100 text-green-800';
+      case 'Cancelled':
+        return 'bg-red-100 text-red-800';
+      case 'error':
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPlatformGoldStatusLabel = (status?: string | null, mode?: 'quote' | 'order') => {
+    if (!status) return 'Not submitted';
+    if (status === 'quote_created') return mode === 'quote' ? 'Quote Created (Test)' : 'Quote Created';
+    if (status === 'error' || status === 'failed') return 'Submission Failed';
+    return status;
   };
 
   if (!user?.userId) {
@@ -346,17 +432,98 @@ export default function OrdersPage() {
                     </div>
                   )}
 
+                  {/* Platform Gold Status */}
+                  <div className="mt-6 pt-6 border-t border-[rgba(0,0,0,0.1)]">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-inter font-semibold text-[14px] text-black">
+                        Fulfillment Status:
+                      </h4>
+                      {(order.platformGoldOrderId || order.platformGoldHandle) && (
+                        <button
+                          onClick={() => syncOrderStatus(order.id)}
+                          disabled={syncingOrderId === order.id}
+                          className="flex items-center gap-2 px-3 py-1 text-[12px] font-inter font-medium text-[#141722] bg-white border border-[rgba(0,0,0,0.2)] rounded-full hover:bg-[#f5f5f5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {syncingOrderId === order.id ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b border-[#141722]"></div>
+                              Syncing...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              Refresh Status
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-3 py-1 rounded-full font-inter font-medium text-[12px] ${getPlatformGoldStatusColor(
+                            order.platformGoldStatus
+                          )}`}
+                        >
+                          {getPlatformGoldStatusLabel(order.platformGoldStatus, order.platformGoldMode)}
+                        </span>
+                        {order.platformGoldMode === 'quote' && (
+                          <span className="text-[12px] font-inter text-[#7c7c7c] italic">
+                            (Test Mode)
+                          </span>
+                        )}
+                      </div>
+
+                      {order.platformGoldTransactionId && (
+                        <p className="font-inter text-[12px] text-[#7c7c7c]">
+                          Transaction ID: <span className="font-mono">{order.platformGoldTransactionId}</span>
+                        </p>
+                      )}
+
+                      {order.platformGoldOrderId && (
+                        <p className="font-inter text-[12px] text-[#7c7c7c]">
+                          Platform Gold Order: <span className="font-mono">#{order.platformGoldOrderId}</span>
+                        </p>
+                      )}
+
+                      {order.platformGoldHandle && !order.platformGoldOrderId && (
+                        <p className="font-inter text-[12px] text-[#7c7c7c]">
+                          Processing... <span className="font-mono">{order.platformGoldHandle.slice(0, 8)}...</span>
+                        </p>
+                      )}
+
+                      {order.platformGoldError && (
+                        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <p className="font-inter text-[12px] text-red-800">
+                            <strong>Error:</strong> {order.platformGoldError}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Tracking Info */}
-                  {order.trackingNumbers && order.trackingNumbers.length > 0 && (
+                  {((order.platformGoldTrackingNumbers && order.platformGoldTrackingNumbers.length > 0) ||
+                    (order.trackingNumbers && order.trackingNumbers.length > 0)) && (
                     <div className="mt-6 pt-6 border-t border-[rgba(0,0,0,0.1)]">
                       <h4 className="font-inter font-semibold text-[14px] text-black mb-2">
                         Tracking Numbers:
                       </h4>
-                      {order.trackingNumbers.map((tracking, index) => (
-                        <p key={index} className="font-mono text-[14px] text-[#7c7c7c]">
-                          {tracking}
-                        </p>
-                      ))}
+                      <div className="space-y-1">
+                        {order.platformGoldTrackingNumbers?.map((tracking, index) => (
+                          <p key={`pg-${index}`} className="font-mono text-[14px] text-[#7c7c7c]">
+                            {tracking}
+                          </p>
+                        ))}
+                        {order.trackingNumbers?.map((tracking, index) => (
+                          <p key={`track-${index}`} className="font-mono text-[14px] text-[#7c7c7c]">
+                            {tracking}
+                          </p>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

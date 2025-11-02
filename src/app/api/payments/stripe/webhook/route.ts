@@ -3,6 +3,13 @@ import { stripe } from '@/lib/stripe';
 import { adminDb } from '@/lib/firebase-admin';
 import { clearCart } from '@/lib/firebaseAdminHelpers';
 import Stripe from 'stripe';
+import {
+  createPlatformGoldOrder,
+  fetchPaymentMethods,
+  fetchShippingInstructions,
+  convertToPlatformGoldAddress,
+  formatOrderItems,
+} from '@/lib/platformGoldHelpers';
 
 /**
  * POST /api/payments/stripe/webhook
@@ -71,8 +78,11 @@ export async function POST(request: NextRequest) {
  * Handle successful PaymentIntent (embedded checkout)
  */
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+  console.log('\n========================================');
   console.log('🎉 PaymentIntent succeeded:', paymentIntent.id);
   console.log('💰 Amount:', paymentIntent.amount / 100);
+  console.log('📧 Metadata:', JSON.stringify(paymentIntent.metadata, null, 2));
+  console.log('========================================\n');
   
   const userId = paymentIntent.metadata?.userId;
   const userEmail = paymentIntent.metadata?.userEmail;
@@ -179,7 +189,84 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     await clearCart(userId);
     console.log('🧹 Cart cleared for user:', userId);
     
-    // TODO: Phase 7 - Send order to Platform Gold for fulfillment
+    // ========================================================================
+    // PHASE 7: Create Platform Gold Order/Quote
+    // ========================================================================
+    try {
+      console.log('📦 Creating Platform Gold order/quote...');
+      
+      // Fetch payment methods and shipping instructions
+      const [paymentMethods, shippingInstructions] = await Promise.all([
+        fetchPaymentMethods(),
+        fetchShippingInstructions(),
+      ]);
+      
+      if (!paymentMethods.length || !shippingInstructions.length) {
+        console.error('❌ No payment methods or shipping instructions available');
+        throw new Error('Platform Gold configuration missing');
+      }
+      
+      // Use first available options (you can add logic to select specific ones)
+      const paymentMethod = paymentMethods[0];
+      const shippingInstruction = shippingInstructions[0];
+      
+      console.log('💳 Using payment method:', paymentMethod.title);
+      console.log('📮 Using shipping instruction:', shippingInstruction.name);
+      
+      // Format order for Platform Gold
+      const platformGoldRequest = {
+        confirmationNumber: orderId, // Use Firebase order ID as confirmation number
+        items: formatOrderItems(orderItems),
+        shippingAddress: convertToPlatformGoldAddress(shippingAddress),
+        email: userEmail,
+        paymentMethodId: paymentMethod.id,
+        shippingInstructionId: shippingInstruction.id,
+        customerReferenceNumber: orderId,
+        notes: `Summit Bullion Order - Stripe Payment ID: ${paymentIntent.id}`,
+      };
+      
+      // Create order/quote on Platform Gold
+      const platformGoldResult = await createPlatformGoldOrder(platformGoldRequest);
+      
+      if (platformGoldResult.success) {
+        // Update Firebase order with Platform Gold details
+        await orderRef.update({
+          platformGoldOrderId: platformGoldResult.orderId || null,
+          platformGoldTransactionId: platformGoldResult.transactionId || null,
+          platformGoldHandle: platformGoldResult.handle || null,
+          platformGoldStatus: platformGoldResult.status || 'quote_created',
+          platformGoldMode: platformGoldResult.mode,
+          platformGoldAmount: platformGoldResult.amount,
+          updatedAt: new Date(),
+        });
+        
+        console.log('✅ Platform Gold order/quote linked to Firebase order');
+        console.log(`📊 Mode: ${platformGoldResult.mode}`);
+        console.log(`💰 Amount: $${platformGoldResult.amount}`);
+        
+        if (platformGoldResult.handle) {
+          console.log(`🔗 Handle: ${platformGoldResult.handle}`);
+        }
+        if (platformGoldResult.orderId) {
+          console.log(`🆔 Order ID: ${platformGoldResult.orderId}`);
+        }
+      } else {
+        console.error('❌ Failed to create Platform Gold order/quote');
+        await orderRef.update({
+          platformGoldStatus: 'failed',
+          platformGoldError: 'Failed to create order on Platform Gold',
+          updatedAt: new Date(),
+        });
+      }
+    } catch (platformGoldError) {
+      console.error('❌ Platform Gold integration error:', platformGoldError);
+      // Don't fail the entire webhook - order is still saved in Firebase
+      await orderRef.update({
+        platformGoldStatus: 'error',
+        platformGoldError: platformGoldError instanceof Error ? platformGoldError.message : 'Unknown error',
+        updatedAt: new Date(),
+      });
+    }
     
   } catch (error) {
     console.error('❌ Error handling PaymentIntent:', error);

@@ -57,9 +57,17 @@ export interface Order {
   
   // Platform Gold integration
   platformGoldOrderId?: number; // Platform Gold's sales order ID
+  platformGoldTransactionId?: string; // Platform Gold's transaction ID (e.g., SO12345)
+  platformGoldHandle?: string; // Handle for async orders
   platformGoldStatus?: string; // Their status string
+  platformGoldMode?: 'quote' | 'order'; // Whether we created a quote or real order
+  platformGoldAmount?: number; // Amount from Platform Gold
   platformGoldConfirmationNumber?: string;
+  platformGoldError?: string; // Error message if Platform Gold integration failed
+  platformGoldLastSynced?: Date; // Last time we synced status
   trackingNumbers?: string[];
+  platformGoldTrackingNumbers?: string[]; // Tracking numbers from Platform Gold
+  platformGoldItemFulfillments?: any[]; // Fulfillment details from Platform Gold
   
   // Order status
   status: OrderStatus;
