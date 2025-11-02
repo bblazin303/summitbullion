@@ -129,6 +129,7 @@ export default function DocsPage() {
         return newSet;
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
 
   // Keyboard shortcut for search (Cmd+K / Ctrl+K)

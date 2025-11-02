@@ -58,6 +58,14 @@ export async function POST(request: NextRequest) {
       case 'payment_intent.payment_failed':
         console.log('❌ Payment failed:', event.data.object.id);
         break;
+      
+      case 'identity.verification_session.verified':
+        await handleIdentityVerified(event.data.object as Stripe.Identity.VerificationSession);
+        break;
+      
+      case 'identity.verification_session.requires_input':
+        await handleIdentityRequiresInput(event.data.object as Stripe.Identity.VerificationSession);
+        break;
         
       default:
         console.log(`⚠️ Unhandled event type: ${event.type}`);
@@ -385,6 +393,85 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     
   } catch (error) {
     console.error('❌ Error handling checkout session:', error);
+  }
+}
+
+/**
+ * Handle successful identity verification
+ */
+async function handleIdentityVerified(session: Stripe.Identity.VerificationSession) {
+  console.log('\n========================================');
+  console.log('✅ Identity verification succeeded:', session.id);
+  console.log('📧 Email:', session.provided_details?.email);
+  console.log('========================================\n');
+  
+  const userId = session.metadata?.userId;
+  const email = session.metadata?.email || session.provided_details?.email;
+  
+  if (!userId || !email) {
+    console.error('❌ Missing user metadata in VerificationSession');
+    return;
+  }
+  
+  if (!adminDb) {
+    console.error('❌ Firebase Admin not initialized');
+    return;
+  }
+  
+  try {
+    // Update user profile with KYC status
+    const userRef = adminDb.collection('users').doc(userId);
+    await userRef.update({
+      kycStatus: 'approved',
+      kycVerificationId: session.id,
+      kycCompletedAt: new Date(),
+      updatedAt: new Date(),
+    });
+    
+    console.log('✅ User KYC status updated to approved:', userId);
+    
+  } catch (error) {
+    console.error('❌ Error updating user KYC status:', error);
+  }
+}
+
+/**
+ * Handle identity verification that requires input (failed)
+ */
+async function handleIdentityRequiresInput(session: Stripe.Identity.VerificationSession) {
+  console.log('\n========================================');
+  console.log('⚠️ Identity verification requires input:', session.id);
+  console.log('📧 Email:', session.provided_details?.email);
+  console.log('❌ Last error:', session.last_error);
+  console.log('========================================\n');
+  
+  const userId = session.metadata?.userId;
+  const email = session.metadata?.email || session.provided_details?.email;
+  
+  if (!userId || !email) {
+    console.error('❌ Missing user metadata in VerificationSession');
+    return;
+  }
+  
+  if (!adminDb) {
+    console.error('❌ Firebase Admin not initialized');
+    return;
+  }
+  
+  try {
+    // Update user profile with KYC status
+    const userRef = adminDb.collection('users').doc(userId);
+    await userRef.update({
+      kycStatus: 'rejected',
+      kycVerificationId: session.id,
+      kycCompletedAt: new Date(),
+      updatedAt: new Date(),
+    });
+    
+    console.log('⚠️ User KYC status updated to rejected:', userId);
+    
+  } catch (error) {
+    console.error('❌ Error updating user KYC status:', error);
   }
 }
 

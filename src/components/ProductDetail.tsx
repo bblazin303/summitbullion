@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { gsap } from 'gsap';
 import { useCart } from '@/context/CartContext';
 import type { Inventory } from '@/types/platformGold';
-import { fetchInventoryById, applyMarkup, getMetalDisplayName } from '@/lib/platformGoldApi';
+import { fetchInventory, fetchInventoryById, applyMarkup, getMetalDisplayName } from '@/lib/platformGoldApi';
 import { useAuthenticatedAction } from '@/hooks/useAuthenticatedAction';
 
 // Import product images (fallback)
@@ -37,6 +37,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
   const [productData, setProductData] = useState<Inventory | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [relatedProductsData, setRelatedProductsData] = useState<Inventory[]>([]);
 
   // Fetch product data from Platform Gold API
   useEffect(() => {
@@ -61,6 +62,34 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
 
     loadProduct();
   }, [productId]);
+
+  // Fetch related products (same metal type)
+  useEffect(() => {
+    const loadRelatedProducts = async () => {
+      if (!productData) return;
+      
+      try {
+        const response = await fetchInventory(100, 0); // Fetch first 100 products
+        
+        // fetchInventory returns an object with a 'records' property
+        if (response && Array.isArray(response.records)) {
+          // Filter products of the same metal type, excluding current product
+          const related = response.records
+            .filter(p => 
+              p.metalSymbol === productData.metalSymbol && 
+              p.id !== productData.id
+            )
+            .slice(0, 4); // Get first 4 related products
+          
+          setRelatedProductsData(related);
+        }
+      } catch (err) {
+        console.error('Failed to load related products:', err);
+      }
+    };
+
+    loadRelatedProducts();
+  }, [productData]);
 
   // Helper function to get fallback image
   const getFallbackImage = (metalSymbol: string): StaticImageData => {
@@ -164,14 +193,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
   };
 
   const tabContent = getTabContent();
-
-  // Related products
-  const relatedProducts = [
-    { id: 1, name: '1 g Fine Gold Grain', price: 44272.12, crypto: 186.8862, image: ProductImage1 },
-    { id: 2, name: '1 oz Gold Bar', price: 44272.12, crypto: 186.8862, image: ProductImage2 },
-    { id: 3, name: '10 oz Gold Bar', price: 44272.12, crypto: 186.8862, image: ProductImage3 },
-    { id: 4, name: '1 ox Silver Unity Bar', price: 44272.12, crypto: 186.8862, image: ProductImage4 }
-  ];
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -572,65 +593,68 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
 
           {/* Products Grid */}
           <div ref={relatedProductsRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {relatedProducts.map((relatedProduct) => (
-              <div key={relatedProduct.id} className="bg-white rounded-[36px] overflow-hidden flex flex-col">
-                {/* Product Image */}
-                <div className="relative w-full h-[200px] p-6">
-                  <Image
-                    src={relatedProduct.image}
-                    alt={relatedProduct.name}
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-
-                {/* Product Info */}
-                <div className="p-6 flex flex-col gap-4 flex-1">
-                  <h3 className="font-inter font-semibold text-[24px] text-black leading-[1.14] overflow-hidden text-ellipsis" style={{
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical'
-                  }}>
-                    {relatedProduct.name}
-                  </h3>
-                  <p className="font-inter font-medium text-[16px] text-[#7c7c7c] leading-[1.57] overflow-hidden text-ellipsis" style={{
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical'
-                  }}>
-                    From fractional gold to full ounces - find the perfect precious met
-                  </p>
-
-                  {/* Price */}
-                  <div className="flex flex-col gap-2 mt-auto">
-                    <div className="font-inter font-medium text-[20px] text-black">
-                      ${relatedProduct.price.toLocaleString()} USD
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="relative w-[19px] h-[19px]">
-                        <Image
-                          src={SolLogo}
-                          alt="SOL"
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                      <span className="font-inter font-medium text-[16px] text-[#8a8a8a]">
-                        {relatedProduct.crypto}
-                      </span>
-                    </div>
+            {relatedProductsData.map((relatedProduct) => {
+              const markedUpPrice = applyMarkup(relatedProduct.askPrice, 2);
+              const productImage = relatedProduct.mainImage || getFallbackImage(relatedProduct.metalSymbol);
+              
+              return (
+                <Link
+                  key={relatedProduct.id}
+                  href={`/marketplace/${relatedProduct.id}`}
+                  className="bg-white rounded-[36px] overflow-hidden flex flex-col hover:shadow-lg transition-shadow"
+                >
+                  {/* Product Image */}
+                  <div className="relative w-full h-[200px] p-6 bg-white">
+                    {typeof productImage === 'string' ? (
+                      <Image
+                        src={productImage}
+                        alt={relatedProduct.name}
+                        fill
+                        className="object-contain"
+                        unoptimized
+                      />
+                    ) : (
+                      <Image
+                        src={productImage}
+                        alt={relatedProduct.name}
+                        fill
+                        className="object-contain"
+                      />
+                    )}
                   </div>
 
-                  {/* Add to Cart Button */}
-                  <Link
-                    href={`/marketplace/${relatedProduct.id}`}
-                    className="w-full bg-[#141722] text-[#efe9e0] font-inter font-medium text-[14px] uppercase py-[17px] rounded-full text-center hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300"
-                  >
-                    Add to cart
-                  </Link>
-                </div>
-              </div>
-            ))}
+                  {/* Product Info */}
+                  <div className="p-6 flex flex-col gap-4 flex-1">
+                    <h3 className="font-inter font-semibold text-[24px] text-black leading-[1.14] overflow-hidden text-ellipsis" style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}>
+                      {relatedProduct.name}
+                    </h3>
+                    <p className="font-inter font-medium text-[16px] text-[#7c7c7c] leading-[1.57] overflow-hidden text-ellipsis" style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}>
+                      {relatedProduct.purity} {getMetalDisplayName(relatedProduct.metalSymbol)} - {relatedProduct.metalOz} oz
+                    </p>
+
+                    {/* Price */}
+                    <div className="flex flex-col gap-2 mt-auto">
+                      <div className="font-inter font-medium text-[20px] text-black">
+                        ${markedUpPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                      </div>
+                    </div>
+
+                    {/* View Product Button */}
+                    <div className="w-full bg-[#141722] text-[#efe9e0] font-inter font-medium text-[14px] uppercase py-[17px] rounded-full text-center hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300">
+                      View Product
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
 
           {/* Navigation Arrow */}

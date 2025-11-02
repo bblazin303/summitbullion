@@ -4,19 +4,29 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import { useUser } from '@account-kit/react';
 import StripePaymentForm from '@/components/StripePaymentForm';
 import { ShippingAddressForm } from '@/components/ShippingAddressForm';
+import IdentityVerification from '@/components/IdentityVerification';
 import { ShippingAddress } from '@/types/user';
+import { User } from '@/types/user';
 
 const CheckoutComponent: React.FC = () => {
   const { cart, updateQuantity, removeFromCart, getCartTotal, isLoading } = useCart();
-  const [checkoutStep, setCheckoutStep] = useState<'address' | 'payment'>('address');
+  const user = useUser();
+  const [checkoutStep, setCheckoutStep] = useState<'address' | 'kyc' | 'payment'>('address');
   const [paymentMethod, setPaymentMethod] = useState<'credit' | 'crypto'>('credit');
   const [shippingAddress, setShippingAddress] = useState<Partial<ShippingAddress>>({
     country: 'US', // Default to US
   });
   const [shippingErrors, setShippingErrors] = useState<string[]>([]);
   const [isShippingValid, setIsShippingValid] = useState(false);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [kycVerified, setKycVerified] = useState(false);
+
+  // KYC threshold
+  const KYC_THRESHOLD = 3000;
 
   // Validate shipping address
   const validateShippingAddress = (address: Partial<ShippingAddress>): boolean => {
@@ -56,11 +66,49 @@ const CheckoutComponent: React.FC = () => {
     validateShippingAddress(address);
   };
 
-  // Handle "Continue to Payment" button
+  // Fetch user profile to check KYC status
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user?.email) {
+        setIsLoadingProfile(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/user/profile?email=${encodeURIComponent(user.email)}`);
+        if (response.ok) {
+          const profile = await response.json();
+          setUserProfile(profile);
+          setKycVerified(profile.kycStatus === 'approved');
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [user?.email]);
+
+  // Calculate totals
+  const deliveryFee = 15;
+  const subtotal = getCartTotal();
+  const total = subtotal + deliveryFee;
+
+  // Check if KYC is required for this order (TEMPORARILY DISABLED)
+  const requiresKyc = false; // TODO: Re-enable after admin enables Stripe Identity: subtotal >= KYC_THRESHOLD;
+
+  // Handle "Continue to Payment" or "Continue to KYC" button
   const handleContinueToPayment = () => {
     if (validateShippingAddress(shippingAddress)) {
-      setCheckoutStep('payment');
-      // Scroll to top of payment section
+      // If order requires KYC and user is not verified, go to KYC step
+      if (requiresKyc && !kycVerified) {
+        setCheckoutStep('kyc');
+      } else {
+        setCheckoutStep('payment');
+      }
+      // Scroll to top of section
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -71,14 +119,12 @@ const CheckoutComponent: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Debug logs - DISABLED FOR NOW
-  // console.log('CheckoutComponent rendered');
-  // console.log('Cart contents:', cart);
-  // console.log('Cart count:', getCartCount());
-
-  const deliveryFee = 15;
-  const subtotal = getCartTotal();
-  const total = subtotal + deliveryFee;
+  // Handle KYC verification complete
+  const handleKycComplete = () => {
+    setKycVerified(true);
+    setCheckoutStep('payment');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Show loading state while cart is being fetched
   if (isLoading) {
@@ -145,37 +191,60 @@ const CheckoutComponent: React.FC = () => {
 
           {/* Progress Indicator */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Step 1 - Clickable when on payment step */}
+            {/* Step 1 - Shipping Address */}
             <button
-              onClick={() => checkoutStep === 'payment' && handleBackToAddress()}
+              onClick={() => (checkoutStep === 'kyc' || checkoutStep === 'payment') && handleBackToAddress()}
               disabled={checkoutStep === 'address'}
               className={`flex items-center gap-2 transition-opacity ${
-                checkoutStep === 'payment' ? 'cursor-pointer hover:opacity-70' : 'cursor-default'
+                checkoutStep !== 'address' ? 'cursor-pointer hover:opacity-70' : 'cursor-default'
               }`}
             >
               <div className={`w-8 h-8 rounded-full flex items-center justify-center font-inter font-semibold text-[14px] transition-all ${
                 checkoutStep === 'address' ? 'bg-[#141722] text-white' : 'bg-[#FFB546] text-black'
               }`}>
-                {checkoutStep === 'payment' ? '✓' : '1'}
+                {checkoutStep !== 'address' ? '✓' : '1'}
               </div>
               <span className={`hidden sm:inline font-inter text-[14px] transition-all ${
                 checkoutStep === 'address' ? 'font-semibold text-black' : 'text-[#7c7c7c]'
               }`}>
-                Shipping Address
+                Address
               </span>
             </button>
 
             {/* Separator */}
-            <div className="w-12 h-[2px] bg-[rgba(0,0,0,0.1)]"></div>
+            <div className="w-8 h-[2px] bg-[rgba(0,0,0,0.1)]"></div>
 
-            {/* Step 2 - Not clickable */}
+            {/* Step 2 - KYC (only show if required) */}
+            {requiresKyc && (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-inter font-semibold text-[14px] transition-all ${
+                    checkoutStep === 'kyc' ? 'bg-[#141722] text-white' : 
+                    checkoutStep === 'payment' ? 'bg-[#FFB546] text-black' : 
+                    'bg-[rgba(0,0,0,0.1)] text-[#7c7c7c]'
+                  }`}>
+                    {checkoutStep === 'payment' ? '✓' : '2'}
+                  </div>
+                  <span className={`hidden sm:inline font-inter text-[14px] transition-all ${
+                    checkoutStep === 'kyc' ? 'font-semibold text-black' : 'text-[#7c7c7c]'
+                  }`}>
+                    Verify ID
+                  </span>
+                </div>
+
+                {/* Separator */}
+                <div className="w-8 h-[2px] bg-[rgba(0,0,0,0.1)]"></div>
+              </>
+            )}
+
+            {/* Step 3 (or 2 if no KYC) - Payment */}
             <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-inter font-semibold text-[14px] ${
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-inter font-semibold text-[14px] transition-all ${
                 checkoutStep === 'payment' ? 'bg-[#141722] text-white' : 'bg-[rgba(0,0,0,0.1)] text-[#7c7c7c]'
               }`}>
-                2
+                {requiresKyc ? '3' : '2'}
               </div>
-              <span className={`hidden sm:inline font-inter text-[14px] ${
+              <span className={`hidden sm:inline font-inter text-[14px] transition-all ${
                 checkoutStep === 'payment' ? 'font-semibold text-black' : 'text-[#7c7c7c]'
               }`}>
                 Payment
@@ -268,6 +337,29 @@ const CheckoutComponent: React.FC = () => {
           ))}
           </div>
 
+          {/* Mobile Summary - Shows on mobile/tablet, hidden on desktop */}
+          <div className="flex xl:hidden flex-col gap-3 flex-shrink-0 pt-6 border-t border-[rgba(0,0,0,0.1)]">
+            {checkoutStep === 'address' ? (
+              <>
+                {/* Address Step - Show Estimated */}
+                <div className="flex items-center justify-between font-inter text-[18px] sm:text-[20px]">
+                  <span className="font-semibold text-black">Estimated Total</span>
+                  <span className="font-bold text-black">${subtotal.toFixed(2)} USD</span>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Payment Step - Show Final Price (will be updated by StripePaymentForm) */}
+                <div key="mobile-payment-summary" id="mobile-final-price-summary" className="flex flex-col">
+                  <div className="flex items-center justify-center py-4">
+                    <div className="w-6 h-6 border-2 border-[#141722] border-t-transparent rounded-full animate-spin"></div>
+                    <span className="ml-3 font-inter text-[14px] text-[#7c7c7c]">Calculating final price...</span>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Summary & Continue Shopping - Desktop Only */}
           <div className="hidden xl:flex flex-col 2xl:flex-row items-start 2xl:items-end justify-between gap-6 flex-shrink-0 pt-6 border-t border-[rgba(0,0,0,0.1)]">
             {/* Summary */}
@@ -283,7 +375,7 @@ const CheckoutComponent: React.FC = () => {
               ) : (
                 <>
                   {/* Payment Step - Show Final Price (will be updated by StripePaymentForm) */}
-                  <div key="payment-summary" id="final-price-summary" className="flex flex-col gap-3 xl:gap-4">
+                  <div key="payment-summary" id="final-price-summary" className="flex flex-col">
                     <div className="flex items-center justify-center py-4">
                       <div className="w-6 h-6 border-2 border-[#141722] border-t-transparent rounded-full animate-spin"></div>
                       <span className="ml-3 font-inter text-[14px] text-[#7c7c7c]">Calculating final price...</span>
@@ -340,18 +432,69 @@ const CheckoutComponent: React.FC = () => {
                   />
                 </div>
 
-                {/* Continue to Payment Button */}
+                {/* KYC Notice (if order requires KYC) */}
+                {requiresKyc && !kycVerified && (
+                  <div className="mb-6 bg-[#fff9e6] border border-[#ffb546]/30 rounded-[12px] p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                          <path d="M10 0C4.48 0 0 4.48 0 10C0 15.52 4.48 20 10 20C15.52 20 20 15.52 20 10C20 4.48 15.52 0 10 0ZM11 15H9V13H11V15ZM11 11H9V5H11V11Z" fill="#ffb546"/>
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-inter font-semibold text-[13px] text-[#141722] mb-1">
+                          Identity Verification Required
+                        </h4>
+                        <p className="font-inter text-[12px] text-[#7c7c7c]">
+                          Your order total exceeds $3,000. You&apos;ll need to verify your identity on the next step.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Continue Button */}
                 <button
                   onClick={handleContinueToPayment}
                   disabled={!isShippingValid}
                   className="w-full bg-[#141722] text-[#efe9e0] font-inter font-medium text-[14px] uppercase py-[17px] rounded-[42px] hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:to-[#FFB546] hover:text-black transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Continue to Payment
+                  {requiresKyc && !kycVerified ? 'Continue to Verification' : 'Continue to Payment'}
                 </button>
               </>
             )}
 
-            {/* STEP 2: Payment Method */}
+            {/* STEP 2: Identity Verification (KYC) */}
+            {checkoutStep === 'kyc' && (
+              <>
+                <h2 className="font-inter font-semibold text-[18px] sm:text-[20px] md:text-[24px] text-black mb-2">
+                  Identity Verification
+                </h2>
+                <p className="font-inter font-normal text-[11px] sm:text-[12px] text-[#8a8a8a] mb-6">
+                  Verify your identity to complete this order
+                </p>
+
+                {/* Identity Verification Component */}
+                <div className="mb-6">
+                  <IdentityVerification
+                    onVerificationComplete={handleKycComplete}
+                    onVerificationError={(error) => {
+                      console.error('KYC verification error:', error);
+                    }}
+                  />
+                </div>
+
+                {/* Back to Address Button */}
+                <button
+                  onClick={handleBackToAddress}
+                  className="w-full border border-[#dfdfdf] text-[#141722] font-inter font-medium text-[14px] uppercase py-[17px] rounded-[42px] hover:border-black transition-colors"
+                >
+                  Back to Address
+                </button>
+              </>
+            )}
+
+            {/* STEP 3: Payment Method */}
             {checkoutStep === 'payment' && (
               <>
                 <h2 className="font-inter font-semibold text-[18px] sm:text-[20px] md:text-[24px] text-black mb-2">
@@ -361,63 +504,11 @@ const CheckoutComponent: React.FC = () => {
                   Choose your preferred method of payment
                 </p>
 
-            {/* Payment Options */}
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'credit' ? 'border-[#1a1a1a]' : 'border-[#cccccc]'}`}>
-                  {paymentMethod === 'credit' && <div className="w-3 h-3 rounded-full bg-[#1a1a1a]"></div>}
-                </div>
-                <input
-                  type="radio"
-                  value="credit"
-                  checked={paymentMethod === 'credit'}
-                  onChange={() => setPaymentMethod('credit')}
-                  className="sr-only"
-                />
-                <span className="font-inter font-medium text-[12px] sm:text-[13px] text-[#1a1a1a]">Checkout with Stripe</span>
-              </label>
-
-              <label className="flex items-center gap-2 cursor-pointer">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'crypto' ? 'border-[#1a1a1a]' : 'border-[#cccccc]'}`}>
-                  {paymentMethod === 'crypto' && <div className="w-3 h-3 rounded-full bg-[#1a1a1a]"></div>}
-                </div>
-                <input
-                  type="radio"
-                  value="crypto"
-                  checked={paymentMethod === 'crypto'}
-                  onChange={() => setPaymentMethod('crypto')}
-                  className="sr-only"
-                />
-                <span className="font-inter font-medium text-[12px] sm:text-[13px] text-[#1a1a1a]">Pay with Crypto</span>
-              </label>
-            </div>
-
-            {/* Embedded Stripe Payment Form */}
-            {paymentMethod === 'credit' && checkoutStep === 'payment' && (
-              <StripePaymentForm
-                shippingAddress={shippingAddress}
-                isShippingValid={isShippingValid}
-              />
-            )}
-
-            {/* Crypto Payment Placeholder */}
-            {paymentMethod === 'crypto' && (
-              <div className="mb-6 p-8 text-center bg-white rounded-[12px] border border-[rgba(0,0,0,0.1)]">
-                <p className="font-inter text-[16px] text-[#7c7c7c]">
-                  Crypto payment options coming soon!
-                </p>
-              </div>
-            )}
-
-                {/* Mobile Summary */}
-                <div className="flex flex-col gap-3 mb-6 xl:hidden">
-                  <div className="border-t border-[rgba(0,0,0,0.1)] pt-3">
-                    <div className="flex items-center justify-between font-inter text-[18px] sm:text-[20px]">
-                      <span className="font-semibold text-black">Estimated Total</span>
-                      <span className="font-bold text-black">${subtotal.toFixed(2)} USD</span>
-                    </div>
-                  </div>
-                </div>
+            {/* Stripe Payment Element with all payment methods */}
+            <StripePaymentForm
+              shippingAddress={shippingAddress}
+              isShippingValid={isShippingValid}
+            />
               </>
             )}
           </div>

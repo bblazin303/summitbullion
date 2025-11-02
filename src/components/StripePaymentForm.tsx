@@ -174,6 +174,7 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
   
   // Function to update the left-side summary with final pricing
   const updateLeftSideSummary = (pricing: any) => {
+    // Update desktop summary
     const summaryElement = document.getElementById('final-price-summary');
     if (summaryElement) {
       summaryElement.innerHTML = `
@@ -181,7 +182,21 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
           <span class="font-semibold text-black">Total</span>
           <span class="font-bold text-black">$${pricing.total.toFixed(2)} USD</span>
         </div>
-        <div class="text-right">
+        <div class="text-right" style="margin-top: 2px;">
+          <span class="font-inter text-[10px] text-[#7c7c7c]">Includes all fees and shipping</span>
+        </div>
+      `;
+    }
+
+    // Update mobile summary
+    const mobileSummaryElement = document.getElementById('mobile-final-price-summary');
+    if (mobileSummaryElement) {
+      mobileSummaryElement.innerHTML = `
+        <div class="flex items-center justify-between font-inter text-[18px] sm:text-[20px]">
+          <span class="font-semibold text-black">Total</span>
+          <span class="font-bold text-black">$${pricing.total.toFixed(2)} USD</span>
+        </div>
+        <div class="text-right" style="margin-top: 2px;">
           <span class="font-inter text-[10px] text-[#7c7c7c]">Includes all fees and shipping</span>
         </div>
       `;
