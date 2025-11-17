@@ -88,15 +88,15 @@ export async function POST(request: NextRequest) {
       platformGoldQuote = await createSalesOrderQuote(quoteRequest);
       
       console.log('✅ Platform Gold quote received:');
-      console.log(`   Item cost: $${platformGoldQuote.amount}`);
-      console.log(`   Handling fee: $${platformGoldQuote.handlingFee}`);
+      console.log(`   Quote amount (includes item + handling): $${platformGoldQuote.amount.toFixed(2)}`);
+      console.log(`   Handling fee breakdown (for info): $${platformGoldQuote.handlingFee.toFixed(2)}`);
       
-      // IMPORTANT: Platform Gold's amount does NOT include handling fee
-      // We need to add them together to get the true cost
-      const platformGoldTotalCost = platformGoldQuote.amount + platformGoldQuote.handlingFee;
+      // IMPORTANT: Platform Gold's amount ALREADY includes handling fee
+      // The handlingFee field is just for display/breakdown purposes
+      const platformGoldTotalCost = platformGoldQuote.amount;
       console.log(`   Total Platform Gold cost: $${platformGoldTotalCost.toFixed(2)}`);
       
-      // Store handling fee separately for transparency
+      // Store handling fee separately for display purposes only
       deliveryFee = platformGoldQuote.handlingFee;
       
     } catch (error) {
@@ -110,8 +110,8 @@ export async function POST(request: NextRequest) {
     // ========================================================================
     // APPLY YOUR 2% MARKUP
     // ========================================================================
-    // Apply 2% markup to the TOTAL Platform Gold cost (items + handling)
-    const platformGoldTotal = platformGoldQuote.amount + platformGoldQuote.handlingFee;
+    // Apply 2% markup to Platform Gold's total (which already includes handling)
+    const platformGoldTotal = platformGoldQuote.amount;
     const markupPercentage = 2;
     const markupAmount = platformGoldTotal * (markupPercentage / 100);
     const subtotalWithMarkup = platformGoldTotal + markupAmount;
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     const total = subtotalWithMarkup;
     
     console.log('💰 Pricing breakdown:');
-    console.log(`   Platform Gold quote: $${platformGoldTotal.toFixed(2)}`);
+    console.log(`   Platform Gold total (item + handling): $${platformGoldTotal.toFixed(2)}`);
     console.log(`   Your ${markupPercentage}% markup: $${markupAmount.toFixed(2)}`);
     console.log(`   Final total: $${total.toFixed(2)}`);
     

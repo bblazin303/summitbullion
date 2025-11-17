@@ -349,7 +349,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
 
         {/* Product Content Grid */}
         <div className="max-w-[1100px] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 mb-12 sm:mb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 mb-12 sm:mb-16 lg:items-center">
           {/* Left: Image Gallery */}
           <div className="flex flex-col-reverse lg:flex-row gap-4 sm:gap-6 lg:items-end">
             {/* Thumbnails */}
@@ -449,7 +449,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
               {/* Divider */}
               <div className="border-t border-[rgba(0,0,0,0.1)]"></div>
 
-              {/* Volume Discount Header */}
+              {/* ===== VOLUME DISCOUNT PRICING - COMMENTED OUT ===== */}
+              {/* 
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
                 <span className="font-inter font-medium text-[14px] sm:text-[16px] text-black whitespace-nowrap">Volume Discount Pricing</span>
                 <div className="flex items-center gap-2">
@@ -465,9 +466,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                 </div>
               </div>
 
-              {/* Pricing Table */}
               <div className="space-y-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                {/* Header Row */}
                 <div className="grid grid-cols-4 gap-2 sm:gap-4 font-inter font-medium text-[11px] sm:text-[14px] text-black text-center mb-2 min-w-[300px] sm:min-w-0">
                   <div>Quantity</div>
                   <div className="whitespace-nowrap">Check Wire</div>
@@ -475,7 +474,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                   <div className="whitespace-nowrap">CC/Paypal</div>
                 </div>
 
-                {/* Pricing Rows */}
                 {product.volumePricing.map((row, index) => (
                   <button
                     key={index}
@@ -492,8 +490,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                 ))}
               </div>
 
-              {/* Divider */}
               <div className="border-t border-[rgba(0,0,0,0.1)]"></div>
+              */}
+              {/* ===== END VOLUME DISCOUNT PRICING ===== */}
 
               {/* Actions */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
