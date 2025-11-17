@@ -67,7 +67,7 @@ export interface Order {
   platformGoldLastSynced?: Date; // Last time we synced status
   trackingNumbers?: string[];
   platformGoldTrackingNumbers?: string[]; // Tracking numbers from Platform Gold
-  platformGoldItemFulfillments?: any[]; // Fulfillment details from Platform Gold
+  platformGoldItemFulfillments?: unknown[]; // Fulfillment details from Platform Gold
   
   // Order status
   status: OrderStatus;

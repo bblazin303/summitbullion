@@ -117,7 +117,21 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     }
     
     // Build order items from cart
-    const orderItems = cartData.items.map((cartItem: any) => ({
+    interface CartItem {
+      inventoryId: number;
+      sku: string;
+      name: string;
+      quantity: number;
+      pricing?: {
+        basePrice?: number;
+        markupPercentage?: number;
+        markup?: number;
+        finalPrice?: number;
+      };
+      image?: string;
+    }
+    
+    const orderItems = cartData.items.map((cartItem: CartItem) => ({
       id: cartItem.inventoryId,
       sku: cartItem.sku,
       name: cartItem.name,
@@ -136,7 +150,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     const subtotal = cartData.subtotal || 0;
     const deliveryFee = parseFloat(paymentIntent.metadata?.deliveryFee || '15');
     const platformGoldCost = orderItems.reduce(
-      (sum: number, item: any) => sum + (item.pricing.basePrice * item.quantity),
+      (sum: number, item: typeof orderItems[0]) => sum + (item.pricing.basePrice * item.quantity),
       0
     );
     const totalMarkup = subtotal - platformGoldCost;
@@ -145,7 +159,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     let shippingAddress;
     try {
       shippingAddress = JSON.parse(paymentIntent.metadata?.shippingAddress || '{}');
-    } catch (e) {
+    } catch {
       console.error('❌ Failed to parse shipping address from metadata');
       shippingAddress = {};
     }
@@ -303,11 +317,6 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   }
   
   try {
-    // Retrieve full session with line items
-    const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
-      expand: ['line_items.data.price.product'],
-    });
-    
     // Get cart data (for metadata like inventoryId, pricing breakdown)
     const cartRef = adminDb.collection('users').doc(userId).collection('cart').doc('current');
     const cartDoc = await cartRef.get();
@@ -319,7 +328,21 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     }
     
     // Build order items from cart and session line items
-    const orderItems = cartData.items.map((cartItem: any) => ({
+    interface CartItem {
+      inventoryId: number;
+      sku: string;
+      name: string;
+      quantity: number;
+      pricing?: {
+        basePrice?: number;
+        markupPercentage?: number;
+        markup?: number;
+        finalPrice?: number;
+      };
+      image?: string;
+    }
+    
+    const orderItems = cartData.items.map((cartItem: CartItem) => ({
       id: cartItem.inventoryId,
       sku: cartItem.sku,
       name: cartItem.name,
@@ -337,7 +360,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     // Calculate totals
     const subtotal = cartData.subtotal || 0;
     const platformGoldCost = orderItems.reduce(
-      (sum: number, item: any) => sum + (item.pricing.basePrice * item.quantity),
+      (sum: number, item: typeof orderItems[0]) => sum + (item.pricing.basePrice * item.quantity),
       0
     );
     const totalMarkup = subtotal - platformGoldCost;

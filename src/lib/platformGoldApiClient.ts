@@ -3,7 +3,7 @@
  * Axios-based HTTP client for direct Platform Gold API calls
  */
 
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
 // Create axios instance for Platform Gold API
 let platformGoldApiInstance: AxiosInstance | null = null;
@@ -56,9 +56,10 @@ export async function getPlatformGoldApi(): Promise<AxiosInstance> {
     console.log('✅ Platform Gold API client initialized');
 
     return platformGoldApiInstance;
-  } catch (error: any) {
-    console.error('❌ Failed to initialize Platform Gold API client:', error.message);
-    throw new Error(`Platform Gold API authentication failed: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Failed to initialize Platform Gold API client:', errorMessage);
+    throw new Error(`Platform Gold API authentication failed: ${errorMessage}`);
   }
 }
 
@@ -74,19 +75,19 @@ export function resetPlatformGoldApi() {
  * Export the API instance getter as the main export
  */
 export const platformGoldApi = {
-  async get(url: string, config?: any) {
+  async get(url: string, config?: AxiosRequestConfig) {
     const api = await getPlatformGoldApi();
     return api.get(url, config);
   },
-  async post(url: string, data?: any, config?: any) {
+  async post(url: string, data?: unknown, config?: AxiosRequestConfig) {
     const api = await getPlatformGoldApi();
     return api.post(url, data, config);
   },
-  async put(url: string, data?: any, config?: any) {
+  async put(url: string, data?: unknown, config?: AxiosRequestConfig) {
     const api = await getPlatformGoldApi();
     return api.put(url, data, config);
   },
-  async delete(url: string, config?: any) {
+  async delete(url: string, config?: AxiosRequestConfig) {
     const api = await getPlatformGoldApi();
     return api.delete(url, config);
   },

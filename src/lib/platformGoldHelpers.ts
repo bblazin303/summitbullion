@@ -29,7 +29,7 @@ async function apiGet<T>(endpoint: string): Promise<T> {
 /**
  * Helper to make POST requests to Platform Gold API
  */
-async function apiPost<T>(endpoint: string, data: any): Promise<T> {
+async function apiPost<T>(endpoint: string, data: unknown): Promise<T> {
   const response = await fetchWithAuth(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
     headers: {
@@ -215,7 +215,7 @@ export async function createSalesOrderQuote(
     });
     
     return quote;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Error creating quote:', error);
     throw new Error('Failed to create Platform Gold quote');
   }
@@ -237,7 +237,7 @@ export async function executeSalesOrderQuote(
     console.log('✅ Quote executed:', result);
     
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Error executing quote:', error);
     throw new Error('Failed to execute Platform Gold quote');
   }
@@ -261,13 +261,14 @@ export async function createSalesOrder(
     const order = orders[0];
     
     console.log('✅ Sales order created:', {
-      id: order.id,
-      status: order.status,
-      transactionId: order.transactionId,
+      id: 'id' in order ? order.id : undefined,
+      handle: 'handle' in order ? order.handle : undefined,
+      status: 'status' in order ? order.status : undefined,
+      transactionId: 'transactionId' in order ? order.transactionId : undefined,
     });
     
     return order;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Error creating sales order:', error);
     throw new Error('Failed to create Platform Gold sales order');
   }
@@ -280,7 +281,7 @@ export async function pollOrderStatus(handle: string): Promise<PlatformGoldPollR
   try {
     const results = await apiPost<PlatformGoldPollResponse[]>('/sales-order/poll', [{ handle }]);
     return results[0];
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Error polling order status:', error);
     throw new Error('Failed to poll Platform Gold order status');
   }
@@ -293,7 +294,7 @@ export async function fetchSalesOrderStatus(orderId: number): Promise<PlatformGo
   try {
     const results = await apiPost<PlatformGoldOrderResponse[]>('/sales-order/status', [{ id: orderId }]);
     return results[0];
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Error fetching order status:', error);
     throw new Error('Failed to fetch Platform Gold order status');
   }
@@ -309,10 +310,10 @@ export async function searchSalesOrders(criteria: {
     from: string;
     to: string;
   };
-}): Promise<any[]> {
+}): Promise<PlatformGoldOrderResponse[]> {
   try {
-    return await apiPost<any[]>('/sales-order/search', criteria);
-  } catch (error: any) {
+    return await apiPost<PlatformGoldOrderResponse[]>('/sales-order/search', criteria);
+  } catch (error: unknown) {
     console.error('❌ Error searching orders:', error);
     throw new Error('Failed to search Platform Gold orders');
   }
@@ -336,7 +337,8 @@ export async function createPlatformGoldOrder(
   transactionId?: string;
   status?: string;
   amount: number;
-  data: PlatformGoldQuoteResponse | PlatformGoldOrderResponse;
+  data?: PlatformGoldQuoteResponse | PlatformGoldOrderResponse;
+  error?: string;
 }> {
   try {
     if (USE_QUOTE_MODE) {
@@ -378,13 +380,14 @@ export async function createPlatformGoldOrder(
         };
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Error creating Platform Gold order:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return {
       success: false,
       mode: USE_QUOTE_MODE ? 'quote' : 'order',
       amount: 0,
-      data: error.response?.data || error.message,
+      error: errorMessage,
     };
   }
 }
@@ -396,7 +399,7 @@ export async function createPlatformGoldOrder(
 /**
  * Convert Firebase shipping address to Platform Gold format
  */
-export function convertToPlatformGoldAddress(address: any): PlatformGoldAddress {
+export function convertToPlatformGoldAddress(address: Partial<PlatformGoldAddress> & { fullName?: string; streetAddress?: string; aptSuite?: string; zipCode?: string }): PlatformGoldAddress {
   return {
     addressee: address.fullName || '',
     attention: address.attention || '',
@@ -412,9 +415,9 @@ export function convertToPlatformGoldAddress(address: any): PlatformGoldAddress 
 /**
  * Format order items for Platform Gold API
  */
-export function formatOrderItems(items: any[]): PlatformGoldOrderItem[] {
+export function formatOrderItems(items: Array<{ id: string | number; quantity: number }>): PlatformGoldOrderItem[] {
   return items.map((item) => ({
-    id: parseInt(item.id) || 0,
+    id: typeof item.id === 'string' ? parseInt(item.id) : item.id || 0,
     quantity: item.quantity || 1,
   }));
 }

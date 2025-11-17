@@ -10,6 +10,13 @@ import { emailToUserId } from '@/lib/userIdHelper';
  */
 export async function GET(req: NextRequest) {
   try {
+    if (!adminDb) {
+      return NextResponse.json(
+        { success: false, error: 'Firebase Admin not initialized' },
+        { status: 500 }
+      );
+    }
+    
     const { searchParams } = new URL(req.url);
     const email = searchParams.get('email');
 
@@ -44,12 +51,13 @@ export async function GET(req: NextRequest) {
       ...userData,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch user profile';
     console.error('❌ Error fetching user profile:', error);
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Failed to fetch user profile' 
+        error: errorMessage
       },
       { status: 500 }
     );

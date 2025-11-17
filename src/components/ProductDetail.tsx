@@ -16,7 +16,6 @@ import ProductImage3 from '/public/images/product-image3.png';
 import ProductImage4 from '/public/images/product-image4.png';
 
 // Import icons
-import SolLogo from '/public/images/icons/sol-logo.svg';
 import FlameLogo from '/public/images/icons/flame.svg';
 import LikeLogo from '/public/images/icons/like.svg';
 

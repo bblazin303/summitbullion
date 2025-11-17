@@ -56,12 +56,13 @@ export async function POST(req: NextRequest) {
       verificationSessionId: verificationSession.id,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create verification session';
     console.error('❌ Error creating verification session:', error);
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Failed to create verification session' 
+        error: errorMessage
       },
       { status: 500 }
     );

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useUser } from '@account-kit/react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -52,7 +51,6 @@ interface Order {
 }
 
 export default function OrdersPage() {
-  const router = useRouter();
   const user = useUser();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);

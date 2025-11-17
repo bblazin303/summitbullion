@@ -14,9 +14,6 @@ import ProductImage2 from '/public/images/product-image2.png';
 import ProductImage3 from '/public/images/product-image3.png';
 import ProductImage4 from '/public/images/product-image4.png';
 
-// Import Sol logo for price indicator
-import SolLogo from '/public/images/icons/sol-logo.svg';
-
 // Import chevron right icon
 import ChevronRight from '/public/images/icons/chevron-right.svg';
 
@@ -241,9 +238,8 @@ const ProductHome: React.FC = () => {
         )}
 
         {/* Floating View More Button - Hidden on mobile */}
-        <Link 
-          href="/marketplace"
-          ref={buttonRef} 
+          <Link
+            href="/marketplace"
           style={{ opacity: 0, transform: 'translateY(60px)' }} 
           className="hidden xl:block absolute -right-16 top-1/2 -translate-y-1/2 bg-black p-[10px] rounded-[154px] hover:bg-[#ffb546] transition-all duration-300 z-10"
         >

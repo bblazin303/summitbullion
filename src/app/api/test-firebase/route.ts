@@ -7,7 +7,7 @@ import { adminAuth, adminDb } from '@/lib/firebase-admin';
 export async function GET() {
   const results = {
     timestamp: new Date().toISOString(),
-    tests: {} as Record<string, { status: string; message: string; details?: any }>,
+    tests: {} as Record<string, { status: string; message: string; details?: unknown }>,
   };
 
   // Test 1: Check environment variables
@@ -28,7 +28,7 @@ export async function GET() {
   };
 
   const missingVars = Object.entries(requiredEnvVars)
-    .filter(([_, value]) => !value)
+    .filter(([, value]) => !value)
     .map(([key]) => key);
 
   if (missingVars.length > 0) {

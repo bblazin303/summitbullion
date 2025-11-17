@@ -12,7 +12,7 @@ export async function DELETE(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { itemId, authType, userId: bodyUserId, email } = body as {
+    const { itemId, authType, email } = body as {
       itemId: string;
       authType?: 'email' | 'google';
       userId?: string;

@@ -192,7 +192,7 @@ export async function addToCart(
     items = [item];
   }
   
-  const subtotal = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+  const subtotal = items.reduce((sum, i) => sum + (i.pricing.finalPrice * i.quantity), 0);
   const itemCount = items.reduce((count, i) => count + i.quantity, 0);
   
   await setDoc(cartRef, {
@@ -236,7 +236,7 @@ export async function updateCartItemQuantity(
     }
   }
   
-  const subtotal = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+  const subtotal = items.reduce((sum, i) => sum + (i.pricing.finalPrice * i.quantity), 0);
   const itemCount = items.reduce((count, i) => count + i.quantity, 0);
   
   await updateDoc(cartRef, {

@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body first to determine auth type
     const body = await request.json();
-    const { authType, userId, email, walletAddress, solanaAddress, accountType, orgId } = body as { 
+    const { authType, email, walletAddress, solanaAddress, accountType, orgId } = body as { 
       authType?: 'email' | 'google';
       userId?: string;
       email?: string;

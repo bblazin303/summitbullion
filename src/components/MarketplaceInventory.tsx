@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Image, { StaticImageData } from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { gsap } from 'gsap';
@@ -16,7 +15,6 @@ import ProductImage3 from '/public/images/product-image3.png';
 import ProductImage4 from '/public/images/product-image4.png';
 
 // Import icons
-import SolLogo from '/public/images/icons/sol-logo.svg';
 import ChevronDown from '/public/images/icons/chevron-down.svg';
 import FilterIcon from '/public/images/icons/filter.svg';
 

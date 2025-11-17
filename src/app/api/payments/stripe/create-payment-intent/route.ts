@@ -8,7 +8,6 @@ import {
   fetchShippingInstructions,
   createSalesOrderQuote,
   convertToPlatformGoldAddress,
-  formatOrderItems,
   type PlatformGoldQuoteResponse
 } from '@/lib/platformGoldHelpers';
 

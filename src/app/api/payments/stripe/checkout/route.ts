@@ -7,7 +7,7 @@ import { getCart } from '@/lib/firebaseAdminHelpers';
  * POST /api/payments/stripe/checkout
  * Creates a Stripe checkout session for the authenticated user's cart
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Verify authentication
     const user = await requireAuth();
@@ -25,7 +25,19 @@ export async function POST(request: NextRequest) {
     }
     
     // Convert cart items to Stripe line items
-    const lineItems = cart.items.map((item: any) => ({
+    interface CartItem {
+      name: string;
+      manufacturer?: string;
+      sku: string;
+      image?: string;
+      pricing: { finalPrice: number };
+      quantity: number;
+      inventoryId: number;
+      metalSymbol?: string;
+      metalOz?: number;
+    }
+    
+    const lineItems = cart.items.map((item: CartItem) => ({
       price_data: {
         currency: 'usd',
         product_data: {
@@ -35,7 +47,7 @@ export async function POST(request: NextRequest) {
           metadata: {
             inventoryId: item.inventoryId.toString(),
             sku: item.sku,
-            manufacturer: item.manufacturer,
+            manufacturer: item.manufacturer || '',
             metalSymbol: item.metalSymbol || '',
             metalOz: item.metalOz?.toString() || '0',
           },

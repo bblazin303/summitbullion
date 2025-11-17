@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
-import { useRouter } from 'next/navigation';
 import { useUser } from '@account-kit/react';
 import { ShippingAddress } from '@/types/user';
 
@@ -20,7 +19,6 @@ interface CheckoutFormProps {
 function CheckoutForm({ isShippingValid }: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
-  const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -173,7 +171,7 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
   }, [user?.userId, user?.idToken, shippingAddress]);
   
   // Function to update the left-side summary with final pricing
-  const updateLeftSideSummary = (pricing: any) => {
+  const updateLeftSideSummary = (pricing: { total: number; subtotal: number; deliveryFee: number }) => {
     // Update desktop summary
     const summaryElement = document.getElementById('final-price-summary');
     if (summaryElement) {

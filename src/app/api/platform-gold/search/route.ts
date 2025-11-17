@@ -37,6 +37,10 @@ async function getAuthToken(): Promise<string> {
   // Cache token for 23 hours (tokens typically last 24 hours)
   tokenExpiry = Date.now() + (23 * 60 * 60 * 1000);
   
+  if (!cachedToken) {
+    throw new Error('No token received from Platform Gold');
+  }
+  
   return cachedToken;
 }
 
@@ -58,7 +62,17 @@ export async function GET(request: Request) {
     const batchSize = 100;
     const apiBatchOffset = Math.floor(offset / batchSize) * batchSize;
     
-    let allMatches: any[] = [];
+    interface SearchMatch {
+      id: number;
+      sku: string;
+      name: string;
+      manufacturer: string;
+      askPrice: number;
+      mainImage: string;
+      metalSymbol: string;
+    }
+    
+    let allMatches: SearchMatch[] = [];
     let currentApiOffset = apiBatchOffset;
     let hasMoreFromApi = true;
     
@@ -86,9 +100,21 @@ export async function GET(request: Request) {
       }
 
       // Filter and search through available products
+      interface ApiItem {
+        sellQuantity: number;
+        stockStatus?: string;
+        name?: string;
+        sku?: string;
+        manufacturer?: string;
+        id: number;
+        askPrice: number;
+        mainImage: string;
+        metalSymbol: string;
+      }
+      
       const searchLower = query.toLowerCase();
       const matches = data.records
-        .filter((item: any) => {
+        .filter((item: ApiItem) => {
           // Only include available items
           const isAvailable = item.sellQuantity > 0 && 
                             item.stockStatus !== 'Out of Stock';
@@ -102,7 +128,7 @@ export async function GET(request: Request) {
           
           return matchesSearch;
         })
-        .map((item: any) => ({
+        .map((item: ApiItem) => ({
           id: item.id,
           sku: item.sku,
           name: item.name,

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { item, authType, userId: bodyUserId, email } = body as {
+    const { item, authType, email } = body as {
       item: CartItem;
       authType?: 'email' | 'google';
       userId?: string;

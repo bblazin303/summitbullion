@@ -174,15 +174,26 @@ export async function getCart(uid: string): Promise<Cart | null> {
     return null;
   }
 
+  interface FirestoreCartItem {
+    addedAt?: { toDate?: () => Date } | Date;
+    [key: string]: unknown;
+  }
+  
   const cartObject = {
     ...data,
-    items: (data.items || []).map((item: any) => {
+    items: (data.items || []).map((item: FirestoreCartItem) => {
+      const addedAt = item.addedAt && typeof item.addedAt === 'object' && 'toDate' in item.addedAt && typeof item.addedAt.toDate === 'function'
+        ? item.addedAt.toDate()
+        : item.addedAt;
+      
       return {
         ...item,
-        addedAt: item.addedAt?.toDate?.() || item.addedAt,
+        addedAt,
       };
     }),
-    updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+    updatedAt: data.updatedAt && typeof data.updatedAt === 'object' && 'toDate' in data.updatedAt && typeof data.updatedAt.toDate === 'function'
+      ? data.updatedAt.toDate()
+      : data.updatedAt,
   } as Cart;
   
   return cartObject;

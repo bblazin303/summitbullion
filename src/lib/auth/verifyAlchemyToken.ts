@@ -9,8 +9,8 @@ import { emailToUserId } from '@/lib/userIdHelper';
 export interface VerifiedUser {
   userId: string;
   email: string;
-  address: string;
-  orgId: string;
+  address?: string;
+  orgId?: string;
 }
 
 /**
@@ -89,8 +89,14 @@ export async function requireAuth(): Promise<VerifiedUser> {
  * Flexible auth that handles both Google OAuth (JWT) and Email auth (client data)
  * Used for API routes that need to support both auth methods
  */
-export async function requireFlexibleAuth(body: any): Promise<VerifiedUser> {
-  const { authType, userId, email, walletAddress, orgId } = body;
+export async function requireFlexibleAuth(body: {
+  authType?: 'email' | 'google';
+  userId?: string;
+  email?: string;
+  walletAddress?: string;
+  orgId?: string;
+}): Promise<VerifiedUser> {
+  const { authType, email, walletAddress, orgId } = body;
   
   // If authType is 'email', trust client-provided data but use email-based userId
   if (authType === 'email') {

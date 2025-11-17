@@ -9,24 +9,17 @@ import StripePaymentForm from '@/components/StripePaymentForm';
 import { ShippingAddressForm } from '@/components/ShippingAddressForm';
 import IdentityVerification from '@/components/IdentityVerification';
 import { ShippingAddress } from '@/types/user';
-import { User } from '@/types/user';
 
 const CheckoutComponent: React.FC = () => {
   const { cart, updateQuantity, removeFromCart, getCartTotal, isLoading } = useCart();
   const user = useUser();
   const [checkoutStep, setCheckoutStep] = useState<'address' | 'kyc' | 'payment'>('address');
-  const [paymentMethod, setPaymentMethod] = useState<'credit' | 'crypto'>('credit');
   const [shippingAddress, setShippingAddress] = useState<Partial<ShippingAddress>>({
     country: 'US', // Default to US
   });
   const [shippingErrors, setShippingErrors] = useState<string[]>([]);
   const [isShippingValid, setIsShippingValid] = useState(false);
-  const [userProfile, setUserProfile] = useState<User | null>(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [kycVerified, setKycVerified] = useState(false);
-
-  // KYC threshold
-  const KYC_THRESHOLD = 3000;
 
   // Validate shipping address
   const validateShippingAddress = (address: Partial<ShippingAddress>): boolean => {
@@ -70,7 +63,6 @@ const CheckoutComponent: React.FC = () => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!user?.email) {
-        setIsLoadingProfile(false);
         return;
       }
 
@@ -78,13 +70,10 @@ const CheckoutComponent: React.FC = () => {
         const response = await fetch(`/api/user/profile?email=${encodeURIComponent(user.email)}`);
         if (response.ok) {
           const profile = await response.json();
-          setUserProfile(profile);
           setKycVerified(profile.kycStatus === 'approved');
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
-      } finally {
-        setIsLoadingProfile(false);
       }
     };
 
@@ -94,7 +83,6 @@ const CheckoutComponent: React.FC = () => {
   // Calculate totals
   const deliveryFee = 15;
   const subtotal = getCartTotal();
-  const total = subtotal + deliveryFee;
 
   // Check if KYC is required for this order (TEMPORARILY DISABLED)
   const requiresKyc = false; // TODO: Re-enable after admin enables Stripe Identity: subtotal >= KYC_THRESHOLD;

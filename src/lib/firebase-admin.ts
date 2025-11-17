@@ -5,7 +5,7 @@ import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
-let app: App;
+let app: App | undefined;
 
 // Initialize Firebase Admin (only once)
 if (getApps().length === 0) {
@@ -16,6 +16,7 @@ if (getApps().length === 0) {
       !privateKey) {
     console.warn('⚠️ Firebase Admin credentials not configured. Server-side features will not work.');
     console.warn('Please add FIREBASE_ADMIN_* variables to your .env.local file');
+    app = undefined;
   } else {
     app = initializeApp({
       credential: cert({

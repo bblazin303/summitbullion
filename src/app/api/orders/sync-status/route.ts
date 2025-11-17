@@ -41,7 +41,6 @@ export async function POST(request: NextRequest) {
     // Check if order has Platform Gold reference
     const platformGoldOrderId = orderData?.platformGoldOrderId;
     const platformGoldHandle = orderData?.platformGoldHandle;
-    const platformGoldMode = orderData?.platformGoldMode;
     
     if (!platformGoldOrderId && !platformGoldHandle) {
       return NextResponse.json(
@@ -89,7 +88,14 @@ export async function POST(request: NextRequest) {
         const pollResult = await pollOrderStatus(platformGoldHandle);
         
         // Update Firebase with poll result
-        const updateData: any = {
+        const updateData: {
+          platformGoldLastSynced: Date;
+          updatedAt: Date;
+          platformGoldOrderId?: number;
+          platformGoldTransactionId?: string;
+          platformGoldStatus?: string;
+          platformGoldError?: string;
+        } = {
           platformGoldLastSynced: new Date(),
           updatedAt: new Date(),
         };
@@ -122,12 +128,13 @@ export async function POST(request: NextRequest) {
         });
       }
       
-    } catch (platformGoldError: any) {
+    } catch (platformGoldError: unknown) {
+      const errorMessage = platformGoldError instanceof Error ? platformGoldError.message : 'Failed to fetch status';
       console.error('❌ Error fetching Platform Gold status:', platformGoldError);
       
       // Update Firebase with error
       await orderRef.update({
-        platformGoldError: platformGoldError.message || 'Failed to fetch status',
+        platformGoldError: errorMessage,
         platformGoldLastSynced: new Date(),
         updatedAt: new Date(),
       });
@@ -135,16 +142,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: 'Failed to sync with Platform Gold',
-          details: platformGoldError.message 
+          details: errorMessage
         },
         { status: 500 }
       );
     }
     
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     console.error('❌ Error in sync-status route:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error', details: errorMessage },
       { status: 500 }
     );
   }
@@ -154,7 +162,7 @@ export async function POST(request: NextRequest) {
  * GET /api/orders/sync-status
  * Sync all pending orders (can be called by cron job)
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     if (!adminDb) {
       return NextResponse.json(
@@ -211,7 +219,13 @@ export async function GET(request: NextRequest) {
         } else if (orderData.platformGoldHandle) {
           const pollResult = await pollOrderStatus(orderData.platformGoldHandle);
           
-          const updateData: any = {
+          const updateData: {
+            platformGoldLastSynced: Date;
+            updatedAt: Date;
+            platformGoldOrderId?: number;
+            platformGoldTransactionId?: string;
+            platformGoldStatus?: string;
+          } = {
             platformGoldLastSynced: new Date(),
             updatedAt: new Date(),
           };
@@ -228,15 +242,16 @@ export async function GET(request: NextRequest) {
             orderId,
             handle: orderData.platformGoldHandle,
             synced: true,
-            orderId: pollResult.id || null,
+            platformGoldOrderId: pollResult.id || null,
           });
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error(`❌ Error syncing order ${orderId}:`, error);
         syncResults.push({
           orderId,
           synced: false,
-          error: error.message,
+          error: errorMessage,
         });
       }
     }
@@ -248,10 +263,11 @@ export async function GET(request: NextRequest) {
       results: syncResults,
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     console.error('❌ Error in bulk sync:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error', details: errorMessage },
       { status: 500 }
     );
   }

@@ -12,7 +12,6 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const authType = searchParams.get('authType');
-    const userIdParam = searchParams.get('userId');
     const emailParam = searchParams.get('email');
     
     let userId: string;

@@ -78,10 +78,11 @@ export default function IdentityVerification({
         onVerificationComplete?.(verificationSessionId);
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       console.error('❌ Error during identity verification:', err);
-      setError(err.message || 'An unexpected error occurred');
-      onVerificationError?.(err.message || 'An unexpected error occurred');
+      setError(errorMessage);
+      onVerificationError?.(errorMessage);
     } finally {
       setIsLoading(false);
     }

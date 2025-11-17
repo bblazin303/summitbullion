@@ -12,7 +12,7 @@ export async function PUT(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { itemId, quantity, authType, userId: bodyUserId, email } = body as {
+    const { itemId, quantity, authType, email } = body as {
       itemId: string;
       quantity: number;
       authType?: 'email' | 'google';
