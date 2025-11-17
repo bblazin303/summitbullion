@@ -154,7 +154,7 @@ export interface PlatformGoldPollResponse {
  * Toggle between quote mode (testing) and real order mode (production)
  * Set to false when you have sandbox/production access
  */
-export const USE_QUOTE_MODE = true;
+export const USE_QUOTE_MODE = false;
 
 /**
  * Default payment method and shipping instruction IDs
