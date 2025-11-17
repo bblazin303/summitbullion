@@ -50,14 +50,14 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://summitbullion.com"),
+  metadataBase: new URL("https://summitbullion.io"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     title: "Summit Bullion - Precious Metals for the Next Generation",
     description: "Clear prices and fast fulfillment for precious metals investing. Buy gold, silver, and other precious metals with flexible payment options including cryptocurrency.",
-    url: "https://summitbullion.com",
+    url: "https://summitbullion.io",
     siteName: "Summit Bullion",
     images: [
       {

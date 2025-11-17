@@ -2895,7 +2895,7 @@ export default function DocsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white rounded-2xl border border-[#e5ddd0] p-6">
               <h4 className="text-[#141722] font-semibold mb-2 font-inter">Email Support</h4>
-              <p className="text-[#7c7c7c] text-sm mb-2 font-inter">support@summitbullion.com</p>
+              <p className="text-[#7c7c7c] text-sm mb-2 font-inter">support@summitbullion.io</p>
               <p className="text-[#7c7c7c] text-sm font-inter">Response time: 24-48 hours</p>
             </div>
             

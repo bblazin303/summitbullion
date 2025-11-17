@@ -75,7 +75,7 @@ async function testPlatformGoldIntegration() {
         confirmationNumber: `TEST-${Date.now()}`,
         items: [{ id: 2915, quantity: 1 }], // Use a real inventory ID from your Platform Gold
         shippingAddress: convertedAddress,
-        email: 'test@summitbullion.com',
+        email: 'test@summitbullion.io',
         paymentMethodId: paymentMethods[0].id,
         shippingInstructionId: shippingInstructions[0].id,
         customerReferenceNumber: `TEST-${Date.now()}`,
