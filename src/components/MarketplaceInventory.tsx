@@ -61,9 +61,17 @@ const MarketplaceInventory: React.FC = () => {
   const [isLoadingMoreSearch, setIsLoadingMoreSearch] = useState<boolean>(false);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [isFilterLoading, setIsFilterLoading] = useState<boolean>(false);
+  const [activeSearchQuery, setActiveSearchQuery] = useState<string>(''); // For filtering main grid
+  const [searchResultsForGrid, setSearchResultsForGrid] = useState<Inventory[]>([]); // Search results to show in grid
+  const [isSearchingGrid, setIsSearchingGrid] = useState<boolean>(false);
+  const [gridSearchOffset, setGridSearchOffset] = useState<number>(0);
+  const [hasMoreGridSearchResults, setHasMoreGridSearchResults] = useState<boolean>(false);
+  const [totalGridSearchResults, setTotalGridSearchResults] = useState<number>(0);
+  const [isLoadingMoreGridSearch, setIsLoadingMoreGridSearch] = useState<boolean>(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
   const searchLoadMoreRef = useRef<HTMLDivElement>(null);
+  const gridSearchLoadMoreRef = useRef<HTMLDivElement>(null);
   const filterAbortControllerRef = useRef<AbortController | null>(null);
   const router = useRouter();
 
@@ -247,6 +255,70 @@ const MarketplaceInventory: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Infinite scroll for grid search results
+  useEffect(() => {
+    const currentRef = gridSearchLoadMoreRef.current;
+    if (!currentRef || !hasMoreGridSearchResults || !activeSearchQuery) return;
+
+    const observer = new IntersectionObserver(
+      async (entries) => {
+        const firstEntry = entries[0];
+        if (firstEntry.isIntersecting && !isLoadingMoreGridSearch) {
+          // Load more grid search results
+          setIsLoadingMoreGridSearch(true);
+          
+          try {
+            console.log(`🔄 Loading more grid search results (offset: ${gridSearchOffset})...`);
+            const response = await fetch(`/api/platform-gold/search?q=${encodeURIComponent(activeSearchQuery)}&offset=${gridSearchOffset}`);
+            const data = await response.json();
+            
+            if (data.results && data.results.length > 0) {
+              const newResults: Inventory[] = data.results.map((result: SearchResult) => ({
+                id: result.id,
+                sku: result.sku,
+                name: result.name,
+                manufacturer: result.manufacturer,
+                askPrice: result.askPrice,
+                mainImage: result.mainImage,
+                metalSymbol: result.metalSymbol,
+                sellQuantity: 1,
+                stockStatus: 'In Stock',
+                metalOz: 1,
+                purity: '',
+                minAskQty: 1,
+                iraEligible: false,
+                altImage1: '',
+                altImage2: '',
+                altImage3: '',
+                year: ''
+              }));
+              
+              setSearchResultsForGrid(prev => [...prev, ...newResults]);
+              setHasMoreGridSearchResults(data.hasMore || false);
+              setGridSearchOffset(prev => prev + 20);
+              console.log(`✅ Loaded ${newResults.length} more search results`);
+            } else {
+              setHasMoreGridSearchResults(false);
+            }
+          } catch (err) {
+            console.error('Failed to load more grid search results:', err);
+          } finally {
+            setIsLoadingMoreGridSearch(false);
+          }
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(currentRef);
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [hasMoreGridSearchResults, isLoadingMoreGridSearch, gridSearchOffset, activeSearchQuery]);
+
   // Infinite scroll - load more products
   useEffect(() => {
     const currentRef = loadMoreRef.current;
@@ -411,6 +483,62 @@ const MarketplaceInventory: React.FC = () => {
   const handleSortSelect = (option: string) => {
     setSelectedSort(option);
     setIsSortOpen(false);
+  };
+
+  // Handle Enter key search - filters main product grid
+  const handleGridSearch = async (query: string) => {
+    if (!query.trim()) return;
+    
+    setActiveSearchQuery(query);
+    setIsSearchingGrid(true);
+    setSearchDropdownResults([]); // Close dropdown
+    setGridSearchOffset(0); // Reset offset for new search
+    
+    try {
+      console.log(`🔍 Grid search for: "${query}"`);
+      const response = await fetch(`/api/platform-gold/search?q=${encodeURIComponent(query)}&offset=0`);
+      const data = await response.json();
+      
+      if (data.results && data.results.length > 0) {
+        // Convert search results to Inventory format
+        const inventoryResults: Inventory[] = data.results.map((result: SearchResult) => ({
+          id: result.id,
+          sku: result.sku,
+          name: result.name,
+          manufacturer: result.manufacturer,
+          askPrice: result.askPrice,
+          mainImage: result.mainImage,
+          metalSymbol: result.metalSymbol,
+          sellQuantity: 1, // Default, we know it's available
+          stockStatus: 'In Stock',
+          metalOz: 1,
+          purity: '',
+          minAskQty: 1,
+          iraEligible: false,
+          altImage1: '',
+          altImage2: '',
+          altImage3: '',
+          year: ''
+        }));
+        
+        setSearchResultsForGrid(inventoryResults);
+        setHasMoreGridSearchResults(data.hasMore || false);
+        setTotalGridSearchResults(data.totalFound || inventoryResults.length);
+        setGridSearchOffset(20);
+        console.log(`✅ Grid search found ${data.totalFound || inventoryResults.length} total, showing ${inventoryResults.length}`);
+      } else {
+        setSearchResultsForGrid([]);
+        setHasMoreGridSearchResults(false);
+        setTotalGridSearchResults(0);
+        console.log('❌ No results found for grid search');
+      }
+    } catch (err) {
+      console.error('Grid search failed:', err);
+      setSearchResultsForGrid([]);
+      setHasMoreGridSearchResults(false);
+    } finally {
+      setIsSearchingGrid(false);
+    }
   };
 
   const handleFilterSelect = async (option: string) => {
@@ -586,8 +714,10 @@ const MarketplaceInventory: React.FC = () => {
     return imageMap[metalSymbol] || ProductImage1;
   };
 
-  // Always use regular inventory for the grid (search is now autocomplete only)
-  const inventoryToDisplay = inventory;
+  // Use search results if active search, otherwise regular inventory
+  const inventoryToDisplay = activeSearchQuery && searchResultsForGrid.length > 0 
+    ? searchResultsForGrid 
+    : inventory;
 
   // Transform Platform Gold inventory to our product format (without badge initially)
   const allProductsWithoutBadges = inventoryToDisplay.map((item) => {
@@ -690,7 +820,51 @@ const MarketplaceInventory: React.FC = () => {
           <span className="text-[#ffc633]">Shop </span>
           <span className="text-slate-900">Our Inventory</span>
         </h2>
-          {!isLoading && !error && products.length > 0 && (
+          {/* Searching state */}
+          {isSearchingGrid && activeSearchQuery && (
+            <p className="font-inter text-[14px] sm:text-[16px] text-[#7c7c7c] flex items-center gap-2">
+              <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#ffc633]"></span>
+              Searching for &quot;{activeSearchQuery}&quot;...
+            </p>
+          )}
+          {/* Search results count */}
+          {!isSearchingGrid && activeSearchQuery && searchResultsForGrid.length > 0 && (
+            <p className="font-inter text-[14px] sm:text-[16px] text-[#7c7c7c]">
+              Showing {searchResultsForGrid.length} of {totalGridSearchResults} results for &quot;{activeSearchQuery}&quot;
+              <button 
+                onClick={() => {
+                  setActiveSearchQuery('');
+                  setSearchResultsForGrid([]);
+                  setSearchQuery('');
+                  setHasMoreGridSearchResults(false);
+                  setTotalGridSearchResults(0);
+                }}
+                className="ml-2 text-[#ffc633] hover:underline"
+              >
+                Clear search
+              </button>
+            </p>
+          )}
+          {/* No search results */}
+          {!isSearchingGrid && activeSearchQuery && searchResultsForGrid.length === 0 && (
+            <p className="font-inter text-[14px] sm:text-[16px] text-[#7c7c7c]">
+              No results found for &quot;{activeSearchQuery}&quot;
+              <button 
+                onClick={() => {
+                  setActiveSearchQuery('');
+                  setSearchResultsForGrid([]);
+                  setSearchQuery('');
+                  setHasMoreGridSearchResults(false);
+                  setTotalGridSearchResults(0);
+                }}
+                className="ml-2 text-[#ffc633] hover:underline"
+              >
+                Clear search
+              </button>
+            </p>
+          )}
+          {/* Regular inventory count */}
+          {!isLoading && !error && !activeSearchQuery && products.length > 0 && (
             <p className="font-inter text-[14px] sm:text-[16px] text-[#7c7c7c]">
               {selectedFilter !== 'All' ? (
                 <>
@@ -714,6 +888,12 @@ const MarketplaceInventory: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  e.preventDefault();
+                  handleGridSearch(searchQuery.trim());
+                }
+              }}
               placeholder="Search products..."
               className="w-full h-[48px] px-5 pr-12 py-4 border border-[#7c7c7c] rounded-[62px] font-inter font-normal text-[16px] text-black placeholder:text-[#7c7c7c] focus:outline-none focus:border-black transition-colors"
             />
@@ -721,6 +901,8 @@ const MarketplaceInventory: React.FC = () => {
               <button
                 onClick={() => {
                   setSearchQuery('');
+                  setActiveSearchQuery('');
+                  setSearchResultsForGrid([]);
                 }}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7c7c7c] hover:text-black transition-colors z-10"
                 aria-label="Clear search"
@@ -933,7 +1115,7 @@ const MarketplaceInventory: React.FC = () => {
       </div>
 
       {/* Loading State - Skeleton Cards */}
-      {isLoading && (
+      {(isLoading || isSearchingGrid) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 xl:gap-[14px] max-w-full">
           {[...Array((metalCounts[selectedFilter] || 20) <= 50 ? (metalCounts[selectedFilter] || 20) : 20)].map((_, index) => (
             <div
@@ -980,14 +1162,16 @@ const MarketplaceInventory: React.FC = () => {
       )}
 
       {/* Products Grid */}
-      {!isLoading && !error && (
+      {!isLoading && !isSearchingGrid && !error && (
       <div 
         ref={productsRef}
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 xl:gap-[14px] max-w-full"
       >
           {products.length === 0 ? (
             <div className="col-span-full text-center py-12">
-              <p className="text-[#7c7c7c] text-lg">No products available at this time.</p>
+              <p className="text-[#7c7c7c] text-lg">
+                {activeSearchQuery ? `No products found for "${activeSearchQuery}"` : 'No products available at this time.'}
+              </p>
             </div>
           ) : (
             products.map((product) => (
@@ -1090,8 +1274,8 @@ const MarketplaceInventory: React.FC = () => {
         </div>
       )}
 
-      {/* Load More Trigger */}
-      {!isLoading && !error && hasMoreProducts && (
+      {/* Load More Trigger - for regular inventory */}
+      {!isLoading && !error && !activeSearchQuery && hasMoreProducts && (
         <>
           <div ref={loadMoreRef} className="h-4" />
           {isLoadingMore && (
@@ -1133,11 +1317,49 @@ const MarketplaceInventory: React.FC = () => {
         </>
       )}
 
+      {/* Load More Trigger - for search results (infinite scroll) */}
+      {!isLoading && !isSearchingGrid && activeSearchQuery && hasMoreGridSearchResults && (
+        <>
+          <div ref={gridSearchLoadMoreRef} className="h-4" />
+          {isLoadingMoreGridSearch && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 xl:gap-[14px] max-w-full mt-4">
+              {[...Array(4)].map((_, index) => (
+                <div
+                  key={`search-loading-skeleton-${index}`}
+                  className="bg-white rounded-[24px] sm:rounded-[36px] p-4 sm:p-6 flex flex-col min-h-[460px] sm:min-h-[500px] lg:min-h-[534px] animate-pulse"
+                >
+                  <div className="bg-gray-200 h-[160px] sm:h-[180px] lg:h-[200px] w-full rounded-lg mb-6 sm:mb-8 lg:mb-[43px]"></div>
+                  <div className="flex flex-col gap-3 sm:gap-4 flex-1">
+                    <div className="bg-gray-200 h-6 w-3/4 rounded"></div>
+                    <div className="space-y-2">
+                      <div className="bg-gray-200 h-4 w-full rounded"></div>
+                      <div className="bg-gray-200 h-4 w-5/6 rounded"></div>
+                    </div>
+                    <div className="flex-1" />
+                    <div className="bg-gray-200 h-6 w-2/3 rounded"></div>
+                    <div className="bg-gray-200 h-[50px] w-full rounded-[42px] mt-6"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
       {/* End of Products Message */}
-      {!isLoading && !error && !hasMoreProducts && totalProducts > 20 && (
+      {!isLoading && !error && !activeSearchQuery && !hasMoreProducts && totalProducts > 20 && (
         <div className="w-full py-8 text-center">
           <p className="font-inter text-[16px] text-[#7c7c7c]">
             You&apos;ve viewed all {totalProducts} products
+          </p>
+        </div>
+      )}
+
+      {/* End of Search Results Message */}
+      {!isLoading && !isSearchingGrid && activeSearchQuery && !hasMoreGridSearchResults && searchResultsForGrid.length > 0 && (
+        <div className="w-full py-8 text-center">
+          <p className="font-inter text-[16px] text-[#7c7c7c]">
+            Showing all {totalGridSearchResults} results for &quot;{activeSearchQuery}&quot;
           </p>
         </div>
       )}

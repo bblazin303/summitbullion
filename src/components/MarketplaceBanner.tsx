@@ -33,13 +33,23 @@ const MarketplaceBanner: React.FC = () => {
   return (
     <div ref={bannerRef} className="relative w-full px-4 sm:px-8 md:px-16 lg:px-[120px] 2xl:px-[200px]">
       <div className="relative w-full h-[320px] sm:h-[400px] lg:h-[504px] rounded-[20px] sm:rounded-[24px] lg:rounded-[33px] overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0">
+        {/* Background Image - Mobile */}
+        <div className="absolute inset-0 sm:hidden">
+          <Image
+            src="/images/inventory-banner-mobile.png"
+            alt="Marketplace banner"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+        {/* Background Image - Desktop */}
+        <div className="absolute inset-0 hidden sm:block">
           <Image
             src="/images/inventory-banner.png"
             alt="Marketplace banner"
             fill
-            className="object-cover object-left sm:object-center"
+            className="object-cover"
             priority
           />
         </div>
