@@ -11,6 +11,27 @@ import {
   type PlatformGoldQuoteResponse
 } from '@/lib/platformGoldHelpers';
 
+// Processing fee rates by payment method (must match frontend)
+const PROCESSING_FEES: Record<string, { percentage: number; fixed: number; cap?: number }> = {
+  card: { percentage: 2.9, fixed: 0.30 },
+  us_bank_account: { percentage: 0.8, fixed: 0, cap: 5.00 },
+  crypto: { percentage: 1.5, fixed: 0 },
+  default: { percentage: 2.9, fixed: 0.30 },
+};
+
+// Calculate processing fee based on payment method and subtotal
+function calculateProcessingFee(subtotal: number, paymentMethodType: string): number {
+  const fees = PROCESSING_FEES[paymentMethodType] || PROCESSING_FEES.default;
+  let fee = (subtotal * fees.percentage / 100) + fees.fixed;
+  
+  // Apply cap for ACH payments
+  if (fees.cap && fee > fees.cap) {
+    fee = fees.cap;
+  }
+  
+  return fee;
+}
+
 /**
  * POST /api/payments/stripe/create-payment-intent
  * Creates a Stripe PaymentIntent with dynamic pricing from Platform Gold
@@ -19,11 +40,12 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { authType, userId: bodyUserId, email: bodyEmail, shippingAddress } = body as {
+    const { authType, userId: bodyUserId, email: bodyEmail, shippingAddress, paymentMethodType = 'card' } = body as {
       authType?: 'email' | 'google';
       userId?: string;
       email?: string;
       shippingAddress: Partial<ShippingAddress>;
+      paymentMethodType?: string;
     };
     
     // Verify authentication (supports both Google OAuth and email auth)
@@ -116,12 +138,20 @@ export async function POST(request: NextRequest) {
     const markupAmount = platformGoldTotal * (markupPercentage / 100);
     const subtotalWithMarkup = platformGoldTotal + markupAmount;
     
-    // Final total
-    const total = subtotalWithMarkup;
+    // ========================================================================
+    // CALCULATE PROCESSING FEE
+    // ========================================================================
+    // Calculate processing fee based on selected payment method
+    const processingFee = calculateProcessingFee(subtotalWithMarkup, paymentMethodType);
+    
+    // Final total includes processing fee
+    const total = subtotalWithMarkup + processingFee;
     
     console.log('💰 Pricing breakdown:');
     console.log(`   Platform Gold total (item + handling): $${platformGoldTotal.toFixed(2)}`);
     console.log(`   Your ${markupPercentage}% markup: $${markupAmount.toFixed(2)}`);
+    console.log(`   Subtotal (before processing): $${subtotalWithMarkup.toFixed(2)}`);
+    console.log(`   Processing fee (${paymentMethodType}): $${processingFee.toFixed(2)}`);
     console.log(`   Final total: $${total.toFixed(2)}`);
     
     // ========================================================================
@@ -139,6 +169,8 @@ export async function POST(request: NextRequest) {
         orderTotal: total.toFixed(2),
         itemCount: cart.itemCount.toString(),
         deliveryFee: deliveryFee.toFixed(2),
+        processingFee: processingFee.toFixed(2),
+        paymentMethodType: paymentMethodType,
         platformGoldQuoteHandle: platformGoldQuote.handle,
         platformGoldAmount: platformGoldTotal.toFixed(2),
         markupAmount: markupAmount.toFixed(2),
@@ -151,16 +183,18 @@ export async function POST(request: NextRequest) {
     console.log('✅ PaymentIntent created:', paymentIntent.id);
     
     // Return updated pricing to frontend
+    // Note: Frontend will recalculate processing fee based on selected payment method
     return NextResponse.json({
       success: true,
       clientSecret: paymentIntent.client_secret,
       pricing: {
-        subtotal: subtotalWithMarkup,
+        subtotal: subtotalWithMarkup, // This is the base before processing fee
         deliveryFee: deliveryFee,
         total: total,
         platformGoldQuote: platformGoldTotal,
         markup: markupAmount,
         markupPercentage: markupPercentage,
+        processingFee: processingFee,
       },
     });
     

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 import type { Inventory } from '@/types/platformGold';
-import { fetchInventory, applyMarkup, getMetalDisplayName } from '@/lib/platformGoldApi';
+import { fetchInventory, applyMarkup, getMetalDisplayName, isAvailableForPurchase } from '@/lib/platformGoldApi';
 
 // Import product images (fallback)
 import ProductImage1 from '/public/images/product-image1.png';
@@ -42,14 +42,61 @@ const ProductHome: React.FC = () => {
     const loadProducts = async () => {
       try {
         setIsLoading(true);
-        const response = await fetchInventory(4, 0); // Fetch first 4 products
-        // fetchInventory returns an object with a 'records' property
-        if (response && Array.isArray(response.records)) {
-          setProducts(response.records);
-        } else {
-          console.error('fetchInventory did not return valid data:', response);
-          setProducts([]);
+        
+        // To ensure variety (avoiding similar items grouped together in DB),
+        // we fetch from 4 distinct random points in the inventory.
+        const totalEstInventory = 2500; // Conservative estimate based on ~2700 total
+        const randomOffsets = Array.from({ length: 4 }, () => 
+          Math.floor(Math.random() * totalEstInventory)
+        );
+        
+        // Fetch a small batch from each offset to find at least one valid item
+        const fetchPromises = randomOffsets.map(offset => 
+          fetchInventory(5, offset)
+            .catch(err => {
+              console.error(`Failed to fetch at offset ${offset}`, err);
+              return null;
+            })
+        );
+        
+        const responses = await Promise.all(fetchPromises);
+        
+        const selectedProducts: Inventory[] = [];
+        const seenIds = new Set<number>();
+        
+        for (const response of responses) {
+          if (response && Array.isArray(response.records)) {
+            // Find first valid product not already selected
+            const validProduct = response.records.find(item => 
+              isAvailableForPurchase(item) && !seenIds.has(item.id)
+            );
+            
+            if (validProduct) {
+              selectedProducts.push(validProduct);
+              seenIds.add(validProduct.id);
+            }
+          }
         }
+        
+        // Fallback: if we somehow got fewer than 4 (e.g. API errors), 
+        // try to fill with more from the successful batches
+        if (selectedProducts.length < 4) {
+          for (const response of responses) {
+            if (selectedProducts.length >= 4) break;
+            if (response && Array.isArray(response.records)) {
+              const extras = response.records.filter(item => 
+                isAvailableForPurchase(item) && !seenIds.has(item.id)
+              );
+              for (const item of extras) {
+                if (selectedProducts.length >= 4) break;
+                selectedProducts.push(item);
+                seenIds.add(item.id);
+              }
+            }
+          }
+        }
+        
+        setProducts(selectedProducts);
       } catch (error) {
         console.error('Failed to load products:', error);
         setProducts([]); // Set empty array on error

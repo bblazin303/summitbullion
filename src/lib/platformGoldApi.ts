@@ -56,14 +56,17 @@ export async function fetchInventory(
 /**
  * Fetch a single inventory item by ID via our API route
  */
-export async function fetchInventoryById(id: number): Promise<Inventory | null> {
+export async function fetchInventoryById(id: number, forceRefresh: boolean = false): Promise<Inventory | null> {
   try {
-    const response = await fetch(`/api/platform-gold/inventory/${id}`, {
+    const url = `/api/platform-gold/inventory/${id}${forceRefresh ? '?refresh=true' : ''}`;
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
       },
-      next: { revalidate: 300 }
+      // Force no-cache when refreshing to get live availability
+      cache: forceRefresh ? 'no-store' : 'default',
+      next: forceRefresh ? undefined : { revalidate: 300 }
     });
 
     if (!response.ok) {

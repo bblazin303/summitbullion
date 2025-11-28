@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { gsap } from 'gsap';
 import { useCart } from '@/context/CartContext';
 import type { Inventory } from '@/types/platformGold';
-import { fetchInventory, fetchInventoryById, applyMarkup, getMetalDisplayName } from '@/lib/platformGoldApi';
+import { fetchInventory, fetchInventoryById, applyMarkup, getMetalDisplayName, isAvailableForPurchase } from '@/lib/platformGoldApi';
 import { useAuthenticatedAction } from '@/hooks/useAuthenticatedAction';
 
 // Import product images (fallback)
@@ -16,7 +16,6 @@ import ProductImage3 from '/public/images/product-image3.png';
 import ProductImage4 from '/public/images/product-image4.png';
 
 // Import icons
-import FlameLogo from '/public/images/icons/flame.svg';
 import LikeLogo from '/public/images/icons/like.svg';
 
 interface ProductDetailProps {
@@ -27,8 +26,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('OVERVIEW');
-  const [selectedPricingTier, setSelectedPricingTier] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const relatedProductsRef = useRef<HTMLDivElement>(null);
   const { addToCart } = useCart();
@@ -68,19 +67,54 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
       if (!productData) return;
       
       try {
-        const response = await fetchInventory(100, 0); // Fetch first 100 products
+        const metalName = getMetalDisplayName(productData.metalSymbol);
+        
+        // Determine a safe random offset based on metal type
+        // Gold/Silver have 500+ items, others have < 30
+        let maxOffset = 0;
+        if (productData.metalSymbol === 'XAU' || productData.metalSymbol === 'XAG') {
+          // Pick a random page within the first 200 items to ensure variety
+          maxOffset = 200; 
+        }
+        
+        const randomOffset = Math.floor(Math.random() * maxOffset);
+        
+        // Fetch potentially related items with the specific metal filter
+        // We fetch a larger batch (20) to allow for filtering and randomization
+        const response = await fetchInventory(20, randomOffset, undefined, metalName);
         
         // fetchInventory returns an object with a 'records' property
         if (response && Array.isArray(response.records)) {
-          // Filter products of the same metal type, excluding current product
-          const related = response.records
-            .filter(p => 
-              p.metalSymbol === productData.metalSymbol && 
-              p.id !== productData.id
-            )
-            .slice(0, 4); // Get first 4 related products
+          // Filter products: valid status, exclude current product
+          let related = response.records.filter(p => 
+            p.id !== productData.id &&
+            isAvailableForPurchase(p)
+          );
           
-          setRelatedProductsData(related);
+          // If we don't have enough items (e.g. offset was too high or filtered out),
+          // try fetching from the beginning
+          if (related.length < 4 && randomOffset > 0) {
+            const fallbackResponse = await fetchInventory(10, 0, undefined, metalName);
+            if (fallbackResponse && Array.isArray(fallbackResponse.records)) {
+              const fallbackRelated = fallbackResponse.records.filter(p => 
+                p.id !== productData.id &&
+                isAvailableForPurchase(p)
+              );
+              // Merge and deduplicate
+              const existingIds = new Set(related.map(r => r.id));
+              for (const item of fallbackRelated) {
+                if (!existingIds.has(item.id)) {
+                  related.push(item);
+                  existingIds.add(item.id);
+                }
+              }
+            }
+          }
+
+          // Shuffle the results to ensure variety
+          related = related.sort(() => 0.5 - Math.random());
+          
+          setRelatedProductsData(related.slice(0, 4));
         }
       } catch (err) {
         console.error('Failed to load related products:', err);
@@ -249,55 +283,70 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
   const handleQuantityChange = (delta: number) => {
     const newQuantity = Math.max(1, quantity + delta);
     setQuantity(newQuantity);
-    
-    // Update selected pricing tier based on quantity
-    if (newQuantity >= 25) {
-      setSelectedPricingTier(2);
-    } else if (newQuantity >= 10) {
-      setSelectedPricingTier(1);
-    } else {
-      setSelectedPricingTier(0);
-    }
   };
 
-  const handlePricingTierClick = (tierIndex: number) => {
-    setSelectedPricingTier(tierIndex);
+  const handleAddToCart = async () => {
+    if (!product || !productData || isAddingToCart) return;
     
-    // Set quantity to the minimum of the selected tier
-    if (tierIndex === 0) {
-      setQuantity(1);
-    } else if (tierIndex === 1) {
-      setQuantity(10);
-    } else if (tierIndex === 2) {
-      setQuantity(25);
-    }
-  };
-
-  const handleAddToCart = () => {
-    if (!product || !productData) return;
+    setIsAddingToCart(true);
     
-    // Calculate pricing breakdown
-    const basePrice = productData.askPrice; // Platform Gold's original price
-    const markedUpPrice = applyMarkup(basePrice, 2); // Your price with 2% markup
-    const markupAmount = markedUpPrice - basePrice; // Dollar amount of markup
-    
-    // Require authentication before adding to cart
-    executeIfAuthenticated(() => {
-      addToCart({
-        id: product.id,
-        name: product.name,
-        pricing: {
-          basePrice: basePrice, // Platform Gold's cost
-          markupPercentage: 2, // 2% markup
-          markup: markupAmount, // Your profit per unit
-          finalPrice: markedUpPrice, // Final price customer pays
-        },
-        image: product.images[0] as StaticImageData | string,
-        brand: product.brand,
-        quantity: quantity
+    try {
+      // Do a LIVE availability check before adding to cart (bypass cache)
+      console.log('🔍 Checking live availability for product:', productId);
+      const liveData = await fetchInventoryById(parseInt(productId), true); // forceRefresh = true
+      
+      if (!liveData) {
+        alert('Sorry, this product is no longer available.');
+        setIsAddingToCart(false);
+        return;
+      }
+      
+      // Check if item is available for purchase with LIVE data
+      if (!isAvailableForPurchase(liveData)) {
+        console.log('❌ Product not available:', liveData.sellQuantity, 'units,', liveData.askPrice, 'price');
+        alert(`Sorry, this item is currently out of stock. (Available: ${liveData.sellQuantity} units)`);
+        // Update local state to reflect the new availability
+        setProductData(liveData);
+        setIsAddingToCart(false);
+        return;
+      }
+      
+      console.log('✅ Product available:', liveData.sellQuantity, 'units at $', liveData.askPrice);
+      
+      // Update productData with fresh data
+      setProductData(liveData);
+      
+      // Calculate pricing breakdown with LIVE prices
+      const basePrice = liveData.askPrice; // Platform Gold's original price
+      const markedUpPrice = applyMarkup(basePrice, 2); // Your price with 2% markup
+      const markupAmount = markedUpPrice - basePrice; // Dollar amount of markup
+      
+      // Require authentication before adding to cart
+      executeIfAuthenticated(() => {
+        addToCart({
+          id: product.id,
+          name: product.name,
+          pricing: {
+            basePrice: basePrice, // Platform Gold's cost
+            markupPercentage: 2, // 2% markup
+            markup: markupAmount, // Your profit per unit
+            finalPrice: markedUpPrice, // Final price customer pays
+          },
+          image: product.images[0] as StaticImageData | string,
+          brand: product.brand,
+          quantity: quantity
+        });
       });
-    });
+    } catch (err) {
+      console.error('Error checking availability:', err);
+      alert('Unable to verify product availability. Please try again.');
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
+
+  // Check if product is available for purchase
+  const isProductAvailable = productData ? isAvailableForPurchase(productData) : false;
 
   // Loading state
   if (isLoading) {
@@ -329,7 +378,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
   return (
     <div className="w-full">
       {/* Main Product Section */}
-      <div ref={contentRef} className="bg-white px-4 sm:px-8 md:px-16 lg:px-[120px] 2xl:px-[200px] pt-[120px] sm:pt-[140px] lg:pt-[160px] pb-12">
+      <div ref={contentRef} className="bg-white px-4 sm:px-8 md:px-16 lg:px-[120px] 2xl:px-[200px] pt-[80px] sm:pt-[100px] lg:pt-[110px] pb-12">
         {/* Breadcrumb */}
         <div className="flex items-center gap-3 mb-8">
           <Link href="/" className="text-[16px] text-[rgba(0,0,0,0.6)] hover:text-[#ffc633] transition-colors">
@@ -510,17 +559,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                   </button>
 
                   {/* Quantity Selector */}
-                  <div className="flex items-center justify-between w-[150px] h-[52px] border border-[#dfdfdf] rounded-full px-3 flex-shrink-0">
+                  <div className={`flex items-center justify-between w-[150px] h-[52px] border border-[#dfdfdf] rounded-full px-3 flex-shrink-0 ${!isProductAvailable ? 'opacity-50' : ''}`}>
                     <button
                       onClick={() => handleQuantityChange(-1)}
-                      className="flex items-center justify-center w-[36px] h-[36px] rounded-full text-black text-xl font-medium hover:bg-[#f7f7f7] hover:text-[#ffb546] transition-colors cursor-pointer"
+                      disabled={!isProductAvailable}
+                      className="flex items-center justify-center w-[36px] h-[36px] rounded-full text-black text-xl font-medium hover:bg-[#f7f7f7] hover:text-[#ffb546] transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       −
                     </button>
                     <span className="font-satoshi text-[16px] text-black">{quantity}</span>
                     <button
                       onClick={() => handleQuantityChange(1)}
-                      className="flex items-center justify-center w-[36px] h-[36px] rounded-full text-black text-xl font-medium hover:bg-[#f7f7f7] hover:text-[#ffb546] transition-colors cursor-pointer"
+                      disabled={!isProductAvailable}
+                      className="flex items-center justify-center w-[36px] h-[36px] rounded-full text-black text-xl font-medium hover:bg-[#f7f7f7] hover:text-[#ffb546] transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       +
                     </button>
@@ -530,11 +581,33 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                 {/* Add to Cart Button */}
                 <button 
                   onClick={handleAddToCart}
-                  className="w-full sm:flex-1 bg-[#141722] text-[#efe9e0] font-inter font-medium text-[14px] uppercase h-[52px] rounded-full hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black transition-all duration-300 cursor-pointer"
+                  disabled={!isProductAvailable || isAddingToCart}
+                  className={`w-full sm:flex-1 font-inter font-medium text-[14px] uppercase h-[52px] rounded-full transition-all duration-300 ${
+                    isProductAvailable && !isAddingToCart
+                      ? 'bg-[#141722] text-[#efe9e0] hover:bg-gradient-to-br hover:from-[#FFF0C1] hover:from-[4.98%] hover:to-[#FFB546] hover:to-[95.02%] hover:text-black cursor-pointer'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
-                  Add to cart
+                  {isAddingToCart ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                      </svg>
+                      Checking...
+                    </span>
+                  ) : isProductAvailable ? 'Add to cart' : 'Out of Stock'}
                 </button>
               </div>
+
+              {/* Out of Stock Notice */}
+              {!isProductAvailable && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
+                  <p className="text-red-700 text-sm font-medium">
+                    This item is currently unavailable. Please check back later or browse similar products.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -653,15 +726,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                 </Link>
               );
             })}
-          </div>
-
-          {/* Navigation Arrow */}
-          <div className="flex justify-end mt-8">
-            <button className="bg-black rounded-full p-3 hover:bg-[#ffb546] transition-colors">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="rotate-[-90deg]">
-                <path d="M18 9L12 15L6 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
           </div>
         </div>
       </div>
