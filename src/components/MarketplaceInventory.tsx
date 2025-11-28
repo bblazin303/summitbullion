@@ -678,7 +678,7 @@ const MarketplaceInventory: React.FC = () => {
   const totalProducts = sortedProducts.length;
 
   return (
-    <div ref={sectionRef} className="bg-[#fcf8f1] relative w-full mt-[48px] py-12 sm:py-16 lg:py-0 px-4 sm:px-8 md:px-16 lg:px-[120px] 2xl:px-[200px]">
+    <div ref={sectionRef} className="bg-[#fcf8f1] relative w-full mt-6 sm:mt-10 lg:mt-[48px] py-12 sm:py-16 lg:py-0 px-4 sm:px-8 md:px-16 lg:px-[120px] 2xl:px-[200px]">
       {/* Header with Title and Filters - Sticky */}
       <div 
         ref={headerRef}

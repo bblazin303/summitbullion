@@ -347,13 +347,13 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
             <span>$${pricingData.processingFee.toFixed(2)}</span>
           </div>
           <div class="pt-2 mt-1">
-            <div class="flex items-center justify-between font-inter text-[18px] xl:text-[20px] 2xl:text-[24px]">
-              <span class="font-semibold text-black">Total</span>
+        <div class="flex items-center justify-between font-inter text-[18px] xl:text-[20px] 2xl:text-[24px]">
+          <span class="font-semibold text-black">Total</span>
               <span class="font-bold text-black">$${pricingData.total.toFixed(2)} USD</span>
             </div>
-          </div>
-          <div class="text-right" style="margin-top: 2px;">
-            <span class="font-inter text-[10px] text-[#7c7c7c]">Includes all fees and shipping</span>
+        </div>
+        <div class="text-right" style="margin-top: 2px;">
+          <span class="font-inter text-[10px] text-[#7c7c7c]">Includes all fees and shipping</span>
           </div>
         </div>
       `;
@@ -373,13 +373,13 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
             <span>$${pricingData.processingFee.toFixed(2)}</span>
           </div>
           <div class="pt-2 mt-1">
-            <div class="flex items-center justify-between font-inter text-[18px] sm:text-[20px]">
-              <span class="font-semibold text-black">Total</span>
+        <div class="flex items-center justify-between font-inter text-[18px] sm:text-[20px]">
+          <span class="font-semibold text-black">Total</span>
               <span class="font-bold text-black">$${pricingData.total.toFixed(2)} USD</span>
             </div>
-          </div>
-          <div class="text-right" style="margin-top: 2px;">
-            <span class="font-inter text-[10px] text-[#7c7c7c]">Includes all fees and shipping</span>
+        </div>
+        <div class="text-right" style="margin-top: 2px;">
+          <span class="font-inter text-[10px] text-[#7c7c7c]">Includes all fees and shipping</span>
           </div>
         </div>
       `;

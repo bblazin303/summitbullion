@@ -97,7 +97,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
             // Fetch a batch of items with the specific metal filter
             const response = await fetchInventory(20, randomOffset, undefined, metalName);
             
-            if (response && Array.isArray(response.records)) {
+        if (response && Array.isArray(response.records)) {
               for (const item of response.records) {
                 if (selectedProducts.length >= 4) break;
                 
@@ -367,28 +367,28 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
       
       // Update productData with fresh data
       setProductData(liveData);
-      
+    
       // Calculate pricing breakdown with LIVE prices
       const basePrice = liveData.askPrice; // Platform Gold's original price
-      const markedUpPrice = applyMarkup(basePrice, 2); // Your price with 2% markup
-      const markupAmount = markedUpPrice - basePrice; // Dollar amount of markup
-      
-      // Require authentication before adding to cart
-      executeIfAuthenticated(() => {
-        addToCart({
-          id: product.id,
-          name: product.name,
-          pricing: {
-            basePrice: basePrice, // Platform Gold's cost
-            markupPercentage: 2, // 2% markup
-            markup: markupAmount, // Your profit per unit
-            finalPrice: markedUpPrice, // Final price customer pays
-          },
-          image: product.images[0] as StaticImageData | string,
-          brand: product.brand,
-          quantity: quantity
-        });
+    const markedUpPrice = applyMarkup(basePrice, 2); // Your price with 2% markup
+    const markupAmount = markedUpPrice - basePrice; // Dollar amount of markup
+    
+    // Require authentication before adding to cart
+    executeIfAuthenticated(() => {
+      addToCart({
+        id: product.id,
+        name: product.name,
+        pricing: {
+          basePrice: basePrice, // Platform Gold's cost
+          markupPercentage: 2, // 2% markup
+          markup: markupAmount, // Your profit per unit
+          finalPrice: markedUpPrice, // Final price customer pays
+        },
+        image: product.images[0] as StaticImageData | string,
+        brand: product.brand,
+        quantity: quantity
       });
+    });
     } catch (err) {
       console.error('Error checking availability:', err);
       alert('Unable to verify product availability. Please try again.');

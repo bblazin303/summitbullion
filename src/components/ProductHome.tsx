@@ -62,7 +62,7 @@ const ProductHome: React.FC = () => {
             // Fetch a batch of 20 items to have more candidates
             const response = await fetchInventory(20, randomOffset);
             
-            if (response && Array.isArray(response.records)) {
+        if (response && Array.isArray(response.records)) {
               // Find valid products not already selected (filter out high min quantity items)
               for (const item of response.records) {
                 if (selectedProducts.length >= 4) break;

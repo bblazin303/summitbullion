@@ -39,7 +39,7 @@ const MarketplaceBanner: React.FC = () => {
             src="/images/inventory-banner.png"
             alt="Marketplace banner"
             fill
-            className="object-cover"
+            className="object-cover object-left sm:object-center"
             priority
           />
         </div>
@@ -52,38 +52,38 @@ const MarketplaceBanner: React.FC = () => {
         >
           <div className="flex flex-col gap-6 sm:gap-8 lg:gap-[36px] max-w-[776px] w-full">
             {/* Heading */}
-            <h1 className="font-inter font-semibold text-[32px] sm:text-[48px] lg:text-[72px] leading-[1.03] text-white tracking-[-1.5px] lg:tracking-[-2.16px] [text-shadow:rgba(0,0,0,0.25)_0px_2px_9.1px]">
+            <h1 className="font-inter font-semibold text-[28px] sm:text-[48px] lg:text-[72px] leading-[1.03] text-white tracking-[-1.5px] lg:tracking-[-2.16px] [text-shadow:rgba(0,0,0,0.25)_0px_2px_9.1px]">
               <span className="text-[#ffc633]">Modern wealth</span> starts with timeless assets
             </h1>
 
             {/* Stats */}
-            <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 lg:gap-[103px]">
+            <div className="flex flex-row flex-wrap gap-4 sm:gap-8 lg:gap-[103px]">
               {/* Stat 1 */}
-              <div className="flex flex-col gap-2 sm:gap-3">
-                <div className="font-inter font-semibold text-[28px] sm:text-[32px] lg:text-[36px] text-white tracking-[-0.8px] lg:tracking-[-1.08px] leading-none">
+              <div className="flex flex-col gap-1 sm:gap-3">
+                <div className="font-inter font-semibold text-[20px] sm:text-[32px] lg:text-[36px] text-white tracking-[-0.8px] lg:tracking-[-1.08px] leading-none">
                   100%
                 </div>
-                <div className="font-inter font-medium text-[14px] sm:text-[15px] lg:text-[17px] text-[rgba(255,255,255,0.72)] leading-[1.3]">
+                <div className="font-inter font-medium text-[11px] sm:text-[15px] lg:text-[17px] text-[rgba(255,255,255,0.72)] leading-[1.3]">
                   Satisfaction Guarantee
                 </div>
               </div>
 
               {/* Stat 2 */}
-              <div className="flex flex-col gap-2 sm:gap-3">
-                <div className="font-inter font-semibold text-[28px] sm:text-[32px] lg:text-[36px] text-white tracking-[-0.8px] lg:tracking-[-1.08px] leading-none">
+              <div className="flex flex-col gap-1 sm:gap-3">
+                <div className="font-inter font-semibold text-[20px] sm:text-[32px] lg:text-[36px] text-white tracking-[-0.8px] lg:tracking-[-1.08px] leading-none">
                   99.9%
                 </div>
-                <div className="font-inter font-medium text-[14px] sm:text-[15px] lg:text-[17px] text-[rgba(255,255,255,0.72)] leading-[1.3]">
+                <div className="font-inter font-medium text-[11px] sm:text-[15px] lg:text-[17px] text-[rgba(255,255,255,0.72)] leading-[1.3]">
                   Purity Metals
                 </div>
               </div>
 
               {/* Stat 3 */}
-              <div className="flex flex-col gap-2 sm:gap-3">
-                <div className="font-inter font-semibold text-[28px] sm:text-[32px] lg:text-[36px] text-white tracking-[-0.8px] lg:tracking-[-1.08px] leading-none">
+              <div className="flex flex-col gap-1 sm:gap-3">
+                <div className="font-inter font-semibold text-[20px] sm:text-[32px] lg:text-[36px] text-white tracking-[-0.8px] lg:tracking-[-1.08px] leading-none">
                   2700+
                 </div>
-                <div className="font-inter font-medium text-[14px] sm:text-[15px] lg:text-[17px] text-[rgba(255,255,255,0.72)] leading-[1.3]">
+                <div className="font-inter font-medium text-[11px] sm:text-[15px] lg:text-[17px] text-[rgba(255,255,255,0.72)] leading-[1.3]">
                   Products Available
                 </div>
               </div>
