@@ -43,59 +43,62 @@ const ProductHome: React.FC = () => {
       try {
         setIsLoading(true);
         
-        // To ensure variety (avoiding similar items grouped together in DB),
-        // we fetch from 4 distinct random points in the inventory.
-        const totalEstInventory = 2500; // Conservative estimate based on ~2700 total
-        const randomOffsets = Array.from({ length: 4 }, () => 
-          Math.floor(Math.random() * totalEstInventory)
-        );
-        
-        // Fetch a small batch from each offset to find at least one valid item
-        const fetchPromises = randomOffsets.map(offset => 
-          fetchInventory(5, offset)
-            .catch(err => {
-              console.error(`Failed to fetch at offset ${offset}`, err);
-              return null;
-            })
-        );
-        
-        const responses = await Promise.all(fetchPromises);
-        
         const selectedProducts: Inventory[] = [];
         const seenIds = new Set<number>();
+        const totalEstInventory = 2500; // Conservative estimate based on ~2700 total
+        const MAX_MIN_QUANTITY = 5; // Filter out items requiring more than 5 units
         
-        for (const response of responses) {
-          if (response && Array.isArray(response.records)) {
-            // Find first valid product not already selected
-            const validProduct = response.records.find(item => 
-              isAvailableForPurchase(item) && !seenIds.has(item.id)
-            );
+        // Keep trying until we have 4 products or exhaust attempts
+        let attempts = 0;
+        const maxAttempts = 8; // Prevent infinite loops
+        
+        while (selectedProducts.length < 4 && attempts < maxAttempts) {
+          attempts++;
+          
+          // Generate random offset, avoiding areas we've likely already checked
+          const randomOffset = Math.floor(Math.random() * totalEstInventory);
+          
+          try {
+            // Fetch a batch of 20 items to have more candidates
+            const response = await fetchInventory(20, randomOffset);
             
-            if (validProduct) {
-              selectedProducts.push(validProduct);
-              seenIds.add(validProduct.id);
-            }
-          }
-        }
-        
-        // Fallback: if we somehow got fewer than 4 (e.g. API errors), 
-        // try to fill with more from the successful batches
-        if (selectedProducts.length < 4) {
-          for (const response of responses) {
-            if (selectedProducts.length >= 4) break;
             if (response && Array.isArray(response.records)) {
-              const extras = response.records.filter(item => 
-                isAvailableForPurchase(item) && !seenIds.has(item.id)
-              );
-              for (const item of extras) {
+              // Find valid products not already selected (filter out high min quantity items)
+              for (const item of response.records) {
                 if (selectedProducts.length >= 4) break;
-                selectedProducts.push(item);
-                seenIds.add(item.id);
+                
+                if (isAvailableForPurchase(item, MAX_MIN_QUANTITY) && !seenIds.has(item.id)) {
+                  selectedProducts.push(item);
+                  seenIds.add(item.id);
+                }
               }
             }
+          } catch (err) {
+            console.error(`Failed to fetch at offset ${randomOffset}`, err);
           }
         }
         
+        // Final fallback: if we still don't have 4, fetch from the beginning
+        if (selectedProducts.length < 4) {
+          console.log(`Only found ${selectedProducts.length} products, fetching fallback from start...`);
+          try {
+            const fallbackResponse = await fetchInventory(50, 0);
+            if (fallbackResponse && Array.isArray(fallbackResponse.records)) {
+              for (const item of fallbackResponse.records) {
+                if (selectedProducts.length >= 4) break;
+                
+                if (isAvailableForPurchase(item, MAX_MIN_QUANTITY) && !seenIds.has(item.id)) {
+                  selectedProducts.push(item);
+                  seenIds.add(item.id);
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Fallback fetch failed:', err);
+          }
+        }
+        
+        console.log(`✅ Loaded ${selectedProducts.length} products for home page`);
         setProducts(selectedProducts);
       } catch (error) {
         console.error('Failed to load products:', error);

@@ -106,8 +106,19 @@ export function getMetalDisplayName(metalSymbol: string): string {
 
 /**
  * Check if an inventory item is available for purchase
+ * @param item - The inventory item to check
+ * @param maxMinQuantity - Optional max minimum quantity threshold (items requiring more than this are filtered out)
  */
-export function isAvailableForPurchase(item: Inventory): boolean {
-  return item.sellQuantity > 0 && item.askPrice > 0;
+export function isAvailableForPurchase(item: Inventory, maxMinQuantity?: number): boolean {
+  const basicAvailable = item.sellQuantity > 0 && item.askPrice > 0;
+  
+  // If no max min quantity specified, just check basic availability
+  if (maxMinQuantity === undefined) {
+    return basicAvailable;
+  }
+  
+  // Also check that minimum order quantity is reasonable
+  const minQty = item.minAskQty || 1;
+  return basicAvailable && minQty <= maxMinQuantity;
 }
 

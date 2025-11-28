@@ -49,6 +49,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
           setError('Product not found');
         } else {
           setProductData(data);
+          // Set initial quantity to minimum required (minAskQty is min to BUY)
+          if (data.minAskQty && data.minAskQty > 1) {
+            setQuantity(Math.ceil(data.minAskQty));
+          }
         }
       } catch (err) {
         console.error('Failed to load product:', err);
@@ -68,54 +72,90 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
       
       try {
         const metalName = getMetalDisplayName(productData.metalSymbol);
+        const selectedProducts: Inventory[] = [];
+        const seenIds = new Set<number>();
+        seenIds.add(productData.id); // Exclude current product
+        const MAX_MIN_QUANTITY = 5; // Filter out items requiring more than 5 units
         
-        // Determine a safe random offset based on metal type
+        // Determine max offset based on metal type
         // Gold/Silver have 500+ items, others have < 30
-        let maxOffset = 0;
+        let maxOffset = 50;
         if (productData.metalSymbol === 'XAU' || productData.metalSymbol === 'XAG') {
-          // Pick a random page within the first 200 items to ensure variety
-          maxOffset = 200; 
+          maxOffset = 300;
         }
         
-        const randomOffset = Math.floor(Math.random() * maxOffset);
+        // Keep trying until we have 4 products or exhaust attempts
+        let attempts = 0;
+        const maxAttempts = 6;
         
-        // Fetch potentially related items with the specific metal filter
-        // We fetch a larger batch (20) to allow for filtering and randomization
-        const response = await fetchInventory(20, randomOffset, undefined, metalName);
-        
-        // fetchInventory returns an object with a 'records' property
-        if (response && Array.isArray(response.records)) {
-          // Filter products: valid status, exclude current product
-          let related = response.records.filter(p => 
-            p.id !== productData.id &&
-            isAvailableForPurchase(p)
-          );
+        while (selectedProducts.length < 4 && attempts < maxAttempts) {
+          attempts++;
           
-          // If we don't have enough items (e.g. offset was too high or filtered out),
-          // try fetching from the beginning
-          if (related.length < 4 && randomOffset > 0) {
-            const fallbackResponse = await fetchInventory(10, 0, undefined, metalName);
-            if (fallbackResponse && Array.isArray(fallbackResponse.records)) {
-              const fallbackRelated = fallbackResponse.records.filter(p => 
-                p.id !== productData.id &&
-                isAvailableForPurchase(p)
-              );
-              // Merge and deduplicate
-              const existingIds = new Set(related.map(r => r.id));
-              for (const item of fallbackRelated) {
-                if (!existingIds.has(item.id)) {
-                  related.push(item);
-                  existingIds.add(item.id);
+          const randomOffset = Math.floor(Math.random() * maxOffset);
+          
+          try {
+            // Fetch a batch of items with the specific metal filter
+            const response = await fetchInventory(20, randomOffset, undefined, metalName);
+            
+            if (response && Array.isArray(response.records)) {
+              for (const item of response.records) {
+                if (selectedProducts.length >= 4) break;
+                
+                if (isAvailableForPurchase(item, MAX_MIN_QUANTITY) && !seenIds.has(item.id)) {
+                  selectedProducts.push(item);
+                  seenIds.add(item.id);
                 }
               }
             }
+          } catch (err) {
+            console.error(`Failed to fetch related at offset ${randomOffset}`, err);
           }
-
-          // Shuffle the results to ensure variety
-          related = related.sort(() => 0.5 - Math.random());
-          
-          setRelatedProductsData(related.slice(0, 4));
         }
+        
+        // Final fallback: fetch from the beginning if we still don't have 4
+        if (selectedProducts.length < 4) {
+          console.log(`Only found ${selectedProducts.length} related products, fetching fallback...`);
+          try {
+            const fallbackResponse = await fetchInventory(30, 0, undefined, metalName);
+            if (fallbackResponse && Array.isArray(fallbackResponse.records)) {
+              for (const item of fallbackResponse.records) {
+                if (selectedProducts.length >= 4) break;
+                
+                if (isAvailableForPurchase(item, MAX_MIN_QUANTITY) && !seenIds.has(item.id)) {
+                  selectedProducts.push(item);
+                  seenIds.add(item.id);
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Fallback fetch for related products failed:', err);
+          }
+        }
+        
+        // If still not enough (e.g., rare metal type), try fetching ANY metal type
+        if (selectedProducts.length < 4) {
+          console.log(`Still only ${selectedProducts.length} related products, fetching any metal type...`);
+          try {
+            const anyMetalResponse = await fetchInventory(30, 0);
+            if (anyMetalResponse && Array.isArray(anyMetalResponse.records)) {
+              for (const item of anyMetalResponse.records) {
+                if (selectedProducts.length >= 4) break;
+                
+                if (isAvailableForPurchase(item, MAX_MIN_QUANTITY) && !seenIds.has(item.id)) {
+                  selectedProducts.push(item);
+                  seenIds.add(item.id);
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Any-metal fallback fetch failed:', err);
+          }
+        }
+        
+        // Shuffle for variety
+        const shuffled = selectedProducts.sort(() => 0.5 - Math.random());
+        console.log(`✅ Loaded ${shuffled.length} related products`);
+        setRelatedProductsData(shuffled);
       } catch (err) {
         console.error('Failed to load related products:', err);
       }
@@ -281,7 +321,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
   }, [isImageModalOpen]);
 
   const handleQuantityChange = (delta: number) => {
-    const newQuantity = Math.max(1, quantity + delta);
+    // Respect minimum quantity requirement (minAskQty is min to BUY)
+    const minQty = Math.ceil(productData?.minAskQty || 1);
+    const newQuantity = Math.max(minQty, quantity + delta);
     setQuantity(newQuantity);
   };
 
@@ -307,6 +349,16 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
         alert(`Sorry, this item is currently out of stock. (Available: ${liveData.sellQuantity} units)`);
         // Update local state to reflect the new availability
         setProductData(liveData);
+        setIsAddingToCart(false);
+        return;
+      }
+      
+      // Check minimum quantity requirement
+      const minQty = Math.ceil(liveData.minAskQty || 1);
+      if (quantity < minQty) {
+        console.log('❌ Quantity below minimum:', quantity, 'vs required', minQty);
+        alert(`This item requires a minimum purchase of ${minQty} units.`);
+        setQuantity(minQty);
         setIsAddingToCart(false);
         return;
       }
@@ -605,6 +657,15 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
                   <p className="text-red-700 text-sm font-medium">
                     This item is currently unavailable. Please check back later or browse similar products.
+                  </p>
+                </div>
+              )}
+
+              {/* Minimum Quantity Notice */}
+              {isProductAvailable && productData?.minAskQty && productData.minAskQty > 1 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-2">
+                  <p className="text-amber-700 text-sm font-medium">
+                     Minimum order: {Math.ceil(productData.minAskQty)} units required for this item
                   </p>
                 </div>
               )}
