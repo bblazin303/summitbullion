@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
       subtotal: number;
     };
     
-    // Verify authentication
-    const user = await requireFlexibleAuth({ authType, userId: bodyUserId, email: bodyEmail });
+    // Verify authentication (ensures user is logged in)
+    await requireFlexibleAuth({ authType, userId: bodyUserId, email: bodyEmail });
     
     console.log('🔄 Updating PaymentIntent:', paymentIntentId);
     console.log('   Payment method:', paymentMethodType);

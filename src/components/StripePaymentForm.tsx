@@ -38,11 +38,10 @@ function calculateProcessingFee(subtotal: number, paymentMethod: PaymentMethodTy
  */
 interface CheckoutFormProps {
   isShippingValid: boolean;
-  subtotal: number;
   onPaymentMethodChange: (method: PaymentMethodType) => void;
 }
 
-function CheckoutForm({ isShippingValid, subtotal, onPaymentMethodChange }: CheckoutFormProps) {
+function CheckoutForm({ isShippingValid, onPaymentMethodChange }: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -165,8 +164,8 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodType>('card');
-  const [isUpdatingPrice, setIsUpdatingPrice] = useState(false);
   const [baseSubtotal, setBaseSubtotal] = useState<number>(0); // Store base subtotal separately
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [pricing, setPricing] = useState<{
     subtotal: number;
     deliveryFee: number;
@@ -185,7 +184,7 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
 
   // Recalculate total and update PaymentIntent when payment method changes
   useEffect(() => {
-    if (!pricing || !paymentIntentId || !user?.userId || baseSubtotal === 0) return;
+    if (!paymentIntentId || !user?.userId || baseSubtotal === 0) return;
     
     // Calculate new processing fee based on selected payment method
     const newProcessingFee = calculateProcessingFee(baseSubtotal, selectedPaymentMethod);
@@ -210,7 +209,6 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
     
     // Update PaymentIntent on Stripe's side (in background)
     const updatePaymentIntent = async () => {
-      setIsUpdatingPrice(true);
       try {
         const isEmailAuth = !user.idToken;
         const headers: Record<string, string> = {
@@ -241,8 +239,6 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
         }
       } catch (err) {
         console.error('Error updating PaymentIntent:', err);
-      } finally {
-        setIsUpdatingPrice(false);
       }
     };
     
@@ -299,6 +295,7 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
           const initialProcessingFee = calculateProcessingFee(subtotalBeforeFee, 'card');
           const totalWithFee = subtotalBeforeFee + initialProcessingFee;
           
+          // Store full pricing state
           setPricing({
             ...data.pricing,
             processingFee: initialProcessingFee,
@@ -324,6 +321,7 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
     };
 
     createPaymentIntent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.userId, user?.idToken, shippingAddress]);
   
   // Function to update the left-side summary with final pricing
@@ -435,7 +433,6 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
     <Elements stripe={stripePromise} options={options}>
       <CheckoutForm 
         isShippingValid={isShippingValid} 
-        subtotal={pricing?.subtotal || 0}
         onPaymentMethodChange={handlePaymentMethodChange}
       />
     </Elements>
