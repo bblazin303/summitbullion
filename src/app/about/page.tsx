@@ -85,7 +85,7 @@ export default function AboutPage() {
               Our focus is simple: real metal, zero guesswork.
             </p>
             <p className="font-inter text-[17px] sm:text-[18px] text-[#7c7c7c] leading-[1.8]">
-              We're building a modern platform around that core idea. Clear product information, intuitive ordering, responsive support, and processes designed for investors who want physical bullion as part of their long-term plan.
+              We&apos;re building a modern platform around that core idea. Clear product information, intuitive ordering, responsive support, and processes designed for investors who want physical bullion as part of their long-term plan.
             </p>
           </div>
 

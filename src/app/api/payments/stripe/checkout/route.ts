@@ -7,7 +7,8 @@ import { getCart } from '@/lib/firebaseAdminHelpers';
  * POST /api/payments/stripe/checkout
  * Creates a Stripe checkout session for the authenticated user's cart
  */
-export async function POST(_request: NextRequest) {
+export async function POST(_request: NextRequest): Promise<NextResponse> {
+  void _request; // Silence unused variable warning
   try {
     // Verify authentication
     const user = await requireAuth();

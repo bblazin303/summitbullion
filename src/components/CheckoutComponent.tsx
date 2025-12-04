@@ -81,7 +81,7 @@ const CheckoutComponent: React.FC = () => {
   }, [user?.email]);
 
   // Calculate totals
-  const deliveryFee = 15;
+  const _deliveryFee = 15; // Reserved for future use
   const subtotal = getCartTotal();
 
   // Check if KYC is required for this order (TEMPORARILY DISABLED)

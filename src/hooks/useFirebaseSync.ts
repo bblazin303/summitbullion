@@ -85,7 +85,7 @@ export function useFirebaseSync() {
           throw new Error('Failed to sync user');
         }
 
-        const data = await response.json();
+        await response.json(); // Response data currently unused
 
         // Mark this user as synced (both in ref and sessionStorage)
         syncedUserIdRef.current = user.userId;
@@ -100,7 +100,8 @@ export function useFirebaseSync() {
     };
 
     syncUserToAPI();
-  }, [user?.userId, user?.email, user?.address, user?.idToken, user?.solanaAddress, user?.type]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.userId, user?.email, user?.address, user?.idToken, user?.solanaAddress, user?.type]); // user object itself excluded to prevent re-renders
 
   return {
     isSynced: syncedUserIdRef.current === user?.userId,

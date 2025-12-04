@@ -162,7 +162,8 @@ export async function POST(request: NextRequest) {
  * GET /api/orders/sync-status
  * Sync all pending orders (can be called by cron job)
  */
-export async function GET(_request: NextRequest) {
+export async function GET(_request: NextRequest): Promise<NextResponse> {
+  void _request; // Silence unused variable warning
   try {
     if (!adminDb) {
       return NextResponse.json(

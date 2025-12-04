@@ -157,7 +157,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     loadCart();
-  }, [consistentUserId, user?.idToken, email, isEmailAuth]); // Don't include cartLoaded in deps to avoid infinite loop
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [consistentUserId, user?.idToken, email, isEmailAuth]); // Don't include cartLoaded, lastUserId, user in deps to avoid infinite loop
 
   const addToCart = async (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
     const newItem = { ...item, quantity: item.quantity || 1 };

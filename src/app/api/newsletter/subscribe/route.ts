@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     }
 
     // Try to get error details
-    let errorMessage = 'Failed to subscribe. Please try again.';
+    const errorMessage = 'Failed to subscribe. Please try again.';
     try {
       const errorData = await response.text();
       console.error('Google Sheets error:', errorData);

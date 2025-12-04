@@ -22,7 +22,7 @@ export default function IdentityVerification({
   onVerificationError,
 }: IdentityVerificationProps) {
   const user = useUser();
-  const { userId: consistentUserId, email, isEmailAuth } = useConsistentUserId();
+  const { userId: _consistentUserId, email, isEmailAuth } = useConsistentUserId(); // userId reserved for future use
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

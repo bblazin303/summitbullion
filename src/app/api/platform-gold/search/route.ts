@@ -111,6 +111,7 @@ export async function GET(request: Request) {
     
     // Paginate results based on offset
     const paginatedMatches = allMatches.slice(offset, offset + limit);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const results = paginatedMatches.map(({ matchScore, ...item }) => item);
     const hasMore = offset + limit < allMatches.length;
 
