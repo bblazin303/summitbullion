@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { gsap } from 'gsap';
 
 // Import benefit images
@@ -21,6 +22,62 @@ const BenefitsNewsletter: React.FC = () => {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const benefitsRef = useRef<HTMLDivElement>(null);
   const newsletterRef = useRef<HTMLDivElement>(null);
+
+  // Newsletter form state
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: 'success' | 'error' | null;
+    message: string;
+  }>({ type: null, message: '' });
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !email.includes('@')) {
+      setSubmitStatus({ type: 'error', message: 'Please enter a valid email address' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitStatus({ type: null, message: '' });
+
+    try {
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          utm_source: 'website',
+          utm_campaign: 'homepage_newsletter',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSubmitStatus({ 
+          type: 'success', 
+          message: data.message || "You're in! Check your inbox." 
+        });
+        setEmail(''); // Clear the input on success
+      } else {
+        setSubmitStatus({ 
+          type: 'error', 
+          message: data.error || 'Something went wrong. Please try again.' 
+        });
+      }
+    } catch {
+      setSubmitStatus({ 
+        type: 'error', 
+        message: 'Network error. Please check your connection and try again.' 
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -83,6 +140,8 @@ const BenefitsNewsletter: React.FC = () => {
       title: "Physical Assets. Fast Shipping.",
       description: "From fractional gold to full ounces - find the perfect precious metals for your portfolio.",
       buttonText: "BROWSE PRODUCTS",
+      link: "/marketplace",
+      external: false,
       darkMode: false
     },
     {
@@ -90,6 +149,8 @@ const BenefitsNewsletter: React.FC = () => {
       title: "Free Shipping on Eligible Orders",
       description: "Insured delivery at no extra cost when you meet the threshold.",
       buttonText: "VIEW DETAILS",
+      link: "/docs#shipping",
+      external: false,
       darkMode: false
     },
     {
@@ -97,6 +158,8 @@ const BenefitsNewsletter: React.FC = () => {
       title: "Flexible Payment Options.",
       description: "Wire, ACH, card, and crypto. Payment options for traditional and modern investors.",
       buttonText: "VIEW OPTIONS",
+      link: "/docs#buy-physical",
+      external: false,
       darkMode: false
     },
     {
@@ -104,6 +167,8 @@ const BenefitsNewsletter: React.FC = () => {
       title: "Join our active community",
       description: "Buy Zzzz Our Legacy Token And Become Part Of The Family.",
       buttonText: "BUY ZZZZ",
+      link: "https://dexscreener.com/solana/dfrlbuzvptylja5js2pg7smuckjfzeav6jmcarfqhy29",
+      external: true,
       darkMode: true
     }
   ];
@@ -156,7 +221,12 @@ const BenefitsNewsletter: React.FC = () => {
             {benefit.darkMode ? (
               <>
                 {/* Mobile: Arrow Link with chevron in corner */}
-                <button className="flex sm:hidden items-end justify-between w-full transition-all duration-300 mt-4">
+                <Link 
+                  href={benefit.link}
+                  target={benefit.external ? "_blank" : undefined}
+                  rel={benefit.external ? "noopener noreferrer" : undefined}
+                  className="flex sm:hidden items-end justify-between w-full transition-all duration-300 mt-4"
+                >
                   <span className="font-inter font-semibold text-[14px] text-neutral-800">
                     {benefit.buttonText}
                   </span>
@@ -168,14 +238,24 @@ const BenefitsNewsletter: React.FC = () => {
                       className="object-contain"
                     />
                   </div>
-                </button>
+                </Link>
                 {/* Desktop: Gradient Button */}
-                <button className="hidden sm:block bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] rounded-[42px] px-6 sm:px-7 py-4 sm:py-[18px] font-inter font-medium text-[13px] sm:text-[14.4px] uppercase text-black hover:shadow-lg transition-all duration-300 w-full mt-4">
+                <Link 
+                  href={benefit.link}
+                  target={benefit.external ? "_blank" : undefined}
+                  rel={benefit.external ? "noopener noreferrer" : undefined}
+                  className="hidden sm:block bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] rounded-[42px] px-6 sm:px-7 py-4 sm:py-[18px] font-inter font-medium text-[13px] sm:text-[14.4px] uppercase text-black hover:shadow-lg transition-all duration-300 w-full mt-4 text-center"
+                >
                   {benefit.buttonText}
-                </button>
+                </Link>
               </>
             ) : (
-              <button className="flex items-end justify-between w-full sm:w-auto sm:items-center sm:justify-start sm:gap-3 transition-all duration-300 mt-4 hover:gap-4">
+              <Link 
+                href={benefit.link}
+                target={benefit.external ? "_blank" : undefined}
+                rel={benefit.external ? "noopener noreferrer" : undefined}
+                className="flex items-end justify-between w-full sm:w-auto sm:items-center sm:justify-start sm:gap-3 transition-all duration-300 mt-4 hover:gap-4"
+              >
                 <span className="font-inter font-semibold text-[14px] sm:text-[15.963px] text-neutral-800">
                   {benefit.buttonText}
                 </span>
@@ -187,7 +267,7 @@ const BenefitsNewsletter: React.FC = () => {
                     className="object-contain"
                   />
                 </div>
-              </button>
+              </Link>
             )}
           </div>
         ))}
@@ -220,16 +300,31 @@ const BenefitsNewsletter: React.FC = () => {
           </div>
 
           {/* Form */}
-          <div className="flex flex-col gap-3 w-full md:w-auto md:min-w-[300px] md:max-w-[374px]">
+          <form onSubmit={handleNewsletterSubmit} className="flex flex-col gap-3 w-full md:w-auto md:min-w-[300px] md:max-w-[374px]">
             <input
               type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="bg-white rounded-[62px] px-6 py-4 font-inter font-normal text-[clamp(14px,2vw,16px)] text-[#7c7c7c] placeholder:text-[#7c7c7c] h-[52px] text-center md:text-left focus:outline-none focus:ring-2 focus:ring-[#FFB546] w-full"
+              disabled={isSubmitting}
+              className="bg-white rounded-[62px] px-6 py-4 font-inter font-normal text-[clamp(14px,2vw,16px)] text-black placeholder:text-[#7c7c7c] h-[52px] text-center md:text-left focus:outline-none focus:ring-2 focus:ring-[#FFB546] w-full disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <button className="bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] rounded-[62px] px-4 py-3 font-inter font-medium text-[clamp(12px,2vw,14px)] uppercase text-black hover:shadow-lg transition-all duration-300 h-[52px] w-full whitespace-nowrap">
-              Stay Informed
+            <button 
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-gradient-to-br from-[#FFF0C1] from-[4.98%] to-[#FFB546] to-[95.02%] rounded-[62px] px-4 py-3 font-inter font-medium text-[clamp(12px,2vw,14px)] uppercase text-black hover:shadow-lg transition-all duration-300 h-[52px] w-full whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Subscribing...' : 'Stay Informed'}
             </button>
-          </div>
+            {/* Status Message */}
+            {submitStatus.type && (
+              <p className={`text-center text-sm font-inter ${
+                submitStatus.type === 'success' ? 'text-green-400' : 'text-red-400'
+              }`}>
+                {submitStatus.message}
+              </p>
+            )}
+          </form>
         </div>
       </div>
     </div>

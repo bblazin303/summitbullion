@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Image, { StaticImageData } from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { gsap } from 'gsap';
 import type { Inventory, SearchResult } from '@/types/platformGold';
@@ -26,6 +26,8 @@ const MarketplaceInventory: React.FC = () => {
   const sortMenuRef = useRef<HTMLDivElement>(null);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+  const initialFilterApplied = useRef(false);
   
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [selectedSort, setSelectedSort] = useState<string>('Default');
@@ -100,6 +102,31 @@ const MarketplaceInventory: React.FC = () => {
     setMounted(true);
   }, []);
 
+  // Get initial filter from URL parameter
+  const getInitialFilter = () => {
+    const metalParam = searchParams.get('metal');
+    if (metalParam) {
+      const formattedMetal = metalParam.charAt(0).toUpperCase() + metalParam.slice(1).toLowerCase();
+      const validMetals = ['Gold', 'Silver', 'Platinum', 'Palladium'];
+      if (validMetals.includes(formattedMetal)) {
+        return formattedMetal;
+      }
+    }
+    return 'All';
+  };
+
+  // Handle URL metal filter parameter on mount
+  useEffect(() => {
+    if (initialFilterApplied.current) return;
+    
+    const initialFilter = getInitialFilter();
+    if (initialFilter !== 'All') {
+      initialFilterApplied.current = true;
+      setSelectedFilter(initialFilter);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Fetch metal counts on mount
   useEffect(() => {
     const loadMetalCounts = async () => {
@@ -118,31 +145,47 @@ const MarketplaceInventory: React.FC = () => {
   // Fetch inventory from Platform Gold API
   useEffect(() => {
     const loadInventory = async () => {
+      // Check for URL filter parameter
+      const initialFilter = getInitialFilter();
+      const hasUrlFilter = initialFilter !== 'All';
+      
       try {
         setIsLoading(true);
         setError(null);
         
-        // Fetch first 100 products
-        const response = await fetchInventory(100, 0);
-        
-        // Filter to only available items
-        const availableItems = response.records.filter(isAvailableForPurchase);
-        console.log(`✅ Loaded ${availableItems.length} available products from ${response.records.length} fetched`);
-        console.log(`📦 Total products in Platform Gold: ${response.totalCount}`);
-        
-        // Log pricing example
-        if (availableItems.length > 0) {
-          const sample = availableItems[0];
-          const markedUpPrice = applyMarkup(sample.askPrice, 2);
-          console.log(`📊 Pricing Example: "${sample.name}"`);
-          console.log(`   Platform Gold price: $${sample.askPrice.toFixed(2)}`);
-          console.log(`   Your price (2% markup): $${markedUpPrice.toFixed(2)}`);
-          console.log(`   Markup amount: $${(markedUpPrice - sample.askPrice).toFixed(2)}`);
+        if (hasUrlFilter) {
+          // If we have a URL filter, load filtered inventory
+          console.log(`🔍 Loading inventory with URL filter: ${initialFilter}`);
+          const response = await fetchInventory(100, 0, undefined, initialFilter);
+          const availableItems = response.records.filter(isAvailableForPurchase);
+          console.log(`✅ Loaded ${availableItems.length} ${initialFilter} products`);
+          
+          setInventory(availableItems);
+          setCurrentOffset(100);
+          setHasMoreFromAPI(response.nextPage !== null);
+        } else {
+          // Fetch first 100 products (default behavior)
+          const response = await fetchInventory(100, 0);
+          
+          // Filter to only available items
+          const availableItems = response.records.filter(isAvailableForPurchase);
+          console.log(`✅ Loaded ${availableItems.length} available products from ${response.records.length} fetched`);
+          console.log(`📦 Total products in Platform Gold: ${response.totalCount}`);
+          
+          // Log pricing example
+          if (availableItems.length > 0) {
+            const sample = availableItems[0];
+            const markedUpPrice = applyMarkup(sample.askPrice, 2);
+            console.log(`📊 Pricing Example: "${sample.name}"`);
+            console.log(`   Platform Gold price: $${sample.askPrice.toFixed(2)}`);
+            console.log(`   Your price (2% markup): $${markedUpPrice.toFixed(2)}`);
+            console.log(`   Markup amount: $${(markedUpPrice - sample.askPrice).toFixed(2)}`);
+          }
+          
+          setInventory(availableItems);
+          setCurrentOffset(100);
+          setHasMoreFromAPI(response.nextPage !== null);
         }
-        
-        setInventory(availableItems);
-        setCurrentOffset(100);
-        setHasMoreFromAPI(response.nextPage !== null);
       } catch (err) {
         console.error('Failed to load inventory:', err);
         setError(err instanceof Error ? err.message : 'Failed to load inventory. Please try again later.');
@@ -152,6 +195,7 @@ const MarketplaceInventory: React.FC = () => {
     };
 
     loadInventory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Debounced autocomplete search (initial search)

@@ -51,47 +51,80 @@ export default function Footer() {
             {/* Social Media Icons */}
             <div className="flex gap-[16.19px]">
               <Link 
-                href="#" 
+                href="https://x.com/SummitBullion" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="border border-white/20 rounded-full p-2 w-[42px] h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                 aria-label="X (Twitter)"
               >
                 <Image src="/images/icons/x.svg" alt="" width={17} height={17} />
               </Link>
               <Link 
+                href="https://www.linkedin.com/company/summit-bullion-inc" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-white/20 rounded-full p-2 w-[42px] h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
+                aria-label="LinkedIn"
+              >
+                <Image src="/images/icons/linkedin.svg" alt="" width={17} height={17} />
+              </Link>
+              {/* <Link 
                 href="#" 
                 className="border border-white/20 rounded-full p-2 w-[42px] h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                 aria-label="Telegram"
               >
                 <Image src="/images/icons/tg.svg" alt="" width={17} height={17} />
-              </Link>
-              <Link 
+              </Link> */}
+              {/* <Link 
                 href="#" 
                 className="border border-white/20 rounded-full p-2 w-[42px] h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                 aria-label="Instagram"
               >
                 <Image src="/images/icons/ig.svg" alt="" width={17} height={17} />
-              </Link>
+              </Link> */}
               <Link 
-                href="#" 
+                href="https://dexscreener.com/solana/dfrlbuzvptylja5js2pg7smuckjfzeav6jmcarfqhy29" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="border border-white/20 rounded-full p-2 w-[42px] h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                 aria-label="DexScreener"
               >
                 <Image src="/images/icons/DexScreener.svg" alt="" width={19} height={19} />
               </Link>
-              <Link 
+              {/* <Link 
                 href="#" 
                 className="border border-white/20 rounded-full p-2 w-[42px] h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                 aria-label="DexTools"
               >
                 <Image src="/images/icons/DexTools.svg" alt="" width={16} height={16} />
-              </Link>
-              <Link 
+              </Link> */}
+              {/* <Link 
                 href="#" 
                 className="border border-white/20 rounded-full p-2 w-[42px] h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                 aria-label="BirdEye"
               >
                 <Image src="/images/icons/BirdEye.svg" alt="" width={19} height={19} />
+              </Link> */}
+            </div>
+
+            {/* Trustpilot Badge */}
+            <div className="mt-4 flex items-center gap-3">
+              <Link 
+                href="https://www.trustpilot.com/review/summitbullion.io"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Image
+                  src="/images/trustpilot.png"
+                  alt="Trustpilot Reviews"
+                  width={180}
+                  height={40}
+                  className="h-auto hover:opacity-80 transition-opacity"
+                />
               </Link>
+              <span className="text-[#b7b7b7] text-[12px] leading-tight">
+                Trusted by investors<br />worldwide
+              </span>
             </div>
           </div>
 
@@ -112,12 +145,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/docs#payment-info" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                <Link href="/docs#buy-physical" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
                   Payment Information
                 </Link>
               </li>
               <li>
-                <Link href="/docs#shipping-info" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                <Link href="/docs#shipping" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
                   Shipping Information
                 </Link>
               </li>
@@ -136,22 +169,22 @@ export default function Footer() {
             </h3>
             <ul className="flex flex-col gap-[16px]">
               <li>
-                <Link href="#" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                <Link href="/marketplace?metal=gold" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
                   Shop Gold
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                <Link href="/marketplace?metal=silver" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
                   Shop Silver
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                <Link href="/marketplace?metal=palladium" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
                   Shop Palladium
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
+                <Link href="/marketplace?metal=platinum" className="text-[#b7b7b7] text-[16px] font-light leading-[20.806px] hover:text-white transition-colors">
                   Shop Platinum
                 </Link>
               </li>
@@ -207,47 +240,80 @@ export default function Footer() {
               {/* Social Media Icons */}
               <div className="flex gap-3 sm:gap-4 flex-wrap">
                 <Link 
-                  href="#" 
+                  href="https://x.com/SummitBullion" 
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="border border-white/20 rounded-full p-2 sm:p-2.5 w-[36px] h-[36px] sm:w-[42px] sm:h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                   aria-label="X (Twitter)"
                 >
                   <Image src="/images/icons/x.svg" alt="" width={17} height={17} className="w-[14px] sm:w-[17px] h-auto" />
                 </Link>
                 <Link 
+                  href="https://www.linkedin.com/company/summit-bullion-inc" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="border border-white/20 rounded-full p-2 sm:p-2.5 w-[36px] h-[36px] sm:w-[42px] sm:h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
+                  aria-label="LinkedIn"
+                >
+                  <Image src="/images/icons/linkedin.svg" alt="" width={17} height={17} className="w-[14px] sm:w-[17px] h-auto" />
+                </Link>
+                {/* <Link 
                   href="#" 
                   className="border border-white/20 rounded-full p-2 sm:p-2.5 w-[36px] h-[36px] sm:w-[42px] sm:h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                   aria-label="Telegram"
                 >
                   <Image src="/images/icons/tg.svg" alt="" width={17} height={17} className="w-[14px] sm:w-[17px] h-auto" />
-                </Link>
-                <Link 
+                </Link> */}
+                {/* <Link 
                   href="#" 
                   className="border border-white/20 rounded-full p-2 sm:p-2.5 w-[36px] h-[36px] sm:w-[42px] sm:h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                   aria-label="Instagram"
                 >
                   <Image src="/images/icons/ig.svg" alt="" width={17} height={17} className="w-[14px] sm:w-[17px] h-auto" />
-                </Link>
+                </Link> */}
                 <Link 
-                  href="#" 
+                  href="https://dexscreener.com/solana/dfrlbuzvptylja5js2pg7smuckjfzeav6jmcarfqhy29" 
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="border border-white/20 rounded-full p-2 sm:p-2.5 w-[36px] h-[36px] sm:w-[42px] sm:h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                   aria-label="DexScreener"
                 >
                   <Image src="/images/icons/DexScreener.svg" alt="" width={19} height={19} className="w-[15px] sm:w-[19px] h-auto" />
                 </Link>
-                <Link 
+                {/* <Link 
                   href="#" 
                   className="border border-white/20 rounded-full p-2 sm:p-2.5 w-[36px] h-[36px] sm:w-[42px] sm:h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                   aria-label="DexTools"
                 >
                   <Image src="/images/icons/DexTools.svg" alt="" width={16} height={16} className="w-[13px] sm:w-[16px] h-auto" />
-                </Link>
-                <Link 
+                </Link> */}
+                {/* <Link 
                   href="#" 
                   className="border border-white/20 rounded-full p-2 sm:p-2.5 w-[36px] h-[36px] sm:w-[42px] sm:h-[42px] flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
                   aria-label="BirdEye"
                 >
                   <Image src="/images/icons/BirdEye.svg" alt="" width={19} height={19} className="w-[15px] sm:w-[19px] h-auto" />
+                </Link> */}
+              </div>
+
+              {/* Trustpilot Badge */}
+              <div className="mt-6 sm:mt-8 flex items-center gap-3 sm:gap-4">
+                <Link 
+                  href="https://www.trustpilot.com/review/summitbullion.io"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Image
+                    src="/images/trustpilot.png"
+                    alt="Trustpilot Reviews"
+                    width={200}
+                    height={45}
+                    className="h-auto hover:opacity-80 transition-opacity"
+                  />
                 </Link>
+                <span className="text-[#b7b7b7] text-[12px] sm:text-[14px] leading-tight">
+                  Trusted by investors<br />worldwide
+                </span>
               </div>
             </div>
 
@@ -270,12 +336,12 @@ export default function Footer() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/docs#payment-info" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
+                    <Link href="/docs#buy-physical" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
                       Payment Information
                     </Link>
                   </li>
                   <li>
-                    <Link href="/docs#shipping-info" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
+                    <Link href="/docs#shipping" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
                       Shipping Information
                     </Link>
                   </li>
@@ -290,22 +356,22 @@ export default function Footer() {
                 </h3>
                 <ul className="flex flex-col gap-2.5 sm:gap-3 lg:gap-4">
                   <li>
-                    <Link href="#" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
+                    <Link href="/marketplace?metal=gold" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
                       Shop Gold
                     </Link>
                   </li>
                   <li>
-                    <Link href="#" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
+                    <Link href="/marketplace?metal=silver" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
                       Shop Silver
                     </Link>
                   </li>
                   <li>
-                    <Link href="#" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
+                    <Link href="/marketplace?metal=palladium" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
                       Shop Palladium
                     </Link>
                   </li>
                   <li>
-                    <Link href="#" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
+                    <Link href="/marketplace?metal=platinum" className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px] hover:text-white transition-colors">
                       Shop Platinum
                     </Link>
                   </li>
@@ -325,7 +391,7 @@ export default function Footer() {
                     <span className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px]">Suite 105 1308</span>
                   </li>
                   <li>
-                    <span className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px]">1-904-305-7903</span>
+                    <span className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px]">Jacksonville, FL</span>
                   </li>
                   <li>
                     <span className="text-[#b7b7b7] text-[12px] sm:text-[13px] lg:text-[16px] font-light leading-[18px] sm:leading-[19px] lg:leading-[21px]">Contact@SummitBullion.Io</span>

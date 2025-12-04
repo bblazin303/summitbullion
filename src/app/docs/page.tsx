@@ -3,7 +3,7 @@
 import { Search, X, ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 type SearchResult = {
   section: string;
@@ -83,8 +83,24 @@ export default function DocsPage() {
   const [activeSubsection, setActiveSubsection] = useState('welcome');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const contentRef = useRef<HTMLDivElement>(null);
+  const isInitialMount = useRef(true);
 
-  const handleNavigate = (sectionId: string, subsectionId?: string) => {
+  // Scroll to top when section changes
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    // Scroll content area to top
+    if (contentRef.current) {
+      contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    // Also scroll the window to top on mobile
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeSection, activeSubsection]);
+
+  const handleNavigate = (sectionId: string, subsectionId?: string, updateHash: boolean = true) => {
     setActiveSection(sectionId);
     setActiveSubsection(subsectionId || '');
     
@@ -97,26 +113,83 @@ export default function DocsPage() {
         return newSet;
       });
     }
+
+    // Update URL hash for deep linking
+    if (updateHash && typeof window !== 'undefined') {
+      const hash = subsectionId || sectionId;
+      window.history.replaceState(null, '', `#${hash}`);
+    }
   };
+
+  // Handle URL hash on mount and hash changes for deep linking
+  useEffect(() => {
+    const handleHashNavigation = () => {
+      const hash = window.location.hash.slice(1); // Remove the #
+      if (!hash) return;
+
+      // Find which section/subsection this hash belongs to
+      for (const section of navigation) {
+        // Check if hash matches the section id
+        if (section.id === hash) {
+          const firstSubsection = section.subsections[0];
+          setActiveSection(section.id);
+          setActiveSubsection(firstSubsection?.id || '');
+          setExpandedSections(prev => {
+            const newSet = new Set(prev);
+            newSet.add(section.id);
+            return newSet;
+          });
+          return;
+        }
+        // Check if hash matches a subsection id
+        const subsection = section.subsections.find(sub => sub.id === hash);
+        if (subsection) {
+          setActiveSection(section.id);
+          setActiveSubsection(subsection.id);
+          setExpandedSections(prev => {
+            const newSet = new Set(prev);
+            newSet.add(section.id);
+            return newSet;
+          });
+          return;
+        }
+      }
+    };
+
+    // Handle initial hash on page load
+    handleHashNavigation();
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashNavigation);
+    return () => window.removeEventListener('hashchange', handleHashNavigation);
+  }, []);
 
   const toggleSection = (sectionId: string) => {
     const section = navigation.find(s => s.id === sectionId);
     if (!section || section.subsections.length === 0) return;
 
-    setExpandedSections(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(sectionId)) {
+    const isCurrentlyExpanded = expandedSections.has(sectionId);
+    
+    if (isCurrentlyExpanded) {
+      // Collapse the section
+      setExpandedSections(prev => {
+        const newSet = new Set(prev);
         newSet.delete(sectionId);
-      } else {
+        return newSet;
+      });
+    } else {
+      // Expand the section and navigate to first subsection
+      setExpandedSections(prev => {
+        const newSet = new Set(prev);
         newSet.add(sectionId);
-        // Navigate to first subsection when opening
-        const firstSubsection = section.subsections[0];
-        if (firstSubsection) {
-          handleNavigate(sectionId, firstSubsection.id);
-        }
+        return newSet;
+      });
+      // Navigate to first subsection when opening
+      const firstSubsection = section.subsections[0];
+      if (firstSubsection) {
+        handleNavigate(sectionId, firstSubsection.id);
       }
-      return newSet;
-    });
+    }
   };
 
   // Auto-expand the initial active section on mount
@@ -3693,7 +3766,7 @@ export default function DocsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="min-[900px]:ml-[280px]">
+      <div ref={contentRef} className="min-[900px]:ml-[280px]">
         {/* Content */}
         <main className="p-[18px] min-[900px]:p-10 max-w-[1000px] mx-auto pt-8">
           {/* Breadcrumb */}
