@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { requireFlexibleAuth } from '@/lib/auth/verifyAlchemyToken';
-import { getCart } from '@/lib/firebaseAdminHelpers';
+import { getCart, updateCartShippingAddress } from '@/lib/firebaseAdminHelpers';
 import { ShippingAddress } from '@/types/user';
 import { 
   fetchPaymentMethods, 
   fetchShippingInstructions,
+  getCorrectPaymentMethod,
+  getCorrectShippingInstruction,
   createSalesOrderQuote,
   convertToPlatformGoldAddress,
   type PlatformGoldQuoteResponse
@@ -65,6 +67,14 @@ export async function POST(request: NextRequest) {
     }
     
     // ========================================================================
+    // SAVE SHIPPING ADDRESS TO FIREBASE
+    // ========================================================================
+    // Store shipping address in the cart document so webhook can read it directly
+    // This is more reliable than parsing JSON from Stripe metadata
+    await updateCartShippingAddress(user.userId, shippingAddress);
+    console.log('✅ Shipping address saved to Firebase cart');
+    
+    // ========================================================================
     // DYNAMIC PRICING: Get Platform Gold Quote
     // ========================================================================
     console.log('📊 Fetching Platform Gold quote for accurate pricing...');
@@ -83,9 +93,11 @@ export async function POST(request: NextRequest) {
         throw new Error('Platform Gold configuration missing');
       }
       
-      // Use first available options
-      const paymentMethod = paymentMethods[0];
-      const shippingInstruction = shippingInstructions[0];
+      // Select the CORRECT payment method and shipping instruction by name
+      // Payment Method: "Pre-Payment Check" (not "Trade")
+      // Shipping Instruction: "Confidential Drop Ship to Customer" (not "Depository")
+      const paymentMethod = getCorrectPaymentMethod(paymentMethods);
+      const shippingInstruction = getCorrectShippingInstruction(shippingInstructions);
       
       // Format cart items for Platform Gold
       const platformGoldItems = cart.items.map(item => ({
@@ -157,6 +169,8 @@ export async function POST(request: NextRequest) {
     // ========================================================================
     // CREATE PAYMENT INTENT
     // ========================================================================
+    // Note: Shipping address is stored in Firebase cart, NOT in Stripe metadata
+    // The webhook will read it directly from Firebase for reliability
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(total * 100), // Convert to cents
       currency: 'usd',
@@ -175,8 +189,8 @@ export async function POST(request: NextRequest) {
         platformGoldAmount: platformGoldTotal.toFixed(2),
         markupAmount: markupAmount.toFixed(2),
         markupPercentage: markupPercentage.toString(),
-        // Store shipping address as JSON string (Stripe metadata values must be strings)
-        shippingAddress: JSON.stringify(shippingAddress),
+        // Shipping address is now stored in Firebase cart (not here)
+        // This avoids Stripe's 500 char metadata limit and fragile JSON parsing
       },
     });
     

@@ -7,6 +7,8 @@ import {
   createPlatformGoldOrder,
   fetchPaymentMethods,
   fetchShippingInstructions,
+  getCorrectPaymentMethod,
+  getCorrectShippingInstruction,
   convertToPlatformGoldAddress,
   formatOrderItems,
 } from '@/lib/platformGoldHelpers';
@@ -155,14 +157,16 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     );
     const totalMarkup = subtotal - platformGoldCost;
     
-    // Extract shipping address from metadata
-    let shippingAddress;
-    try {
-      shippingAddress = JSON.parse(paymentIntent.metadata?.shippingAddress || '{}');
-    } catch {
-      console.error('❌ Failed to parse shipping address from metadata');
-      shippingAddress = {};
+    // Get shipping address directly from cart (stored in Firebase)
+    // This is more reliable than parsing JSON from Stripe metadata
+    const shippingAddress = cartData.shippingAddress || {};
+    
+    if (!shippingAddress.addr1 || !shippingAddress.city || !shippingAddress.state || !shippingAddress.zip) {
+      console.error('❌ Shipping address missing required fields:', shippingAddress);
+      // Continue anyway - the order will be saved but Platform Gold order may fail
     }
+    
+    console.log('📦 Shipping address from Firebase:', shippingAddress);
     
     // Create order document
     const orderRef = adminDb.collection('orders').doc();
@@ -228,12 +232,14 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
         throw new Error('Platform Gold configuration missing');
       }
       
-      // Use first available options (you can add logic to select specific ones)
-      const paymentMethod = paymentMethods[0];
-      const shippingInstruction = shippingInstructions[0];
+      // Select the CORRECT payment method and shipping instruction by name
+      // Payment Method: "Pre-Payment Check" (not "Trade")
+      // Shipping Instruction: "Confidential Drop Ship to Customer" (not "Depository")
+      const paymentMethod = getCorrectPaymentMethod(paymentMethods);
+      const shippingInstruction = getCorrectShippingInstruction(shippingInstructions);
       
-      console.log('💳 Using payment method:', paymentMethod.title);
-      console.log('📮 Using shipping instruction:', shippingInstruction.name);
+      console.log('💳 Using payment method:', paymentMethod.title, `(ID: ${paymentMethod.id})`);
+      console.log('📮 Using shipping instruction:', shippingInstruction.name, `(ID: ${shippingInstruction.id})`);
       
       // Format order for Platform Gold
       const platformGoldRequest = {

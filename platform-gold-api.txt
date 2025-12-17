@@ -1,0 +1,1527 @@
+
+PlatformGold Partner API
+ 2.0.0 
+OAS3
+https://api.platform.gold/public/api-docs/v2
+Obtain inventory, place orders, check status of existing orders.
+
+Servers
+
+/public/v2
+Authorize
+login
+Login
+
+
+
+POST
+/login
+Fetch durable access token
+WARNING!!! This will invalidate any previous access token(s) you requested, potentially breaking existing integrations. Do not use this endpoint if you do not know what you are doing!
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "email": "string",
+  "password": "string"
+}
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "token": "string"
+}
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links
+system
+System
+
+
+
+GET
+/shipping-instructions
+Fetch available shipping instructions (for use when submitting SO)
+
+Fetch available shipping instructions (for use when submitting SO)
+
+Parameters
+Try it out
+No parameters
+
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 0,
+    "name": "string"
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+
+GET
+/warehouse-locations
+Fetch available warehouse locations (for use when submitting PO)
+
+Fetch available warehouse locations (for use when submitting PO)
+
+Parameters
+Try it out
+No parameters
+
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 0,
+    "name": "string",
+    "address": {
+      "addressee": "string",
+      "attention": "string",
+      "addr1": "string",
+      "addr2": "string",
+      "city": "string",
+      "state": "string",
+      "zip": "string",
+      "country": "string"
+    }
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+
+GET
+/payment-methods
+Fetch available payment methods (for use when submitting SO/PO)
+
+Fetch available payment methods (for use when submitting SO/PO)
+
+Parameters
+Try it out
+No parameters
+
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 0,
+    "title": "string",
+    "description": "string",
+    "scope": "string",
+    "fee": 0,
+    "feeWaived": 0
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+
+GET
+/spot-prices
+Fetch metal spot prices
+
+Fetch metal spot prices
+
+Parameters
+Try it out
+Name	Description
+currency
+string
+(query)
+Available values : AUD, CAD, CHF, CZK, EUR, GBP, JPY, PLN, SGD, TRY, USD, ZAR
+
+
+--
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "symbol": "XAU",
+    "currency": "AUD",
+    "currencyMultiplier": 0,
+    "open": 0,
+    "ask": 0,
+    "bid": 0,
+    "timestamp": "string"
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+
+GET
+/status
+Get current status information
+
+Get current status information
+
+Parameters
+Try it out
+No parameters
+
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "SYSTEM_MESSAGE": "string",
+  "SYSTEM_MESSAGE_URL": "string",
+  "TRADING_ENABLED": true
+}
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+inventory
+Inventory
+
+
+
+GET
+/inventory
+List Inventory
+
+Get available inventory with pricing
+
+Parameters
+Try it out
+Name	Description
+ids
+string
+(query)
+Item ids to include in results, separated by commas (e.g. 1,2,3)
+
+ids
+favorite
+boolean
+(query)
+Only include favorited items in response (false = all inventory)
+
+
+--
+limit
+integer
+(query)
+Maximum number of results to return (Default 25)
+
+Default value : 25
+
+25
+offset
+integer
+(query)
+Number of results to skip (Default 0)
+
+Default value : 0
+
+0
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "count": 0,
+  "page": 0,
+  "nextPage": 0,
+  "records": [
+    {
+      "id": 2915,
+      "sku": "ATBG",
+      "name": "string",
+      "metalOz": 0,
+      "bidPriceFormat": "Fixed",
+      "bidPremium": 0,
+      "askPriceFormat": "Fixed",
+      "askPremium": 0,
+      "disablePerOzCalc": true,
+      "metalSymbol": "XAU",
+      "metalType": "GOLD - Hedge",
+      "metalContent": {
+        "gold": 0,
+        "silver": 0,
+        "platinum": 0,
+        "palladium": 0
+      },
+      "manufacturer": "string",
+      "purity": "string",
+      "buyQuantity": 0,
+      "sellQuantity": 0,
+      "minQuantity": 0,
+      "minBidQty": 0,
+      "minAskQty": 0,
+      "year": "string",
+      "grade": "string",
+      "gradingService": "string",
+      "mintMark": "string",
+      "iraEligible": true,
+      "askPrice": 0,
+      "bidPrice": 0,
+      "metalAsk": 0,
+      "metalBid": 0,
+      "mainImage": "string",
+      "altImage1": "string",
+      "altImage2": "string",
+      "altImage3": "string",
+      "stockStatus": "string",
+      "categories": [
+        {
+          "name": "string",
+          "primary": true,
+          "children": [
+            "string"
+          ]
+        }
+      ]
+    }
+  ]
+}
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links
+
+GET
+/inventory/{id}
+Fetch Inventory By Id
+
+Get available inventory by ID with pricing
+
+Parameters
+Try it out
+Name	Description
+id *
+integer
+(path)
+Inventory Unique Id
+
+id
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "id": 2915,
+  "sku": "ATBG",
+  "name": "string",
+  "metalOz": 0,
+  "bidPriceFormat": "Fixed",
+  "bidPremium": 0,
+  "askPriceFormat": "Fixed",
+  "askPremium": 0,
+  "disablePerOzCalc": true,
+  "metalSymbol": "XAU",
+  "metalType": "GOLD - Hedge",
+  "metalContent": {
+    "gold": 0,
+    "silver": 0,
+    "platinum": 0,
+    "palladium": 0
+  },
+  "manufacturer": "string",
+  "purity": "string",
+  "buyQuantity": 0,
+  "sellQuantity": 0,
+  "minQuantity": 0,
+  "minBidQty": 0,
+  "minAskQty": 0,
+  "year": "string",
+  "grade": "string",
+  "gradingService": "string",
+  "mintMark": "string",
+  "iraEligible": true,
+  "askPrice": 0,
+  "bidPrice": 0,
+  "metalAsk": 0,
+  "metalBid": 0,
+  "mainImage": "string",
+  "altImage1": "string",
+  "altImage2": "string",
+  "altImage3": "string",
+  "stockStatus": "string",
+  "categories": [
+    {
+      "name": "string",
+      "primary": true,
+      "children": [
+        "string"
+      ]
+    }
+  ]
+}
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links
+salesOrder
+Sales Orders
+
+
+
+POST
+/sales-order/poll
+Poll Sales Order Submission Status By Handle
+
+Poll Sales Order Submission Status By Handle
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+[
+  {
+    "handle": "string"
+  }
+]
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 0,
+    "handle": "string",
+    "transactionId": "string",
+    "confirmationNumber": "string",
+    "syncError": "string",
+    "syncAttempts": 0,
+    "syncAttemptsRemaining": 0
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links
+
+POST
+/sales-order/search
+Search for sales orders by provided criteria
+
+Search for sales orders by provided criteria
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "transactionId": "string",
+  "customerReferenceNumber": "string",
+  "transactionDate": {
+    "from": "string",
+    "to": "string"
+  }
+}
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 2915,
+    "recordType": "salesOrder",
+    "status": "Awaiting Payment",
+    "trackingNumbers": [
+      "abc",
+      "123"
+    ],
+    "amount": 0,
+    "transactionDate": "string",
+    "customerReferenceNumber": "string",
+    "transactionId": "string"
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links
+
+POST
+/sales-order/status
+Fetch Sales Order Statuses By Ids
+
+Fetch Sales Order Statuses By Ids
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+[
+  {
+    "id": 0
+  }
+]
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 2915,
+    "confirmationNumber": "string",
+    "recordType": "salesOrder",
+    "shippingInstruction": {
+      "id": 0,
+      "name": "string"
+    },
+    "paymentMethod": {
+      "id": 0,
+      "title": "string",
+      "description": "string",
+      "scope": "string",
+      "fee": 0,
+      "feeWaived": 0
+    },
+    "shippingAddress": {
+      "addressee": "string",
+      "attention": "string",
+      "addr1": "string",
+      "addr2": "string",
+      "city": "string",
+      "state": "string",
+      "zip": "string",
+      "country": "string"
+    },
+    "itemFulfillments": [
+      {
+        "shipDate": "string",
+        "shipMethod": "string",
+        "items": [
+          {
+            "id": 0,
+            "quantity": 0
+          }
+        ],
+        "trackingNumbers": [
+          "string"
+        ]
+      }
+    ],
+    "status": "Awaiting Payment",
+    "trackingNumbers": [
+      "abc",
+      "123"
+    ],
+    "lineItems": [
+      {
+        "id": 0,
+        "name": "string",
+        "quantity": 0,
+        "rate": 0
+      }
+    ],
+    "amount": 0,
+    "transactionDate": "string",
+    "customerReferenceNumber": "string",
+    "transactionId": "string"
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links
+
+POST
+/sales-order
+Create Sales Order
+
+WARNING!!! Unless you are explicitly in the sandbox, successful tests of this endpoint will result in real orders being created!
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+[
+  {
+    "asynchronous": false,
+    "confirmationNumber": "string",
+    "items": [
+      {
+        "id": 0,
+        "quantity": 0
+      }
+    ],
+    "shippingAddress": {
+      "addressee": "string",
+      "attention": "string",
+      "addr1": "string",
+      "addr2": "string",
+      "city": "string",
+      "state": "string",
+      "zip": "string",
+      "country": "string"
+    },
+    "email": "string",
+    "paymentMethodId": 0,
+    "shippingInstructionId": 0,
+    "customerReferenceNumber": "string",
+    "notes": "string"
+  }
+]
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 2915,
+    "confirmationNumber": "string",
+    "recordType": "salesOrder",
+    "shippingInstruction": {
+      "id": 0,
+      "name": "string"
+    },
+    "paymentMethod": {
+      "id": 0,
+      "title": "string",
+      "description": "string",
+      "scope": "string",
+      "fee": 0,
+      "feeWaived": 0
+    },
+    "shippingAddress": {
+      "addressee": "string",
+      "attention": "string",
+      "addr1": "string",
+      "addr2": "string",
+      "city": "string",
+      "state": "string",
+      "zip": "string",
+      "country": "string"
+    },
+    "itemFulfillments": [
+      {
+        "shipDate": "string",
+        "shipMethod": "string",
+        "items": [
+          {
+            "id": 0,
+            "quantity": 0
+          }
+        ],
+        "trackingNumbers": [
+          "string"
+        ]
+      }
+    ],
+    "status": "Awaiting Payment",
+    "trackingNumbers": [
+      "abc",
+      "123"
+    ],
+    "lineItems": [
+      {
+        "id": 0,
+        "name": "string",
+        "quantity": 0,
+        "rate": 0
+      }
+    ],
+    "amount": 0,
+    "transactionDate": "string",
+    "customerReferenceNumber": "string",
+    "transactionId": "string"
+  }
+]
+No links
+202	
+ACCEPTED
+
+Media type
+
+application/json
+Example Value
+Schema
+[
+  {
+    "handle": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "recordType": "quote",
+    "quoteExpiration": "string",
+    "lineItems": [
+      {
+        "id": 0,
+        "name": "string",
+        "quantity": 0,
+        "rate": 0
+      }
+    ],
+    "handlingFee": 0,
+    "amount": 0,
+    "transactionDate": "string",
+    "customerReferenceNumber": "string"
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links
+
+PUT
+/sales-order/{id}
+Update Sales Order
+
+Update sales order information (subject to lock status)
+
+Parameters
+Try it out
+Name	Description
+id *
+integer
+(path)
+Sales Order Id
+
+id
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "shippingAddress": {
+    "addressee": "string",
+    "attention": "string",
+    "addr1": "string",
+    "addr2": "string",
+    "city": "string",
+    "state": "string",
+    "zip": "string",
+    "country": "string"
+  },
+  "shippingInstructionId": 0,
+  "customerReferenceNumber": "string",
+  "orderNotes": "string"
+}
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "id": 2915,
+  "confirmationNumber": "string",
+  "recordType": "salesOrder",
+  "shippingInstruction": {
+    "id": 0,
+    "name": "string"
+  },
+  "paymentMethod": {
+    "id": 0,
+    "title": "string",
+    "description": "string",
+    "scope": "string",
+    "fee": 0,
+    "feeWaived": 0
+  },
+  "shippingAddress": {
+    "addressee": "string",
+    "attention": "string",
+    "addr1": "string",
+    "addr2": "string",
+    "city": "string",
+    "state": "string",
+    "zip": "string",
+    "country": "string"
+  },
+  "itemFulfillments": [
+    {
+      "shipDate": "string",
+      "shipMethod": "string",
+      "items": [
+        {
+          "id": 0,
+          "quantity": 0
+        }
+      ],
+      "trackingNumbers": [
+        "string"
+      ]
+    }
+  ],
+  "status": "Awaiting Payment",
+  "trackingNumbers": [
+    "abc",
+    "123"
+  ],
+  "lineItems": [
+    {
+      "id": 0,
+      "name": "string",
+      "quantity": 0,
+      "rate": 0
+    }
+  ],
+  "amount": 0,
+  "transactionDate": "string",
+  "customerReferenceNumber": "string",
+  "transactionId": "string"
+}
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links
+
+POST
+/sales-order/quote/create
+Create Sales Order Quote
+
+WARNING!!! Unless you are explicitly in the sandbox, successful tests of this endpoint will result in real quotes being created!
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+[
+  {
+    "asynchronous": false,
+    "confirmationNumber": "string",
+    "items": [
+      {
+        "id": 0,
+        "quantity": 0
+      }
+    ],
+    "shippingAddress": {
+      "addressee": "string",
+      "attention": "string",
+      "addr1": "string",
+      "addr2": "string",
+      "city": "string",
+      "state": "string",
+      "zip": "string",
+      "country": "string"
+    },
+    "email": "string",
+    "paymentMethodId": 0,
+    "shippingInstructionId": 0,
+    "customerReferenceNumber": "string",
+    "notes": "string"
+  }
+]
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "handle": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "recordType": "quote",
+    "quoteExpiration": "string",
+    "lineItems": [
+      {
+        "id": 0,
+        "name": "string",
+        "quantity": 0,
+        "rate": 0
+      }
+    ],
+    "handlingFee": 0,
+    "amount": 0,
+    "transactionDate": "string",
+    "customerReferenceNumber": "string"
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links
+
+POST
+/sales-order/quote/execute
+Execute Sales Order Quote
+
+WARNING!!! Unless you are explicitly in the sandbox, successful tests of this endpoint will result in real quotes being created!
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+[
+  {
+    "handle": "string"
+  }
+]
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 2915,
+    "confirmationNumber": "string",
+    "recordType": "salesOrder",
+    "shippingInstruction": {
+      "id": 0,
+      "name": "string"
+    },
+    "paymentMethod": {
+      "id": 0,
+      "title": "string",
+      "description": "string",
+      "scope": "string",
+      "fee": 0,
+      "feeWaived": 0
+    },
+    "shippingAddress": {
+      "addressee": "string",
+      "attention": "string",
+      "addr1": "string",
+      "addr2": "string",
+      "city": "string",
+      "state": "string",
+      "zip": "string",
+      "country": "string"
+    },
+    "itemFulfillments": [
+      {
+        "shipDate": "string",
+        "shipMethod": "string",
+        "items": [
+          {
+            "id": 0,
+            "quantity": 0
+          }
+        ],
+        "trackingNumbers": [
+          "string"
+        ]
+      }
+    ],
+    "status": "Awaiting Payment",
+    "trackingNumbers": [
+      "abc",
+      "123"
+    ],
+    "lineItems": [
+      {
+        "id": 0,
+        "name": "string",
+        "quantity": 0,
+        "rate": 0
+      }
+    ],
+    "amount": 0,
+    "transactionDate": "string",
+    "customerReferenceNumber": "string",
+    "transactionId": "string"
+  }
+]
+No links
+202	
+ACCEPTED
+
+Media type
+
+application/json
+Example Value
+Schema
+[
+  {
+    "handle": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "recordType": "quote",
+    "quoteExpiration": "string",
+    "lineItems": [
+      {
+        "id": 0,
+        "name": "string",
+        "quantity": 0,
+        "rate": 0
+      }
+    ],
+    "handlingFee": 0,
+    "amount": 0,
+    "transactionDate": "string",
+    "customerReferenceNumber": "string"
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links
+purchaseOrder
+Purchase Orders
+
+
+
+POST
+/purchase-order
+Create Purchase Order
+
+WARNING!!! Unless you are explicitly in the sandbox, successful tests of this endpoint will result in real orders being created!
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+[
+  {
+    "asynchronous": false,
+    "confirmationNumber": "string",
+    "warehouseLocationId": 0,
+    "items": [
+      {
+        "id": 0,
+        "quantity": 0
+      }
+    ],
+    "customerReferenceNumber": "string",
+    "notes": "string"
+  }
+]
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 2915,
+    "confirmationNumber": "string",
+    "recordType": "salesOrder",
+    "warehouseAddress": {
+      "addressee": "string",
+      "attention": "string",
+      "addr1": "string",
+      "addr2": "string",
+      "city": "string",
+      "state": "string",
+      "zip": "string",
+      "country": "string"
+    },
+    "status": "Fully Billed",
+    "lineItems": [
+      {
+        "id": 0,
+        "name": "string",
+        "quantity": 0,
+        "rate": 0
+      }
+    ],
+    "amount": 0,
+    "transactionDate": "string",
+    "customerReferenceNumber": "string",
+    "transactionId": "string"
+  }
+]
+No links
+202	
+ACCEPTED
+
+Media type
+
+application/json
+Example Value
+Schema
+[
+  {
+    "handle": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "recordType": "quote",
+    "quoteExpiration": "string",
+    "lineItems": [
+      {
+        "id": 0,
+        "name": "string",
+        "quantity": 0,
+        "rate": 0
+      }
+    ],
+    "handlingFee": 0,
+    "amount": 0,
+    "transactionDate": "string",
+    "customerReferenceNumber": "string"
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links
+
+POST
+/purchase-order/status
+Fetch Purchase Order Statuses By Ids
+
+Fetch Purchase Order Statuses By Ids
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+[
+  {
+    "id": 0
+  }
+]
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 2915,
+    "confirmationNumber": "string",
+    "recordType": "salesOrder",
+    "warehouseAddress": {
+      "addressee": "string",
+      "attention": "string",
+      "addr1": "string",
+      "addr2": "string",
+      "city": "string",
+      "state": "string",
+      "zip": "string",
+      "country": "string"
+    },
+    "status": "Fully Billed",
+    "lineItems": [
+      {
+        "id": 0,
+        "name": "string",
+        "quantity": 0,
+        "rate": 0
+      }
+    ],
+    "amount": 0,
+    "transactionDate": "string",
+    "customerReferenceNumber": "string",
+    "transactionId": "string"
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links
+
+POST
+/purchase-order/poll
+Poll Purchase Order Submission Status By Handle
+
+Poll Purchase Order Submission Status By Handle
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+[
+  {
+    "handle": "string"
+  }
+]
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 0,
+    "handle": "string",
+    "transactionId": "string",
+    "confirmationNumber": "string",
+    "syncError": "string",
+    "syncAttempts": 0,
+    "syncAttemptsRemaining": 0
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links
+
+POST
+/purchase-order/search
+Search for purchase orders by provided criteria
+
+Search for purchase orders by provided criteria
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "transactionId": "string",
+  "customerReferenceNumber": "string",
+  "transactionDate": {
+    "from": "string",
+    "to": "string"
+  }
+}
+Responses
+Code	Description	Links
+200	
+OK
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 2915,
+    "recordType": "purchaseOrder",
+    "status": "Fully Billed",
+    "amount": 0,
+    "transactionDate": "string",
+    "customerReferenceNumber": "string",
+    "transactionId": "string",
+    "warehouseAddress": {
+      "addressee": "string",
+      "attention": "string",
+      "addr1": "string",
+      "addr2": "string",
+      "city": "string",
+      "state": "string",
+      "zip": "string",
+      "country": "string"
+    }
+  }
+]
+No links
+400	
+BAD REQUEST
+
+No links
+401	
+UNAUTHORIZED
+
+No links
+404	
+NOT FOUND
+
+No links

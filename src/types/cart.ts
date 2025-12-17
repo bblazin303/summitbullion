@@ -1,5 +1,7 @@
 // Cart-related TypeScript types
 
+import { ShippingAddress } from './user';
+
 export interface CartItemPricing {
   basePrice: number; // Platform Gold's cost
   markupPercentage: number; // Your markup % (e.g., 2 for 2%)
@@ -27,6 +29,7 @@ export interface Cart {
   subtotal: number;
   itemCount: number;
   updatedAt: Date;
+  shippingAddress?: Partial<ShippingAddress>; // Saved when user proceeds to payment
 }
 
 export interface AddToCartRequest {

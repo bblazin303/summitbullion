@@ -157,11 +157,28 @@ export interface PlatformGoldPollResponse {
 export const USE_QUOTE_MODE = false;
 
 /**
- * Default payment method and shipping instruction IDs
- * These should be fetched dynamically in production
+ * CORRECT Payment Method and Shipping Instruction names
+ * These must match exactly what Platform Gold returns from their API
+ * 
+ * Payment Methods available:
+ *   - "Pre-Payment ACH Debit"
+ *   - "Pre-Payment Check"  <-- WE USE THIS
+ *   - "Pre-Payment Wire"
+ *   - "Trade"
+ * 
+ * Shipping Instructions available:
+ *   - "Depository - Confidential Dropship to Customer"
+ *   - "Dealer's Location"
+ *   - "Confidential Drop Ship to Customer"  <-- WE USE THIS
+ *   - "Depository"
+ *   - "Hold for Instructions"
  */
-export const DEFAULT_PAYMENT_METHOD_ID = 1; // Update after fetching from API
-export const DEFAULT_SHIPPING_INSTRUCTION_ID = 1; // Update after fetching from API
+export const REQUIRED_PAYMENT_METHOD_TITLE = 'Pre-Payment Check';
+export const REQUIRED_SHIPPING_INSTRUCTION_NAME = 'Confidential Drop Ship to Customer';
+
+// Fallback IDs (only used if name matching fails)
+export const DEFAULT_PAYMENT_METHOD_ID = 1;
+export const DEFAULT_SHIPPING_INSTRUCTION_ID = 1;
 
 // ============================================================================
 // SYSTEM ENDPOINTS
@@ -189,6 +206,76 @@ export async function fetchShippingInstructions(): Promise<PlatformGoldShippingI
     console.error('❌ Error fetching shipping instructions:', error);
     throw new Error('Failed to fetch shipping instructions from Platform Gold');
   }
+}
+
+/**
+ * Get the correct payment method for Summit Bullion orders
+ * Looks for "Pre-Payment Check" by title
+ */
+export function getCorrectPaymentMethod(
+  paymentMethods: PlatformGoldPaymentMethod[]
+): PlatformGoldPaymentMethod {
+  // Find "Pre-Payment Check" by title
+  const correctMethod = paymentMethods.find(
+    pm => pm.title === REQUIRED_PAYMENT_METHOD_TITLE
+  );
+  
+  if (correctMethod) {
+    console.log(`✅ Found correct payment method: "${correctMethod.title}" (ID: ${correctMethod.id})`);
+    return correctMethod;
+  }
+  
+  // Try partial match as fallback
+  const partialMatch = paymentMethods.find(
+    pm => pm.title.toLowerCase().includes('pre-payment check')
+  );
+  
+  if (partialMatch) {
+    console.log(`⚠️ Found payment method by partial match: "${partialMatch.title}" (ID: ${partialMatch.id})`);
+    return partialMatch;
+  }
+  
+  // Last resort: use first one but warn
+  console.error(`❌ Could not find payment method "${REQUIRED_PAYMENT_METHOD_TITLE}"`);
+  console.error(`   Available methods:`, paymentMethods.map(pm => pm.title));
+  console.error(`   Using first available: "${paymentMethods[0]?.title}"`);
+  
+  return paymentMethods[0];
+}
+
+/**
+ * Get the correct shipping instruction for Summit Bullion orders
+ * Looks for "Confidential Drop Ship to Customer" by name
+ */
+export function getCorrectShippingInstruction(
+  shippingInstructions: PlatformGoldShippingInstruction[]
+): PlatformGoldShippingInstruction {
+  // Find "Confidential Drop Ship to Customer" by name
+  const correctInstruction = shippingInstructions.find(
+    si => si.name === REQUIRED_SHIPPING_INSTRUCTION_NAME
+  );
+  
+  if (correctInstruction) {
+    console.log(`✅ Found correct shipping instruction: "${correctInstruction.name}" (ID: ${correctInstruction.id})`);
+    return correctInstruction;
+  }
+  
+  // Try partial match as fallback
+  const partialMatch = shippingInstructions.find(
+    si => si.name.toLowerCase().includes('confidential drop ship')
+  );
+  
+  if (partialMatch) {
+    console.log(`⚠️ Found shipping instruction by partial match: "${partialMatch.name}" (ID: ${partialMatch.id})`);
+    return partialMatch;
+  }
+  
+  // Last resort: use first one but warn
+  console.error(`❌ Could not find shipping instruction "${REQUIRED_SHIPPING_INSTRUCTION_NAME}"`);
+  console.error(`   Available instructions:`, shippingInstructions.map(si => si.name));
+  console.error(`   Using first available: "${shippingInstructions[0]?.name}"`);
+  
+  return shippingInstructions[0];
 }
 
 // ============================================================================
@@ -319,6 +406,51 @@ export async function searchSalesOrders(criteria: {
   }
 }
 
+/**
+ * Update an existing sales order (subject to lock status)
+ * Use this to fix orders with missing/incorrect shipping addresses
+ */
+export async function updateSalesOrder(
+  orderId: number,
+  updates: {
+    shippingAddress?: PlatformGoldAddress;
+    shippingInstructionId?: number;
+    customerReferenceNumber?: string;
+    orderNotes?: string;
+  }
+): Promise<PlatformGoldOrderResponse> {
+  try {
+    console.log(`📝 Updating Platform Gold order ${orderId}...`);
+    
+    const response = await fetchWithAuth(`${API_BASE_URL}/sales-order/${orderId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ API PUT /sales-order/${orderId} failed:`, response.status, errorText);
+      throw new Error(`Platform Gold API request failed: ${response.status} - ${errorText}`);
+    }
+    
+    const result = await response.json() as PlatformGoldOrderResponse;
+    
+    console.log('✅ Order updated successfully:', {
+      id: result.id,
+      status: result.status,
+      transactionId: result.transactionId,
+    });
+    
+    return result;
+  } catch (error: unknown) {
+    console.error('❌ Error updating order:', error);
+    throw error;
+  }
+}
+
 // ============================================================================
 // UNIFIED ORDER CREATION (SMART MODE SWITCHING)
 // ============================================================================
@@ -398,16 +530,28 @@ export async function createPlatformGoldOrder(
 
 /**
  * Convert Firebase shipping address to Platform Gold format
+ * 
+ * Frontend ShippingAddress uses these field names:
+ *   - addressee (full name)
+ *   - addr1 (street address)
+ *   - addr2 (apt/suite)
+ *   - city
+ *   - state (2-letter code)
+ *   - zip
+ *   - country (2-letter code, defaults to US)
+ * 
+ * Platform Gold expects the exact same field names, so we just need to ensure
+ * all required fields have values and optional fields have defaults.
  */
-export function convertToPlatformGoldAddress(address: Partial<PlatformGoldAddress> & { fullName?: string; streetAddress?: string; aptSuite?: string; zipCode?: string }): PlatformGoldAddress {
+export function convertToPlatformGoldAddress(address: Partial<PlatformGoldAddress>): PlatformGoldAddress {
   return {
-    addressee: address.fullName || '',
+    addressee: address.addressee || '',
     attention: address.attention || '',
-    addr1: address.streetAddress || '',
-    addr2: address.aptSuite || '',
+    addr1: address.addr1 || '',
+    addr2: address.addr2 || '',
     city: address.city || '',
     state: address.state || '',
-    zip: address.zipCode || '',
+    zip: address.zip || '',
     country: address.country || 'US',
   };
 }

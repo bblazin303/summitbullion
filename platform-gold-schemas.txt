@@ -1,0 +1,308 @@
+
+Schemas
+ShippingInstruction{
+id	integer
+name	string
+}
+PaymentMethod{
+id	integer
+title	string
+description	string
+scope	string
+fee	number
+feeWaived	number
+}
+WarehouseLocation{
+id	integer
+name	string
+address	Address{...}
+}
+PurchaseOrderRequest{
+asynchronous	boolean
+default: false
+Submit order asyncronously. Will return confirmation number which can be polled separately.
+
+confirmationNumber	string
+Unique identifier for order. Optional, but recommended. If not provided a random number will be assigned.
+
+warehouseLocationId*	integer
+items*	[...]
+customerReferenceNumber	string
+notes	string
+}
+SalesOrderRequest{
+asynchronous	boolean
+default: false
+Submit order asyncronously. Will return confirmation number which can be polled separately.
+
+confirmationNumber	string
+Unique identifier for order. Optional, but recommended. If not provided a random number will be assigned.
+
+items*	[...]
+shippingAddress	Address{...}
+email*	string
+Customer Email
+
+paymentMethodId	integer
+shippingInstructionId	integer
+customerReferenceNumber	string
+notes	string
+}
+PendingOrderStatus{
+handle	string($uuid)
+recordType	string
+Enum:
+Array [ 2 ]
+quoteExpiration	string
+M/D/Y H:M:S A
+
+lineItems	[...]
+handlingFee	number
+amount	number
+transactionDate	string
+M/D/Y
+
+customerReferenceNumber	string
+Customer reference number, e.g. PO
+
+}
+PollStatus{
+id	integer
+handle	string
+transactionId	string
+confirmationNumber	string
+syncError	string
+syncAttempts	integer
+syncAttemptsRemaining	integer
+}
+Address{
+addressee	string
+Addressee
+
+attention	string
+Attention
+
+addr1*	string
+Address Line 1
+
+addr2	string
+Address Line 2
+
+city*	string
+City
+
+state*	string
+State (2 Letter Abbreviation)
+
+zip*	string
+Zip
+
+country	string
+Country (2 Letter Abbreviation)
+
+}
+ItemFulfillment{
+shipDate	string
+shipMethod	string
+items	[...]
+trackingNumbers	[...]
+}
+PurchaseOrderHeader{
+id	integer($int64)
+example: 2915
+Unique internal id
+
+recordType	string
+Enum:
+Array [ 1 ]
+status	string
+Enum:
+Array [ 5 ]
+amount	number
+transactionDate	string
+M/D/Y
+
+customerReferenceNumber	string
+Customer reference number, e.g. PO
+
+transactionId	string
+e.g. PO12345
+
+warehouseAddress	Address{...}
+}
+PurchaseOrderStatus{
+id	integer($int64)
+example: 2915
+Unique internal id
+
+confirmationNumber	string
+recordType	string
+Enum:
+Array [ 1 ]
+warehouseAddress	Address{...}
+status	string
+Enum:
+Array [ 5 ]
+lineItems	[...]
+amount	number
+transactionDate	string
+M/D/Y
+
+customerReferenceNumber	string
+Customer reference number, e.g. PO
+
+transactionId	string
+e.g. SO12345
+
+}
+SalesOrderHeader{
+id	integer($int64)
+example: 2915
+Unique internal id
+
+recordType	string
+Enum:
+Array [ 1 ]
+status	string
+Enum:
+Array [ 9 ]
+trackingNumbers	[...]
+amount	number
+transactionDate	string
+M/D/Y
+
+customerReferenceNumber	string
+Customer reference number, e.g. PO
+
+transactionId	string
+e.g. SO12345
+
+}
+SalesOrderStatus{
+id	integer($int64)
+example: 2915
+Unique internal id
+
+confirmationNumber	string
+recordType	string
+Enum:
+Array [ 1 ]
+shippingInstruction	ShippingInstruction{...}
+paymentMethod	PaymentMethod{...}
+shippingAddress	Address{...}
+itemFulfillments	[...]
+status	string
+Enum:
+Array [ 9 ]
+trackingNumbers	[...]
+lineItems	[...]
+amount	number
+transactionDate	string
+M/D/Y
+
+customerReferenceNumber	string
+Customer reference number, e.g. PO
+
+transactionId	string
+e.g. SO12345
+
+}
+Inventory{
+id	integer($int64)
+example: 2915
+Unique internal id
+
+sku	string
+example: ATBG
+name	string
+metalOz	number
+Precious metal content in oz
+
+bidPriceFormat	string
+Enum:
+Array [ 3 ]
+bidPremium	number
+askPriceFormat	string
+Enum:
+Array [ 3 ]
+askPremium	number
+disablePerOzCalc	boolean
+metalSymbol	string
+Enum:
+Array [ 4 ]
+metalType	string
+Enum:
+Array [ 9 ]
+metalContent	{...}
+manufacturer	string
+Manufacturer mint or brand
+
+purity	string
+Purity of the metal
+
+buyQuantity	number
+Quantity UCG is currently buying
+
+sellQuantity	number
+Quantity UCG is currently selling
+
+minQuantity	number
+Base minimum quantity that can be included in a trade.
+
+minBidQty	number
+Minimum quantity that can be sold to UCG in one trade
+
+minAskQty	number
+Minimum quantity that can be bought from UCG in one trade
+
+year	string
+grade	string
+gradingService	string
+Grading service used
+
+mintMark	string
+Mint mark
+
+iraEligible	boolean
+Indicates that the metal is IRA grade purity
+
+askPrice	number
+bidPrice	number
+metalAsk	number
+metalBid	number
+mainImage	string
+Main product image
+
+altImage1	string
+Alternate image 1
+
+altImage2	string
+Alternate image 2
+
+altImage3	string
+Alternate image 3
+
+stockStatus	string
+Information about product availability
+
+categories	[...]
+}
+Category{
+name	string
+primary	boolean
+children	[...]
+}
+SpotPrice{
+symbol	string
+example: XAU
+Enum:
+Array [ 4 ]
+currency	string
+Enum:
+Array [ 12 ]
+currencyMultiplier	number
+open	number
+ask	number
+bid	number
+timestamp	string
+}

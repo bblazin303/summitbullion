@@ -334,6 +334,42 @@ export async function clearCart(uid: string): Promise<void> {
   await cartRef.delete();
 }
 
+/**
+ * Update shipping address in cart
+ * Called when user proceeds to payment step
+ */
+export async function updateCartShippingAddress(
+  uid: string,
+  shippingAddress: {
+    addressee?: string;
+    attention?: string;
+    addr1?: string;
+    addr2?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+  }
+): Promise<void> {
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+
+  const cartRef = adminDb.collection('users').doc(uid).collection('cart').doc('current');
+  const cartSnap = await cartRef.get();
+  
+  if (!cartSnap.exists) {
+    throw new Error('Cart not found');
+  }
+
+  await cartRef.update({
+    shippingAddress,
+    updatedAt: new Date(),
+  });
+  
+  console.log('✅ Shipping address saved to cart for user:', uid);
+}
+
 // =============================================================================
 // ORDER OPERATIONS
 // =============================================================================
