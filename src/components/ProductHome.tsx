@@ -80,7 +80,6 @@ const ProductHome: React.FC = () => {
         
         // Final fallback: if we still don't have 4, fetch from the beginning
         if (selectedProducts.length < 4) {
-          console.log(`Only found ${selectedProducts.length} products, fetching fallback from start...`);
           try {
             const fallbackResponse = await fetchInventory(50, 0);
             if (fallbackResponse && Array.isArray(fallbackResponse.records)) {
@@ -98,7 +97,6 @@ const ProductHome: React.FC = () => {
           }
         }
         
-        console.log(`✅ Loaded ${selectedProducts.length} products for home page`);
         setProducts(selectedProducts);
       } catch (error) {
         console.error('Failed to load products:', error);
@@ -119,12 +117,10 @@ const ProductHome: React.FC = () => {
     // Prefetch the inventory API data in the background
     const prefetchInventory = async () => {
       try {
-        console.log('🚀 Prefetching marketplace inventory...');
         // Fetch first batch of inventory
         await fetch('/api/platform-gold/inventory?limit=100&offset=0');
         // Prefetch metadata (counts)
         await fetch('/api/platform-gold/metadata');
-        console.log('✅ Marketplace inventory prefetched successfully');
       } catch (error) {
         console.error('❌ Failed to prefetch inventory:', error);
       }

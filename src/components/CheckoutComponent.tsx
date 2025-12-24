@@ -272,14 +272,12 @@ const CheckoutComponent: React.FC = () => {
                     }}>
                       {item.name}
                     </h3>
-                    <div className="flex flex-col gap-1">
+                    {(item.metalOz ?? 0) > 0 && (
                       <p className="font-inter font-normal text-[10px] text-black">
-                        <span className="text-[rgba(0,0,0,0.6)]">Material: </span>Gold
+                        <span className="text-[rgba(0,0,0,0.6)]">Weight: </span>
+                        {item.metalOz} troy oz
                       </p>
-                      <p className="font-inter font-normal text-[10px] text-black">
-                        <span className="text-[rgba(0,0,0,0.6)]">Weight: </span>1000kg
-                      </p>
-                    </div>
+                    )}
                   </div>
                 </div>
 

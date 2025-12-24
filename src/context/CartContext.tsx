@@ -19,6 +19,8 @@ export interface CartItem {
   quantity: number;
   image: StaticImageData | string;
   brand: string;
+  metalOz?: number; // Weight in troy ounces
+  metalSymbol?: string; // XAU, XAG, XPT, XPD
 }
 
 interface CartContextType {
@@ -63,7 +65,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // If user changed, reset everything and reload
       if (lastUserId && lastUserId !== consistentUserId) {
-        console.log('🔄 User changed, resetting cart:', lastUserId, '->', consistentUserId);
         setCart([]);
         setCartLoaded(false);
         setLastUserId(consistentUserId);
@@ -84,7 +85,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       try {
         setIsLoading(true);
-        console.log('🔄 Loading cart from API for user:', consistentUserId);
         
         const headers: Record<string, string> = {};
         
@@ -121,6 +121,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             quantity: number; 
             image: string; 
             manufacturer: string;
+            metalOz?: number;
+            metalSymbol?: string;
           }) => {
             return {
               id: item.id,
@@ -141,16 +143,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               quantity: item.quantity,
               image: item.image,
               brand: item.manufacturer,
+              metalOz: item.metalOz,
+              metalSymbol: item.metalSymbol,
             };
           });
-          console.log('✅ Cart loaded successfully:', localCartItems.length, 'items');
           setCart(localCartItems);
           setCartLoaded(true); // Mark cart as loaded
-        } else {
-          console.log('⚠️ No cart data in API response');
         }
-      } catch (error) {
-        console.error('❌ Error loading cart from API:', error);
+      } catch {
+        // Silent fail - cart will be empty
       } finally {
         setIsLoading(false);
       }
@@ -197,8 +198,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           },
           quantity: newItem.quantity,
           image: typeof newItem.image === 'string' ? newItem.image : '',
-          metalSymbol: '', // You may want to pass this from product data
-          metalOz: 0, // You may want to pass this from product data
+          metalSymbol: newItem.metalSymbol || '',
+          metalOz: newItem.metalOz || 0,
           manufacturer: newItem.brand,
         };
         
@@ -209,8 +210,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!isEmailAuth && user?.idToken) {
           headers['Authorization'] = `Bearer ${user.idToken}`;
       }
-        
-        console.log('➕ Adding to cart for user:', consistentUserId);
         
         const response = await fetch('/api/cart/add', {
           method: 'POST',
@@ -226,9 +225,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!response.ok) {
           throw new Error('Failed to add item to cart');
         }
-      } catch (error) {
-        console.error('❌ Error syncing cart to API:', error);
-        // Remove the item from local state since API failed (rollback)
+      } catch {
+        // Rollback on error
         setCart((prevCart) => prevCart.filter((item) => item.id !== newItem.id));
       }
     }
@@ -252,8 +250,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           headers['Authorization'] = `Bearer ${user.idToken}`;
         }
         
-        console.log('➖ Removing from cart for user:', consistentUserId);
-        
         const response = await fetch('/api/cart/remove', {
           method: 'DELETE',
           headers,
@@ -268,8 +264,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!response.ok) {
           throw new Error('Failed to remove item from cart');
         }
-      } catch (error) {
-        console.error('❌ Error removing item from cart API:', error);
+      } catch {
         // Rollback to previous state on error
         setCart(previousCart);
       }
@@ -315,8 +310,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!response.ok) {
           throw new Error('Failed to update cart');
         }
-      } catch (error) {
-        console.error('Error updating cart quantity in API:', error);
+      } catch {
+        // Silent fail - local state already updated
       }
     }
   };
@@ -346,8 +341,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!response.ok) {
           throw new Error('Failed to clear cart');
         }
-      } catch (error) {
-        console.error('Error clearing cart in API:', error);
+      } catch {
+        // Silent fail - local state already cleared
       }
     }
   };
@@ -402,6 +397,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           quantity: number; 
           image: string; 
           manufacturer: string;
+          metalOz?: number;
+          metalSymbol?: string;
         }) => ({
           id: item.id,
           name: item.name,
@@ -419,13 +416,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           quantity: item.quantity,
           image: item.image,
           brand: item.manufacturer,
+          metalOz: item.metalOz,
+          metalSymbol: item.metalSymbol,
         }));
         setCart(localCartItems);
       } else {
         setCart([]);
       }
-    } catch (error) {
-      console.error('❌ Error reloading cart:', error);
+    } catch {
+      // Silent fail
     } finally {
       setIsLoading(false);
     }

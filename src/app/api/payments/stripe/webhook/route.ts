@@ -12,6 +12,7 @@ import {
   convertToPlatformGoldAddress,
   formatOrderItems,
 } from '@/lib/platformGoldHelpers';
+import { sendOrderConfirmationEmail } from '@/lib/email';
 
 /**
  * POST /api/payments/stripe/webhook
@@ -294,6 +295,41 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
         platformGoldError: platformGoldError instanceof Error ? platformGoldError.message : 'Unknown error',
         updatedAt: new Date(),
       });
+    }
+    
+    // ========================================================================
+    // Send Order Confirmation Email
+    // ========================================================================
+    try {
+      console.log('📧 Sending order confirmation email...');
+      
+      const emailResult = await sendOrderConfirmationEmail({
+        orderId,
+        customerEmail: userEmail,
+        customerName: shippingAddress?.addressee || undefined,
+        items: orderItems,
+        subtotal,
+        deliveryFee,
+        total: paymentIntent.amount / 100,
+        shippingAddress: shippingAddress,
+      });
+      
+      if (emailResult.success) {
+        console.log('✅ Order confirmation email sent successfully');
+        await orderRef.update({
+          emailSent: true,
+          emailSentAt: new Date(),
+        });
+      } else {
+        console.error('❌ Failed to send order confirmation email:', emailResult.error);
+        await orderRef.update({
+          emailSent: false,
+          emailError: emailResult.error,
+        });
+      }
+    } catch (emailError) {
+      console.error('❌ Email sending error:', emailError);
+      // Don't fail the webhook - email is non-critical
     }
     
   } catch (error) {

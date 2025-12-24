@@ -54,8 +54,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
             setQuantity(Math.ceil(data.minAskQty));
           }
         }
-      } catch (err) {
-        console.error('Failed to load product:', err);
+      } catch {
         setError('Failed to load product details. Please try again later.');
       } finally {
         setIsLoading(false);
@@ -107,14 +106,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                 }
               }
             }
-          } catch (err) {
-            console.error(`Failed to fetch related at offset ${randomOffset}`, err);
+          } catch {
+            // Continue trying other offsets
           }
         }
         
         // Final fallback: fetch from the beginning if we still don't have 4
         if (selectedProducts.length < 4) {
-          console.log(`Only found ${selectedProducts.length} related products, fetching fallback...`);
           try {
             const fallbackResponse = await fetchInventory(30, 0, undefined, metalName);
             if (fallbackResponse && Array.isArray(fallbackResponse.records)) {
@@ -127,14 +125,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                 }
               }
             }
-          } catch (err) {
-            console.error('Fallback fetch for related products failed:', err);
+            } catch {
+            // Continue with what we have
           }
         }
         
         // If still not enough (e.g., rare metal type), try fetching ANY metal type
         if (selectedProducts.length < 4) {
-          console.log(`Still only ${selectedProducts.length} related products, fetching any metal type...`);
           try {
             const anyMetalResponse = await fetchInventory(30, 0);
             if (anyMetalResponse && Array.isArray(anyMetalResponse.records)) {
@@ -147,17 +144,16 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
                 }
               }
             }
-          } catch (err) {
-            console.error('Any-metal fallback fetch failed:', err);
+          } catch {
+            // Continue with what we have
           }
         }
         
         // Shuffle for variety
         const shuffled = selectedProducts.sort(() => 0.5 - Math.random());
-        console.log(`✅ Loaded ${shuffled.length} related products`);
         setRelatedProductsData(shuffled);
-      } catch (err) {
-        console.error('Failed to load related products:', err);
+      } catch {
+        // Silent fail - related products are non-critical
       }
     };
 
@@ -334,7 +330,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
     
     try {
       // Do a LIVE availability check before adding to cart (bypass cache)
-      console.log('🔍 Checking live availability for product:', productId);
       const liveData = await fetchInventoryById(parseInt(productId), true); // forceRefresh = true
       
       if (!liveData) {
@@ -345,7 +340,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
       
       // Check if item is available for purchase with LIVE data
       if (!isAvailableForPurchase(liveData)) {
-        console.log('❌ Product not available:', liveData.sellQuantity, 'units,', liveData.askPrice, 'price');
         alert(`Sorry, this item is currently out of stock. (Available: ${liveData.sellQuantity} units)`);
         // Update local state to reflect the new availability
         setProductData(liveData);
@@ -356,14 +350,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
       // Check minimum quantity requirement
       const minQty = Math.ceil(liveData.minAskQty || 1);
       if (quantity < minQty) {
-        console.log('❌ Quantity below minimum:', quantity, 'vs required', minQty);
         alert(`This item requires a minimum purchase of ${minQty} units.`);
         setQuantity(minQty);
         setIsAddingToCart(false);
         return;
       }
-      
-      console.log('✅ Product available:', liveData.sellQuantity, 'units at $', liveData.askPrice);
       
       // Update productData with fresh data
       setProductData(liveData);
@@ -386,11 +377,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ productId }) => {
         },
         image: product.images[0] as StaticImageData | string,
         brand: product.brand,
-        quantity: quantity
+        quantity: quantity,
+        metalOz: liveData.metalOz,
+        metalSymbol: liveData.metalSymbol,
       });
     });
-    } catch (err) {
-      console.error('Error checking availability:', err);
+    } catch {
       alert('Unable to verify product availability. Please try again.');
     } finally {
       setIsAddingToCart(false);

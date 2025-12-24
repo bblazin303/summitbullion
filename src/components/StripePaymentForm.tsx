@@ -178,7 +178,6 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
 
   // Handle payment method change from Stripe Elements
   const handlePaymentMethodChange = useCallback((method: PaymentMethodType) => {
-    console.log('💳 Payment method changed to:', method);
     setSelectedPaymentMethod(method);
   }, []);
 
@@ -189,8 +188,6 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
     // Calculate new processing fee based on selected payment method
     const newProcessingFee = calculateProcessingFee(baseSubtotal, selectedPaymentMethod);
     const newTotal = baseSubtotal + newProcessingFee;
-    
-    console.log('💰 Recalculating with', selectedPaymentMethod, 'fee:', newProcessingFee.toFixed(2));
     
     // Update pricing state with new processing fee
     setPricing(prev => prev ? {
@@ -233,9 +230,7 @@ export default function StripePaymentForm({ shippingAddress, isShippingValid }: 
         });
 
         if (!response.ok) {
-          console.error('Failed to update PaymentIntent');
-        } else {
-          console.log('✅ PaymentIntent updated with new amount');
+          // Failed to update - will retry
         }
       } catch (err) {
         console.error('Error updating PaymentIntent:', err);

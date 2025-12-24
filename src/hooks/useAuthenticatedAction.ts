@@ -22,7 +22,6 @@ export function useAuthenticatedAction() {
     (action: () => void | Promise<void>) => {
       // Check if still initializing
       if (signerStatus.isInitializing) {
-        console.log("⏳ Still initializing authentication...");
         return;
       }
 
@@ -33,7 +32,6 @@ export function useAuthenticatedAction() {
       }
 
       // If not authenticated, show login modal
-      console.log("🔐 User not authenticated, showing login modal");
       openAuthModal();
     },
     [user, openAuthModal, signerStatus.isInitializing]

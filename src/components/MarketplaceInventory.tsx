@@ -134,9 +134,9 @@ const MarketplaceInventory: React.FC = () => {
         const response = await fetch('/api/platform-gold/metadata');
         const counts = await response.json();
         setMetalCounts(counts);
-        console.log('📊 Metal counts loaded:', counts);
-      } catch (err) {
-        console.error('Failed to load metal counts:', err);
+        // Metal counts loaded successfully
+      } catch {
+        // Silent fail - counts will show as 0
       }
     };
     loadMetalCounts();
@@ -155,10 +155,8 @@ const MarketplaceInventory: React.FC = () => {
         
         if (hasUrlFilter) {
           // If we have a URL filter, load filtered inventory
-          console.log(`🔍 Loading inventory with URL filter: ${initialFilter}`);
           const response = await fetchInventory(100, 0, undefined, initialFilter);
           const availableItems = response.records.filter(isAvailableForPurchase);
-          console.log(`✅ Loaded ${availableItems.length} ${initialFilter} products`);
           
           setInventory(availableItems);
           setCurrentOffset(100);
@@ -169,25 +167,12 @@ const MarketplaceInventory: React.FC = () => {
           
           // Filter to only available items
           const availableItems = response.records.filter(isAvailableForPurchase);
-          console.log(`✅ Loaded ${availableItems.length} available products from ${response.records.length} fetched`);
-          console.log(`📦 Total products in Platform Gold: ${response.totalCount}`);
-          
-          // Log pricing example
-          if (availableItems.length > 0) {
-            const sample = availableItems[0];
-            const markedUpPrice = applyMarkup(sample.askPrice, 2);
-            console.log(`📊 Pricing Example: "${sample.name}"`);
-            console.log(`   Platform Gold price: $${sample.askPrice.toFixed(2)}`);
-            console.log(`   Your price (2% markup): $${markedUpPrice.toFixed(2)}`);
-            console.log(`   Markup amount: $${(markedUpPrice - sample.askPrice).toFixed(2)}`);
-          }
           
           setInventory(availableItems);
           setCurrentOffset(100);
           setHasMoreFromAPI(response.nextPage !== null);
         }
       } catch (err) {
-        console.error('Failed to load inventory:', err);
         setError(err instanceof Error ? err.message : 'Failed to load inventory. Please try again later.');
       } finally {
         setIsLoading(false);
@@ -216,14 +201,12 @@ const MarketplaceInventory: React.FC = () => {
       setHasSearched(false); // Reset for new search
 
       try {
-        console.log(`🔍 Searching for: "${query}"`);
         const response = await fetch(`/api/platform-gold/search?q=${encodeURIComponent(query)}&offset=0`);
         const data = await response.json();
         
         setSearchDropdownResults(data.results || []);
         setHasMoreSearchResults(data.hasMore || false);
         setHasSearched(true); // Mark that search has completed
-        console.log(`✅ Found ${data.results?.length || 0} matching products (hasMore: ${data.hasMore})`);
       } catch (err) {
         console.error('Search failed:', err);
         setSearchDropdownResults([]);
@@ -253,7 +236,6 @@ const MarketplaceInventory: React.FC = () => {
           const newOffset = searchOffset + 20;
           
           try {
-            console.log(`🔄 Loading more search results (offset: ${newOffset})...`);
             const response = await fetch(
               `/api/platform-gold/search?q=${encodeURIComponent(searchQuery)}&offset=${newOffset}`
             );
@@ -262,7 +244,6 @@ const MarketplaceInventory: React.FC = () => {
             setSearchDropdownResults(prev => [...prev, ...(data.results || [])]);
             setSearchOffset(newOffset);
             setHasMoreSearchResults(data.hasMore || false);
-            console.log(`✅ Loaded ${data.results?.length || 0} more results`);
           } catch (err) {
             console.error('Failed to load more search results:', err);
           } finally {
@@ -312,7 +293,6 @@ const MarketplaceInventory: React.FC = () => {
           setIsLoadingMoreGridSearch(true);
           
           try {
-            console.log(`🔄 Loading more grid search results (offset: ${gridSearchOffset})...`);
             const response = await fetch(`/api/platform-gold/search?q=${encodeURIComponent(activeSearchQuery)}&offset=${gridSearchOffset}`);
             const data = await response.json();
             
@@ -340,7 +320,6 @@ const MarketplaceInventory: React.FC = () => {
               setSearchResultsForGrid(prev => [...prev, ...newResults]);
               setHasMoreGridSearchResults(data.hasMore || false);
               setGridSearchOffset(prev => prev + 20);
-              console.log(`✅ Loaded ${newResults.length} more search results`);
             } else {
               setHasMoreGridSearchResults(false);
             }
@@ -379,7 +358,6 @@ const MarketplaceInventory: React.FC = () => {
           
           if (needsMoreFromAPI) {
             try {
-              console.log(`🔄 Fetching more products from API (offset: ${currentOffset}, filter: ${selectedFilter})...`);
               
               // For filtered views, we might need to fetch multiple batches to get enough items
               let newItems: Inventory[] = [];
@@ -397,7 +375,6 @@ const MarketplaceInventory: React.FC = () => {
                 stillHasMore = response.nextPage !== null;
                 attempts++;
                 
-                console.log(`📦 Attempt ${attempts}: Found ${newAvailable.length} items (${newItems.length} total new items)`);
                 
                 // If we got nothing and there's no more to fetch, stop
                 if (newAvailable.length === 0 && !stillHasMore) break;
@@ -407,7 +384,6 @@ const MarketplaceInventory: React.FC = () => {
               setCurrentOffset(tempOffset);
               setHasMoreFromAPI(stillHasMore && inventory.length + newItems.length < (metalCounts[selectedFilter] || 10000));
               
-              console.log(`✅ Loaded ${newItems.length} more ${selectedFilter} products (total: ${inventory.length + newItems.length})`);
             } catch (err) {
               console.error('Failed to load more products:', err);
             }
@@ -539,7 +515,6 @@ const MarketplaceInventory: React.FC = () => {
     setGridSearchOffset(0); // Reset offset for new search
     
     try {
-      console.log(`🔍 Grid search for: "${query}"`);
       const response = await fetch(`/api/platform-gold/search?q=${encodeURIComponent(query)}&offset=0`);
       const data = await response.json();
       
@@ -569,12 +544,10 @@ const MarketplaceInventory: React.FC = () => {
         setHasMoreGridSearchResults(data.hasMore || false);
         setTotalGridSearchResults(data.totalFound || inventoryResults.length);
         setGridSearchOffset(20);
-        console.log(`✅ Grid search found ${data.totalFound || inventoryResults.length} total, showing ${inventoryResults.length}`);
       } else {
         setSearchResultsForGrid([]);
         setHasMoreGridSearchResults(false);
         setTotalGridSearchResults(0);
-        console.log('❌ No results found for grid search');
       }
     } catch (err) {
       console.error('Grid search failed:', err);
@@ -588,7 +561,6 @@ const MarketplaceInventory: React.FC = () => {
   const handleFilterSelect = async (option: string) => {
     // Abort any ongoing filter search immediately
     if (filterAbortControllerRef.current) {
-      console.log('🛑 Aborting previous filter search');
       try {
         filterAbortControllerRef.current.abort();
       } catch {
@@ -629,8 +601,6 @@ const MarketplaceInventory: React.FC = () => {
     }
     
     try {
-      console.log(`🔍 Filtering by: ${option}`);
-      console.log(`📊 Target: ${targetCount} ${option} products${isRareMetal ? ' (rare metal - deep search)' : ''}`);
       
       let allItems: Inventory[] = [];
       let offset = 0;
@@ -645,7 +615,6 @@ const MarketplaceInventory: React.FC = () => {
         const maxBatchesToFetch = 30; // Fetch up to 30 batches (3000 products)
         const maxConsecutiveEmpty = 15; // Allow more empty batches for rare metals
         
-        console.log('🔍 Deep search mode: Loading all items...');
         
         while (allItems.length < targetCount && hasMore && batchesFetched < maxBatchesToFetch) {
           const response = await fetchInventory(100, offset, undefined, option, abortController.signal);
@@ -656,7 +625,6 @@ const MarketplaceInventory: React.FC = () => {
           hasMore = response.nextPage !== null;
           batchesFetched++;
           
-          console.log(`📦 Batch ${batchesFetched}: Found ${availableItems.length} ${option} items (${allItems.length}/${targetCount} total)`);
           
           // Update UI progressively as items come in
           if (availableItems.length > 0) {
@@ -672,14 +640,12 @@ const MarketplaceInventory: React.FC = () => {
             
             // For rare metals, be more patient - search deeper
             if (consecutiveEmptyBatches >= maxConsecutiveEmpty) {
-              console.log(`⚠️ Stopping after ${consecutiveEmptyBatches} consecutive empty batches`);
               break;
             }
           }
           
           // Stop if we reached the end of inventory
           if (!hasMore) {
-            console.log('📭 Reached end of inventory');
             break;
           }
         }
@@ -691,7 +657,6 @@ const MarketplaceInventory: React.FC = () => {
         setDisplayedProducts(allItems.length);
       } else {
         // COMMON METAL QUICK LOAD - Load first batch only, use infinite scroll for more
-        console.log('⚡ Quick load mode: Loading first batch...');
         
         const response = await fetchInventory(100, offset, undefined, option, abortController.signal);
         const availableItems = response.records.filter(isAvailableForPurchase);
@@ -700,7 +665,6 @@ const MarketplaceInventory: React.FC = () => {
         offset += 100;
         hasMore = response.nextPage !== null;
         
-        console.log(`📦 Loaded ${allItems.length} ${option} items from first batch`);
         
         // Set state for quick display
         setInventory(allItems);
@@ -712,12 +676,9 @@ const MarketplaceInventory: React.FC = () => {
       // Log results
       if (isRareMetal) {
         if (allItems.length < targetCount) {
-          console.log(`⚠️ Found ${allItems.length} of ${targetCount} expected ${option} products`);
         } else {
-          console.log(`✅ Loaded all ${allItems.length} ${option} products`);
         }
       } else {
-        console.log(`✅ Showing ${Math.min(20, allItems.length)} of ${allItems.length} ${option} products (more will load on scroll)`);
       }
       
       // Clear the abort controller ref if this is the current one
@@ -728,12 +689,10 @@ const MarketplaceInventory: React.FC = () => {
       // If the request was aborted, it's because the user selected a different filter
       // Don't show an error or log it - this is expected behavior
       if (err instanceof Error && err.name === 'AbortError') {
-        console.log('✋ Filter search cancelled by user');
         return; // Exit early, don't update state
       }
       // Some browsers throw DOMException for abort errors
       if (err instanceof DOMException && err.name === 'AbortError') {
-        console.log('✋ Filter search cancelled by user');
         return; // Exit early, don't update state
       }
       console.error('Failed to filter inventory:', err);

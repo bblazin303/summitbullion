@@ -31,8 +31,6 @@ export default function IdentityVerification({
       setIsLoading(true);
       setError(null);
 
-      console.log('🔍 Starting identity verification...');
-
       // Get Stripe instance
       const stripe = await stripePromise;
       if (!stripe) {
@@ -62,25 +60,20 @@ export default function IdentityVerification({
 
       const { clientSecret, verificationSessionId } = await response.json();
 
-      console.log('✅ Verification session created:', verificationSessionId);
-
       // Show Stripe Identity modal
       const result = await stripe.verifyIdentity(clientSecret);
 
       if (result.error) {
         // Handle error
-        console.error('❌ Identity verification error:', result.error.message);
         setError(result.error.message || 'Verification failed');
         onVerificationError?.(result.error.message || 'Verification failed');
       } else {
         // Success - verification submitted
-        console.log('✅ Identity verification submitted');
         onVerificationComplete?.(verificationSessionId);
       }
 
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-      console.error('❌ Error during identity verification:', err);
       setError(errorMessage);
       onVerificationError?.(errorMessage);
     } finally {

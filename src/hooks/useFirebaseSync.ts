@@ -45,7 +45,6 @@ export function useFirebaseSync() {
     // Sync user to Firebase via API route
     const syncUserToAPI = async () => {
       if (!user.email) {
-        console.warn('⚠️ User logged in but no email provided');
         return;
       }
 
@@ -92,8 +91,8 @@ export function useFirebaseSync() {
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('firebase_synced_user', user.userId);
         }
-      } catch (error) {
-        console.error('❌ Error syncing user to API:', error);
+      } catch {
+        // Silent fail - will retry on next render
       } finally {
         isSyncingRef.current = false;
       }

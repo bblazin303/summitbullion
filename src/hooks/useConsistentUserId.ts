@@ -36,17 +36,11 @@ export function useConsistentUserId() {
     // The backend will handle Google OAuth JWT verification separately
     const isEmailAuth = true; // Always use email-based ID for consistency
     
-    console.log('🔍 useConsistentUserId - Auth detection:', {
-      userId: user.userId,
-      email: user.email,
-      hasIdToken,
-      isGoogleOAuth,
-      hasGoogleOrgId,
-      userType: user.type,
-      orgId: user.orgId,
-      isEmailAuth,
-      finalUserId: emailToUserId(user.email)
-    });
+    // Suppress unused variable warnings
+    void isGoogleOAuth;
+    void hasGoogleOrgId;
+    void hasIdToken;
+    void isEmailAuth;
     
     // Always use email-based ID for consistency
     // This ensures cart persists regardless of Alchemy's client/server userId mismatch

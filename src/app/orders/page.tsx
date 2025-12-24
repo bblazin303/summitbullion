@@ -97,8 +97,7 @@ export default function OrdersPage() {
         } else {
           throw new Error(data.error || 'Failed to load orders');
         }
-      } catch (err) {
-        console.error('❌ Error fetching orders:', err);
+      } catch {
         setError('Failed to load your orders. Please try again.');
       } finally {
         setIsLoading(false);
@@ -107,40 +106,6 @@ export default function OrdersPage() {
 
     fetchOrders();
   }, [user?.userId, user?.idToken]);
-
-  const getStatusColor = (status: Order['status']) => {
-    switch (status) {
-      case 'pending_fulfillment':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'processing':
-        return 'bg-blue-100 text-blue-800';
-      case 'shipped':
-        return 'bg-purple-100 text-purple-800';
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusLabel = (status: Order['status']) => {
-    switch (status) {
-      case 'pending_fulfillment':
-        return 'Pending';
-      case 'processing':
-        return 'Processing';
-      case 'shipped':
-        return 'Shipped';
-      case 'delivered':
-        return 'Delivered';
-      case 'cancelled':
-        return 'Cancelled';
-      default:
-        return status;
-    }
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -192,43 +157,65 @@ export default function OrdersPage() {
           setOrders(ordersData.orders);
         }
       }
-    } catch (err) {
-      console.error('❌ Error syncing order status:', err);
+    } catch {
+      // Silent fail - status will be stale
     } finally {
       setSyncingOrderId(null);
     }
   };
 
-  const getPlatformGoldStatusColor = (status?: string | null) => {
-    if (!status) return 'bg-gray-100 text-gray-800';
+  // Simplified status for customers - only "Processing" or "Shipped"
+  const getSimplifiedStatus = (platformGoldStatus?: string | null, trackingNumbers?: string[]) => {
+    // If there are tracking numbers, it's shipped
+    if (trackingNumbers && trackingNumbers.length > 0) {
+      return 'shipped';
+    }
     
-    switch (status) {
-      case 'quote_created':
-        return 'bg-blue-100 text-blue-800';
-      case 'Awaiting Payment':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Pending Fulfillment':
-      case 'Awaiting Shipping Instructions':
-        return 'bg-orange-100 text-orange-800';
-      case 'Partially Fulfilled':
-        return 'bg-purple-100 text-purple-800';
+    // Map Platform Gold statuses to simplified status
+    if (!platformGoldStatus) return 'processing';
+    
+    switch (platformGoldStatus) {
       case 'Fulfillment Complete':
-        return 'bg-green-100 text-green-800';
+      case 'Partially Fulfilled':
+        return 'shipped';
       case 'Cancelled':
-        return 'bg-red-100 text-red-800';
+      case 'Void':
+        return 'cancelled';
       case 'error':
       case 'failed':
-        return 'bg-red-100 text-red-800';
+        return 'failed';
       default:
-        return 'bg-gray-100 text-gray-800';
+        // All other statuses (Pending Fulfillment, Pending Billing, Awaiting Payment, etc.)
+        return 'processing';
     }
   };
 
-  const getPlatformGoldStatusLabel = (status?: string | null, mode?: 'quote' | 'order') => {
-    if (!status) return 'Not submitted';
-    if (status === 'quote_created') return mode === 'quote' ? 'Quote Created (Test)' : 'Quote Created';
-    if (status === 'error' || status === 'failed') return 'Submission Failed';
-    return status;
+  const getSimplifiedStatusColor = (status: string) => {
+    switch (status) {
+      case 'shipped':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      case 'processing':
+      default:
+        return 'bg-blue-100 text-blue-800';
+    }
+  };
+
+  const getSimplifiedStatusLabel = (status: string) => {
+    switch (status) {
+      case 'shipped':
+        return 'Shipped';
+      case 'cancelled':
+        return 'Cancelled';
+      case 'failed':
+        return 'Failed';
+      case 'processing':
+      default:
+        return 'Processing';
+    }
   };
 
   if (!user?.userId) {
@@ -322,13 +309,21 @@ export default function OrdersPage() {
                         <h3 className="font-inter font-bold text-[18px] text-black">
                           Order #{order.id.slice(-8)}
                         </h3>
-                        <span
-                          className={`px-3 py-1 rounded-full font-inter font-medium text-[12px] ${getStatusColor(
-                            order.status
-                          )}`}
-                        >
-                          {getStatusLabel(order.status)}
-                        </span>
+                        {(() => {
+                          const simplifiedStatus = getSimplifiedStatus(
+                            order.platformGoldStatus,
+                            order.platformGoldTrackingNumbers
+                          );
+                          return (
+                            <span
+                              className={`px-3 py-1 rounded-full font-inter font-medium text-[12px] ${getSimplifiedStatusColor(
+                                simplifiedStatus
+                              )}`}
+                            >
+                              {getSimplifiedStatusLabel(simplifiedStatus)}
+                            </span>
+                          );
+                        })()}
                       </div>
                       <p className="font-inter text-[14px] text-[#7c7c7c]">
                         {formatDate(order.createdAt)}
@@ -430,11 +425,11 @@ export default function OrdersPage() {
                     </div>
                   )}
 
-                  {/* Platform Gold Status */}
+                  {/* Order Status - Simplified for customers */}
                   <div className="mt-6 pt-6 border-t border-[rgba(0,0,0,0.1)]">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-inter font-semibold text-[14px] text-black">
-                        Fulfillment Status:
+                        Order Status:
                       </h4>
                       {(order.platformGoldOrderId || order.platformGoldHandle) && (
                         <button
@@ -459,48 +454,52 @@ export default function OrdersPage() {
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`px-3 py-1 rounded-full font-inter font-medium text-[12px] ${getPlatformGoldStatusColor(
-                            order.platformGoldStatus
-                          )}`}
-                        >
-                          {getPlatformGoldStatusLabel(order.platformGoldStatus, order.platformGoldMode)}
-                        </span>
-                        {order.platformGoldMode === 'quote' && (
-                          <span className="text-[12px] font-inter text-[#7c7c7c] italic">
-                            (Test Mode)
-                          </span>
-                        )}
-                      </div>
+                    {(() => {
+                      const simplifiedStatus = getSimplifiedStatus(
+                        order.platformGoldStatus,
+                        order.platformGoldTrackingNumbers
+                      );
+                      return (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-3 py-1 rounded-full font-inter font-medium text-[12px] ${getSimplifiedStatusColor(
+                                simplifiedStatus
+                              )}`}
+                            >
+                              {getSimplifiedStatusLabel(simplifiedStatus)}
+                            </span>
+                          </div>
 
-                      {order.platformGoldTransactionId && (
-                        <p className="font-inter text-[12px] text-[#7c7c7c]">
-                          Transaction ID: <span className="font-mono">{order.platformGoldTransactionId}</span>
-                        </p>
-                      )}
+                          {/* Show helpful message based on status */}
+                          {simplifiedStatus === 'processing' && (
+                            <p className="font-inter text-[12px] text-[#7c7c7c]">
+                              Your order is being prepared for shipment.
+                            </p>
+                          )}
+                          
+                          {simplifiedStatus === 'shipped' && (
+                            <p className="font-inter text-[12px] text-[#7c7c7c]">
+                              Your order has been shipped and is on its way!
+                            </p>
+                          )}
 
-                      {order.platformGoldOrderId && (
-                        <p className="font-inter text-[12px] text-[#7c7c7c]">
-                          Platform Gold Order: <span className="font-mono">#{order.platformGoldOrderId}</span>
-                        </p>
-                      )}
+                          {order.platformGoldTransactionId && (
+                            <p className="font-inter text-[12px] text-[#7c7c7c]">
+                              Order Reference: <span className="font-mono">{order.platformGoldTransactionId}</span>
+                            </p>
+                          )}
 
-                      {order.platformGoldHandle && !order.platformGoldOrderId && (
-                        <p className="font-inter text-[12px] text-[#7c7c7c]">
-                          Processing... <span className="font-mono">{order.platformGoldHandle.slice(0, 8)}...</span>
-                        </p>
-                      )}
-
-                      {order.platformGoldError && (
-                        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                          <p className="font-inter text-[12px] text-red-800">
-                            <strong>Error:</strong> {order.platformGoldError}
-                          </p>
+                          {order.platformGoldError && (
+                            <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                              <p className="font-inter text-[12px] text-red-800">
+                                <strong>Error:</strong> {order.platformGoldError}
+                              </p>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Tracking Info */}
